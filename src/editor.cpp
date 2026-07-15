@@ -58,7 +58,16 @@ EditorCanvasComponent::OnRender()
             ftxui::Element cell;
 
             std::string renderBrush = cellContent.brush;
+            ftxui::Color renderColor = cellContent.color;
 
+            if ( renderBrush == " " && M_showGrid)
+            {
+                if ( x % 2 == 0 && y % 1 == 0 )
+                {
+                    renderBrush = "·";
+                    renderColor = ftxui::Color::GrayDark;
+                }
+            }
             if ( M_currentState.selection.isActive &&
                  x >= M_currentState.selection.minX() && x <= M_currentState.selection.maxX() &&
                  y >= M_currentState.selection.minY() && y <= M_currentState.selection.maxY() )
@@ -79,7 +88,7 @@ EditorCanvasComponent::OnRender()
                 else if (isRight) renderBrush = "⢸";
             }
 
-            cell = ftxui::text( renderBrush ) | ftxui::color( cellContent.color );
+            cell = ftxui::text( renderBrush ) | ftxui::color( renderColor );
 
             if ( M_showCursor && x == M_cursorX && y == M_cursorY )
                 cell = ftxui::text( M_currentState.brush ) | ftxui::color( ftxui::Color::Red ) | ftxui::blink;
@@ -588,6 +597,16 @@ EditorCanvasComponent::drawCircle( int x0, int y0, int x1, int y1 )
     }
 }
 
+bool
+EditorCanvasComponent::processToggleGrid( ftxui::Event event )
+{
+    if ( event == ftxui::Event::Character('g') )
+    {
+        M_showGrid = !M_showGrid;
+        return true;
+    }
+    return false;
+}
 
 
 bool
@@ -600,6 +619,9 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
         return true;
 
     if ( processCursorMovement( event ) )
+        return true;
+
+    if ( processToggleGrid( event ) )
         return true;
 
     if ( processKeyboardDrawing( event ) )

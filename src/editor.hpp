@@ -128,6 +128,7 @@ private:
     bool processPaintFill( ftxui::Event event );
     bool processBoxSelection( ftxui::Event event );
     bool processShapeDrawing( ftxui::Event event );
+    bool processToggleGrid( ftxui::Event event );
 
 private:
     int M_width, M_height;
@@ -149,9 +150,10 @@ private:
     int M_lastDragX = 0;
     int M_lastDragY = 0;
 
-
     int M_shapeStartX = 0;
     int M_shapeStartY = 0;
+
+    bool M_showGrid;
 };
 
 
