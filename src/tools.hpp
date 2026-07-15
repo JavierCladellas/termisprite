@@ -15,23 +15,43 @@ namespace Termisprite
 class ToolsComponent
     : public ftxui::ComponentBase
 {
-public:
-    ToolsComponent( EditorState & editorState )
-        : M_editorState( editorState )
+    enum class Category
     {
-        ftxui::ComponentBase::Add( M_brushModeSelector );
-    }
+        DRAWING,
+        SHAPES,
+        TOOLS
+    };
+
+public:
+    ToolsComponent( EditorState & editorState );
 
     ftxui::Element OnRender() override;
 
 private:
+    void updateState();
 
-    std::vector<std::string> M_brushModes{ "Draw","Eraser","Square","Circle","Line","Eye Dropper", "Paint Fill", "Box Select" };
-    int M_selectedBrushModeIndex = 0;
+private:
+    //Drawing
+    std::vector<std::string> M_drawingModes{ "Draw","Eraser" };
+    int M_drawingIndex = 0;
+    ftxui::Component M_drawingMenu;
 
-    ftxui::Component M_brushModeSelector = ftxui::Menu( &M_brushModes, &M_selectedBrushModeIndex );
+    //Shapes
+    std::vector<std::string> M_shapeModes{ "Line","Rectangle","Ellipse" };
+    int M_shapeIndex = 0;
+    ftxui::Component M_shapeMenu;
+
+    //Tools
+    std::vector<std::string> M_toolModes{ "Eye Dropper","Paint Fill","Box Select" };
+    int M_toolIndex = 0;
+    ftxui::Component M_toolMenu;
+
+
+    ftxui::Component M_container;
 
     EditorState & M_editorState;
+
+    Category M_activeCategory = Category::DRAWING;
 
 };
 
