@@ -81,6 +81,9 @@ ColorPicker( EditorState & editorState )
 ftxui::Element
 ColorPaletteComponent::OnRender()
 {
+    if ( M_editorState.palette.empty() )
+        return ftxui::text( " Palette " );
+
     M_container->DetachAllChildren();
 
     auto grid = ftxui::Container::Vertical({});
