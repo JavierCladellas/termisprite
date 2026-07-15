@@ -65,41 +65,10 @@ public:
         : M_maxSize( maxSize ), M_currentIndex( 0 )
     { }
 
-    void push( Sprite const & sprite )
-    {
-        M_history.push_back( sprite );
-    }
-
-    void save( Sprite const& M_sprite )
-    {
-        if ( M_currentIndex < static_cast<int>(M_history.size()) - 1 )
-            M_history.erase( M_history.begin() + M_currentIndex + 1, M_history.end() );
-
-        M_history.push_back( M_sprite );
-
-        if ( M_history.size() > M_maxSize )
-            M_history.erase( M_history.begin() );
-        else
-            M_currentIndex++;
-    }
-
-    void undo( Sprite & sprite )
-    {
-        if ( M_currentIndex > 0 )
-        {
-            M_currentIndex--;
-            sprite = M_history[M_currentIndex];
-        }
-    }
-
-    void redo( Sprite & sprite )
-    {
-        if ( M_currentIndex < static_cast<int>(M_history.size()) - 1 )
-        {
-            M_currentIndex++;
-            sprite = M_history[M_currentIndex];
-        }
-    }
+    void push( Sprite const & sprite ) { M_history.push_back( sprite ); }
+    void save( Sprite const& sprite );
+    void undo( Sprite & sprite );
+    void redo( Sprite & sprite );
 
 
 private:
