@@ -196,7 +196,10 @@ int main( int argc, char** argv )
         return vbox( {
             menu->Render(),
             hbox({
-                editorCanvas->Render() | flex,
+                vbox({
+                    editorCanvas->Render(),
+                    filler()
+                }) | flex,
                 vbox({
                     toolsSection->Render(),
                     colorSection->Render()
