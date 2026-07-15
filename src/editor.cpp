@@ -1,5 +1,6 @@
 #include "editor.hpp"
 #include <cmath>
+#include <ftxui/dom/elements.hpp>
 
 
 namespace Termisprite
@@ -97,6 +98,32 @@ EditorCanvasComponent::OnRender()
         }
         rows.push_back( ftxui::hbox( row ) );
     }
+
+    ftxui::Element canvas = ftxui::vbox( std::move( rows ) )
+                              | ftxui::reflect( M_box )
+                              | ftxui::border
+                              | ftxui::size( ftxui::WIDTH, ftxui::EQUAL, M_width + 1 )
+                              | ftxui::size( ftxui::HEIGHT, ftxui::EQUAL, M_height + 2 );
+
+    if ( M_showRightClickModal )
+    {
+        ftxui::Element modal = ftxui::window( ftxui::text(" Options "), M_rightClickModal->Render() )
+                             | ftxui::clear_under
+                             | ftxui::reflect( M_rightClickModalBox );
+
+        ftxui::Element positioned_modal = ftxui::vbox({
+            ftxui::text("") | ftxui::size(ftxui::HEIGHT, ftxui::EQUAL, M_modalY),
+            ftxui::hbox({
+                ftxui::text("") | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, M_modalX),
+                modal
+            })
+        });
+
+        return ftxui::dbox({ canvas, positioned_modal });
+    }
+
+    return canvas;
+
 
     return ftxui::vbox( std::move( rows ) ) | ftxui::reflect( M_box )
                                             | ftxui::border
@@ -608,10 +635,89 @@ EditorCanvasComponent::processToggleGrid( ftxui::Event event )
     return false;
 }
 
+bool
+EditorCanvasComponent::processRightClickModal( ftxui::Event event )
+{
+    if ( !event.is_mouse() )
+        return false;
+
+    auto mouse = event.mouse();
+
+    if ( mouse.button == ftxui::Mouse::Button::Right && mouse.motion == ftxui::Mouse::Pressed )
+    {
+        if ( M_box.Contain( mouse.x, mouse.y ) )
+        {
+            M_showRightClickModal = true;
+
+            M_modalX = std::clamp(mouse.x - M_box.x_min, 0, M_width - 15);
+            M_modalY = std::clamp(mouse.y - M_box.y_min, 0, M_height - 6);
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+void
+EditorCanvasComponent::clear()
+{
+    M_sprite.clear();
+    saveState();
+}
 
 bool
 EditorCanvasComponent::OnEvent( ftxui::Event event )
 {
+
+    if ( M_showRightClickModal )
+    {
+    bool handled = M_rightClickModal->OnEvent( event );
+
+        bool execute_action = ( event == ftxui::Event::Return || event == ftxui::Event::Character('\n') );
+
+        if ( event.is_mouse() )
+        {
+            auto mouse = event.mouse();
+            if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Pressed )
+            {
+                if ( M_rightClickModalBox.Contain( mouse.x, mouse.y ) )
+                    execute_action = true;
+                else
+                {
+                    M_showRightClickModal = false;
+                    return true;
+                }
+            }
+        }
+
+        if ( execute_action )
+        {
+            switch ( M_rightClickModalIndex )
+            {
+                case 0: M_showGrid = !M_showGrid; break;
+                case 1: M_spriteHistory.undo( M_sprite ); break;
+                case 2: M_spriteHistory.redo( M_sprite ); break;
+                case 3: this->clear(); break;
+                default: break;
+            }
+            M_showRightClickModal = false;
+            M_rightClickModalIndex = 0;
+            return true;
+        }
+
+        if ( event == ftxui::Event::Escape )
+        {
+            M_showRightClickModal = false;
+            return true;
+        }
+
+        return true;
+
+        return true;
+    }
+
     if ( processClipboardEvents( event ) )
         return true;
 
@@ -645,6 +751,10 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
 
         if ( processBoxSelection( event ) )
             return true;
+
+        if ( processRightClickModal( event ) )
+            return true;
+
     }
 
     return false;

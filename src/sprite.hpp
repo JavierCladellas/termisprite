@@ -38,6 +38,7 @@ public:
     GridData::const_iterator begin() const { return M_grid.begin(); }
     GridData::const_iterator end() const { return M_grid.end(); }
 
+    void clear() { M_grid.assign(M_height, std::vector<Pixel>(M_width)); };
 
 private:
     int M_width, M_height;

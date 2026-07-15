@@ -2,9 +2,11 @@
 
 #include <deque>
 
+#include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <string>
 
 #include "sprite.hpp"
 
@@ -90,6 +92,7 @@ public:
           M_sprite( width, height )
     {
         M_spriteHistory.push( M_sprite );
+        Add( M_rightClickModal );
     }
 
     ftxui::Element OnRender() override;
@@ -114,6 +117,8 @@ private:
 
     void floodFillPaint( int x, int y );
 
+    void clear();
+
     void beginTranslation();
     void endTranslation();
     bool translateSelection( int dx, int dy );
@@ -129,6 +134,7 @@ private:
     bool processBoxSelection( ftxui::Event event );
     bool processShapeDrawing( ftxui::Event event );
     bool processToggleGrid( ftxui::Event event );
+    bool processRightClickModal( ftxui::Event event );
 
 private:
     int M_width, M_height;
@@ -153,7 +159,18 @@ private:
     int M_shapeStartX = 0;
     int M_shapeStartY = 0;
 
-    bool M_showGrid;
+    bool M_showGrid = true;
+
+
+    //TODO: REFACTOR
+    int M_modalX = 0;
+    int M_modalY = 0;
+    ftxui::Box M_rightClickModalBox;
+    bool M_showRightClickModal = false;
+    int M_rightClickModalIndex = 0;
+    std::vector<std::string> M_rightClickModalOptions = { "Grid", "Undo", "Redo", "Clear", "Cancel" };
+    ftxui::Component M_rightClickModal = ftxui::Menu(&M_rightClickModalOptions, &M_rightClickModalIndex);
+
 };
 
 
