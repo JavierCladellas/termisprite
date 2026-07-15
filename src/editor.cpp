@@ -162,7 +162,7 @@ EditorCanvasComponent::processKeyboardDrawing( ftxui::Event event )
 bool
 EditorCanvasComponent::processClipboardEvents( ftxui::Event event )
 {
-    if ( event == ftxui::Event::CtrlC )
+    if ( event == ftxui::Event::CtrlC || event == ftxui::Event::Character('y') )
     {
         if ( !M_currentState.selection.isActive ) return false;
 
@@ -182,7 +182,7 @@ EditorCanvasComponent::processClipboardEvents( ftxui::Event event )
         return true;
     }
 
-    if ( event == ftxui::Event::CtrlX )
+    if ( event == ftxui::Event::CtrlX || event == ftxui::Event::Character('x') )
     {
         if ( !M_currentState.selection.isActive ) return false;
 
@@ -206,7 +206,7 @@ EditorCanvasComponent::processClipboardEvents( ftxui::Event event )
         return true;
     }
 
-    if ( event == ftxui::Event::CtrlV )
+    if ( event == ftxui::Event::CtrlV || event == ftxui::Event::Character('v') )
     {
         if ( !M_currentState.clipboard.hasData ) return false;
 
@@ -621,6 +621,7 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
     if ( processCursorMovement( event ) )
         return true;
 
+    //TODO: Maybe this outside the canvas
     if ( processToggleGrid( event ) )
         return true;
 
