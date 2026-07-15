@@ -82,7 +82,10 @@ ftxui::Element
 ColorPaletteComponent::OnRender()
 {
     if ( M_editorState.palette.empty() )
-        return ftxui::text( " Palette " );
+        return ftxui::vbox({
+            ftxui::text( " Palette " ),
+            ftxui::text( "" )
+        });
 
     M_container->DetachAllChildren();
 
