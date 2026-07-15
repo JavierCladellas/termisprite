@@ -1,4 +1,5 @@
 #include "editor.hpp"
+#include <cmath>
 
 
 namespace Termisprite
@@ -256,7 +257,7 @@ EditorCanvasComponent::processMouseDrawing( ftxui::Event event )
     if ( !event.is_mouse() )
         return false;
 
-    if ( M_currentState.toolType != ToolType::BRUSH && M_currentState.toolType != ToolType::ERASER )
+    if ( M_currentState.toolType != ToolType::DRAW && M_currentState.toolType != ToolType::ERASER )
         return false;
 
     auto mouse = event.mouse();
@@ -339,7 +340,7 @@ EditorCanvasComponent::processEyeDropper( ftxui::Event event )
         M_currentState.brush = cell.brush;
         M_currentState.color = cell.color;
     }
-    M_currentState.toolType = ToolType::BRUSH;
+    M_currentState.toolType = ToolType::DRAW;
     return true;
 
 }
@@ -479,6 +480,117 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
 }
 
 bool
+EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
+{
+    if ( !event.is_mouse() )
+        return false;
+
+    if ( M_currentState.toolType != ToolType::SQUARE &&
+         M_currentState.toolType != ToolType::CIRCLE &&
+         M_currentState.toolType != ToolType::LINE )
+        return false;
+
+    auto mouse = event.mouse();
+
+    if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Released )
+    {
+        if ( M_isDrawing )
+        {
+            M_isDrawing = false;
+            saveState();
+            return true;
+        }
+    }
+
+    if ( !M_box.Contain( mouse.x, mouse.y ) )
+        return false;
+
+    if ( mouse.button == ftxui::Mouse::Button::Left )
+    {
+        M_showCursor = false;
+
+        int localX = std::clamp(mouse.x - M_box.x_min, 0, M_width - 1);
+        int localY = std::clamp(mouse.y - M_box.y_min, 0, M_height - 1);
+
+        if ( mouse.motion == ftxui::Mouse::Pressed )
+        {
+            TakeFocus();
+            M_isDrawing = true;
+            M_shapeStartX = localX;
+            M_shapeStartY = localY;
+
+            M_spriteSnapshot = M_sprite;
+            return true;
+        }
+        else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
+        {
+            M_sprite = M_spriteSnapshot;
+
+            if ( M_currentState.toolType == ToolType::SQUARE )
+                drawSquare( M_shapeStartX, M_shapeStartY, localX, localY );
+            else if ( M_currentState.toolType == ToolType::CIRCLE )
+                drawCircle( M_shapeStartX, M_shapeStartY, localX, localY );
+            else if ( M_currentState.toolType == ToolType::LINE )
+                drawLine( M_shapeStartX, M_shapeStartY, localX, localY );
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void
+EditorCanvasComponent::drawSquare( int x0, int y0, int x1, int y1 )
+{
+    int minX = std::min(x0, x1);
+    int maxX = std::max(x0, x1);
+    int minY = std::min(y0, y1);
+    int maxY = std::max(y0, y1);
+
+    for ( int x = minX; x <= maxX; ++x )
+    {
+        M_sprite.at(x, minY) = Pixel{M_currentState.brush, M_currentState.color};
+        M_sprite.at(x, maxY) = Pixel{M_currentState.brush, M_currentState.color};
+    }
+
+    for ( int y = minY; y <= maxY; ++y )
+    {
+        M_sprite.at(minX, y) = Pixel{M_currentState.brush, M_currentState.color};
+        M_sprite.at(maxX, y) = Pixel{M_currentState.brush, M_currentState.color};
+    }
+}
+
+void
+EditorCanvasComponent::drawCircle( int x0, int y0, int x1, int y1 )
+{
+    float xc = (x0 + x1) / 2.;
+    float yc = (y0 + y1) / 2.;
+    float a = std::abs(x1 - x0) / 2.;
+    float b = std::abs(y1 - y0) / 2.;
+
+    if ( x0 == x1 && y0 == y1 )
+    {
+        M_sprite.at(x0, y0) = Pixel{M_currentState.brush, M_currentState.color};
+        return;
+    }
+
+    int points = std::max(a, b) * 8;
+    for ( int i = 0; i <= points; ++i )
+    {
+        float theta = 2. * M_PI * i / points;
+
+        int x = std::round(xc + a * std::cos(theta));
+        int y = std::round(yc + b * std::sin(theta));
+
+        if ( x >= 0 && x < M_width && y >= 0 && y < M_height )
+            M_sprite.at(x, y) = Pixel{M_currentState.brush, M_currentState.color};
+    }
+}
+
+
+
+bool
 EditorCanvasComponent::OnEvent( ftxui::Event event )
 {
     if ( processClipboardEvents( event ) )
@@ -497,6 +609,9 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
     if ( event.is_mouse() )
     {
         if ( processMouseDrawing( event ) )
+            return true;
+
+        if ( processShapeDrawing( event ) )
             return true;
 
         if ( processEyeDropper( event ) )

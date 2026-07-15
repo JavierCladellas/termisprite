@@ -15,8 +15,11 @@ namespace Termisprite
 
 enum class ToolType
 {
-    BRUSH,
+    DRAW,
     ERASER,
+    SQUARE,
+    CIRCLE,
+    LINE,
     EYE_DROPPER,
     PAINT_FILL,
     BOX_SELECT
@@ -47,7 +50,7 @@ struct EditorState
 {
     std::string brush = "█";
     ftxui::Color color = ftxui::Color::White;
-    ToolType toolType = ToolType::BRUSH;
+    ToolType toolType = ToolType::DRAW;
     std::vector<ftxui::Color> palette;
 
     SelectionBounds selection;
@@ -106,6 +109,8 @@ private:
 
     //Bresenham's line algorithm
     void drawLine( int x0, int y0, int x1, int y1 );
+    void drawSquare( int x0, int y0, int x1, int y1 );
+    void drawCircle( int x0, int y0, int x1, int y1 );
 
     void floodFillPaint( int x, int y );
 
@@ -122,6 +127,7 @@ private:
     bool processEyeDropper( ftxui::Event event );
     bool processPaintFill( ftxui::Event event );
     bool processBoxSelection( ftxui::Event event );
+    bool processShapeDrawing( ftxui::Event event );
 
 private:
     int M_width, M_height;
@@ -142,6 +148,10 @@ private:
     bool M_isTranslating = false;
     int M_lastDragX = 0;
     int M_lastDragY = 0;
+
+
+    int M_shapeStartX = 0;
+    int M_shapeStartY = 0;
 };
 
 

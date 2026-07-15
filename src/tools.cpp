@@ -13,9 +13,9 @@ ToolsComponent::OnRender()
         M_editorState.selection.isActive = false;
 
 
-    if ( selectedMode == "line" )
+    if ( selectedMode == "Draw" )
     {
-        M_editorState.toolType = ToolType::BRUSH;
+        M_editorState.toolType = ToolType::DRAW;
         M_editorState.brush = "█";
     }
     else if ( selectedMode == "Eraser" )
@@ -23,6 +23,12 @@ ToolsComponent::OnRender()
         M_editorState.toolType = ToolType::ERASER;
         M_editorState.brush = " ";
     }
+    else if ( selectedMode == "Square" )
+        M_editorState.toolType = ToolType::SQUARE;
+    else if ( selectedMode == "Circle" )
+        M_editorState.toolType = ToolType::CIRCLE;
+    else if ( selectedMode == "Line" )
+        M_editorState.toolType = ToolType::LINE;
     else if ( selectedMode == "Eye Dropper" )
         M_editorState.toolType = ToolType::EYE_DROPPER;
     else if ( selectedMode == "Paint Fill" )

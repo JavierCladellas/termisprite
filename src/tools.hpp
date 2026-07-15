@@ -26,7 +26,7 @@ public:
 
 private:
 
-    std::vector<std::string> M_brushModes{ "line","Eraser","Eye Dropper", "Paint Fill", "Box Select" };
+    std::vector<std::string> M_brushModes{ "Draw","Eraser","Square","Circle","Line","Eye Dropper", "Paint Fill", "Box Select" };
     int M_selectedBrushModeIndex = 0;
 
     ftxui::Component M_brushModeSelector = ftxui::Menu( &M_brushModes, &M_selectedBrushModeIndex );
