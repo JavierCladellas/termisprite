@@ -27,8 +27,12 @@ public:
 
 
     std::vector<Pixel> operator[]( int y ) { return M_grid[y]; }
-    Pixel & at( int x, int y ) { return M_grid[y][x]; }
-    //iterator
+    Pixel & at( int x, int y ) {
+        if ( x < 0 || x >= M_width || y < 0 || y >= M_height )
+            throw std::out_of_range("Sprite::at: Coordinates out of bounds");
+        return M_grid[y][x];
+    }
+
     GridData::iterator begin() { return M_grid.begin(); }
     GridData::iterator end() { return M_grid.end(); }
     GridData::const_iterator begin() const { return M_grid.begin(); }

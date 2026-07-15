@@ -65,21 +65,13 @@ EditorCanvasComponent::processHistoryEvents( ftxui::Event event )
 {
     if ( event == ftxui::Event::CtrlZ || event == ftxui::Event::Character('u') )
     {
-        if ( M_historyIndex > 0 )
-        {
-            M_historyIndex--;
-            M_sprite = M_history[M_historyIndex];
-        }
+        M_spriteHistory.undo( M_sprite );
         return true;
     }
 
     if ( event == ftxui::Event::CtrlY || event == ftxui::Event::CtrlR )
     {
-        if ( M_historyIndex < static_cast<int>(M_history.size()) - 1 )
-        {
-            M_historyIndex++;
-            M_sprite = M_history[M_historyIndex];
-        }
+        M_spriteHistory.redo( M_sprite );
         return true;
     }
 
@@ -506,17 +498,7 @@ EditorCanvasComponent::palette() const
 void
 EditorCanvasComponent::saveState()
 {
-    if ( M_historyIndex < static_cast<int>(M_history.size()) - 1 )
-        M_history.erase( M_history.begin() + M_historyIndex + 1, M_history.end() );
-
-    M_history.push_back( M_sprite );
-
-    if ( M_history.size() > M_maxHistorySize )
-        M_history.erase( M_history.begin() );
-    else
-        M_historyIndex++;
-
-
+    M_spriteHistory.save( M_sprite );
     M_currentState.palette = palette();
 }
 

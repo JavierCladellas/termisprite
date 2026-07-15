@@ -51,10 +51,62 @@ struct EditorState
     std::vector<ftxui::Color> palette;
 
     SelectionBounds selection;
-    std::vector<std::vector<Pixel>> floatingSelection;
+    Sprite::GridData floatingSelection;
     Clipboard clipboard;
 };
 
+
+
+
+class SpriteHistory
+{
+public:
+    SpriteHistory( int maxSize = 50 )
+        : M_maxSize( maxSize ), M_currentIndex( 0 )
+    { }
+
+    void push( Sprite const & sprite )
+    {
+        M_history.push_back( sprite );
+    }
+
+    void save( Sprite const& M_sprite )
+    {
+        if ( M_currentIndex < static_cast<int>(M_history.size()) - 1 )
+            M_history.erase( M_history.begin() + M_currentIndex + 1, M_history.end() );
+
+        M_history.push_back( M_sprite );
+
+        if ( M_history.size() > M_maxSize )
+            M_history.erase( M_history.begin() );
+        else
+            M_currentIndex++;
+    }
+
+    void undo( Sprite & sprite )
+    {
+        if ( M_currentIndex > 0 )
+        {
+            M_currentIndex--;
+            sprite = M_history[M_currentIndex];
+        }
+    }
+
+    void redo( Sprite & sprite )
+    {
+        if ( M_currentIndex < static_cast<int>(M_history.size()) - 1 )
+        {
+            M_currentIndex++;
+            sprite = M_history[M_currentIndex];
+        }
+    }
+
+
+private:
+    std::deque<Sprite> M_history;
+    int M_maxSize = 50;
+    int M_currentIndex = 0;
+};
 
 class EditorCanvasComponent
     : public ftxui::ComponentBase
@@ -65,7 +117,7 @@ public:
           M_cursorX( 0 ), M_cursorY( 0 ),
           M_sprite( width, height )
     {
-        M_history.push_back( M_sprite );
+        M_spriteHistory.push( M_sprite );
     }
 
     ftxui::Element OnRender() override;
@@ -105,15 +157,11 @@ private:
 private:
     int M_width, M_height;
     int M_cursorX, M_cursorY;
-
     bool M_showCursor = true;
 
     Sprite M_sprite;
     Sprite M_spriteSnapshot;
-
-    std::deque<Sprite> M_history;
-    int M_historyIndex = 0;
-    int M_maxHistorySize = 50;
+    SpriteHistory M_spriteHistory;
 
     EditorState M_currentState;
 
