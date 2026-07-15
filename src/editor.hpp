@@ -1,19 +1,16 @@
 #pragma once
 
 #include <deque>
+
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 
+#include "sprite.hpp"
+
 namespace Termisprite
 {
 
-
-struct Pixel
-{
-    std::string brush = " ";
-    ftxui::Color color = ftxui::Color::White;
-};
 
 
 enum class ToolType
@@ -42,7 +39,7 @@ struct SelectionBounds
 struct Clipboard
 {
     bool hasData = false;
-    std::vector<std::vector<Pixel>> data;
+    Sprite::GridData data;
 };
 
 
@@ -62,14 +59,13 @@ struct EditorState
 class EditorCanvasComponent
     : public ftxui::ComponentBase
 {
-    using GridData = std::vector<std::vector<Pixel>>;
 public:
     EditorCanvasComponent( int width = 64, int height = 32 )
         : M_width( width ), M_height( height ),
-          M_cursorX( 0 ), M_cursorY( 0 )
+          M_cursorX( 0 ), M_cursorY( 0 ),
+          M_sprite( width, height )
     {
-        M_grid.resize( M_height, std::vector<Pixel>( M_width ) );
-        M_history.push_back( M_grid );
+        M_history.push_back( M_sprite );
     }
 
     ftxui::Element OnRender() override;
@@ -112,10 +108,10 @@ private:
 
     bool M_showCursor = true;
 
-    GridData M_grid;
-    GridData M_gridSnapshot;
+    Sprite M_sprite;
+    Sprite M_spriteSnapshot;
 
-    std::deque<GridData> M_history;
+    std::deque<Sprite> M_history;
     int M_historyIndex = 0;
     int M_maxHistorySize = 50;
 

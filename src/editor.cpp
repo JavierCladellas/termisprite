@@ -19,7 +19,7 @@ EditorCanvasComponent::OnRender()
         ftxui::Elements row;
         for ( int x = 0; x < M_width; ++x )
         {
-            Pixel const& cellContent = M_grid[y][x];
+            Pixel const& cellContent = M_sprite.at(x,y);
             ftxui::Element cell;
 
             std::string renderBrush = cellContent.brush;
@@ -68,7 +68,7 @@ EditorCanvasComponent::processHistoryEvents( ftxui::Event event )
         if ( M_historyIndex > 0 )
         {
             M_historyIndex--;
-            M_grid = M_history[M_historyIndex];
+            M_sprite = M_history[M_historyIndex];
         }
         return true;
     }
@@ -78,7 +78,7 @@ EditorCanvasComponent::processHistoryEvents( ftxui::Event event )
         if ( M_historyIndex < static_cast<int>(M_history.size()) - 1 )
         {
             M_historyIndex++;
-            M_grid = M_history[M_historyIndex];
+            M_sprite = M_history[M_historyIndex];
         }
         return true;
     }
@@ -103,7 +103,7 @@ EditorCanvasComponent::processKeyboardDrawing( ftxui::Event event )
 
     if ( event == ftxui::Event::Character( ' ' ) || event == ftxui::Event::Return )
     {
-        Pixel & cell = M_grid[M_cursorY][M_cursorX];
+        Pixel & cell = M_sprite.at(M_cursorX,M_cursorY);
         cell.brush = M_currentState.brush;
         cell.color = M_currentState.color;
         M_showCursor = true;
@@ -112,7 +112,7 @@ EditorCanvasComponent::processKeyboardDrawing( ftxui::Event event )
     }
     if ( event == ftxui::Event::Backspace || event == ftxui::Event::Delete )
     {
-        Pixel & cell = M_grid[M_cursorY][M_cursorX];
+        Pixel & cell = M_sprite.at(M_cursorX,M_cursorY);
         cell.brush = " ";
         cell.color = ftxui::Color::White;
         M_showCursor = true;
@@ -139,7 +139,7 @@ EditorCanvasComponent::processClipboardEvents( ftxui::Event event )
         {
             for ( int x = 0; x < w; ++x )
             {
-                M_currentState.clipboard.data[y][x] = M_grid[M_currentState.selection.minY() + y][M_currentState.selection.minX() + x];
+                M_currentState.clipboard.data[y][x] = M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y);
             }
         }
         M_currentState.clipboard.hasData = true;
@@ -159,9 +159,8 @@ EditorCanvasComponent::processClipboardEvents( ftxui::Event event )
         {
             for ( int x = 0; x < w; ++x )
             {
-                M_currentState.clipboard.data[y][x] = M_grid[M_currentState.selection.minY() + y][M_currentState.selection.minX() + x];
-
-                M_grid[M_currentState.selection.minY() + y][M_currentState.selection.minX() + x] = Pixel{" ", ftxui::Color::White};
+                M_currentState.clipboard.data[y][x] = M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y);
+                M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y) = Pixel{" ", ftxui::Color::White};
             }
         }
 
@@ -186,9 +185,7 @@ EditorCanvasComponent::processClipboardEvents( ftxui::Event event )
                 int targetX = M_cursorX + x;
 
                 if ( targetY >= 0 && targetY < M_height && targetX >= 0 && targetX < M_width )
-                {
-                    M_grid[targetY][targetX] = M_currentState.clipboard.data[y][x];
-                }
+                    M_sprite.at(targetX,targetY) = M_currentState.clipboard.data[y][x];
             }
         }
 
@@ -267,7 +264,7 @@ EditorCanvasComponent::processMouseDrawing( ftxui::Event event )
             M_isDrawing = true;
             M_lastDrawX = localX;
             M_lastDrawY = localY;
-            Pixel & cell = M_grid[localY][localX];
+            Pixel & cell = M_sprite.at(localX, localY);
             cell.brush = M_currentState.brush;
             cell.color = M_currentState.color;
             return true;
@@ -310,7 +307,7 @@ EditorCanvasComponent::processEyeDropper( ftxui::Event event )
     localX = std::clamp(localX, 0, M_width - 1);
     localY = std::clamp(localY, 0, M_height - 1);
 
-    Pixel & cell = M_grid[localY][localX];
+    Pixel & cell = M_sprite.at(localX, localY);
     if ( cell.brush != " " )
     {
         M_currentState.brush = cell.brush;
@@ -494,7 +491,7 @@ std::vector<ftxui::Color>
 EditorCanvasComponent::palette() const
 {
     std::vector<ftxui::Color> usedColors;
-    for ( auto const & row : M_grid )
+    for ( auto const & row : M_sprite )
         for ( auto const& cell : row )
         {
             if ( cell.brush == " " ) continue;
@@ -512,7 +509,7 @@ EditorCanvasComponent::saveState()
     if ( M_historyIndex < static_cast<int>(M_history.size()) - 1 )
         M_history.erase( M_history.begin() + M_historyIndex + 1, M_history.end() );
 
-    M_history.push_back( M_grid );
+    M_history.push_back( M_sprite );
 
     if ( M_history.size() > M_maxHistorySize )
         M_history.erase( M_history.begin() );
@@ -534,7 +531,7 @@ EditorCanvasComponent::drawLine( int x0, int y0, int x1, int y1 )
 
     while (true)
     {
-        Pixel & cell = M_grid[y0][x0];
+        Pixel & cell = M_sprite.at(x0, y0);
         cell.brush = M_currentState.brush;
         cell.color = M_currentState.color;
 
@@ -558,7 +555,7 @@ EditorCanvasComponent::floodFillPaint( int x, int y )
     if ( x < 0 || x >= M_width || y < 0 || y >= M_height )
         return;
 
-    Pixel & targetCell = M_grid[y][x];
+    Pixel & targetCell = M_sprite.at(x, y);
     Pixel targetPixel = targetCell;
 
     if ( targetPixel.brush == M_currentState.brush && targetPixel.color == M_currentState.color )
@@ -575,7 +572,7 @@ EditorCanvasComponent::floodFillPaint( int x, int y )
         if ( cx < 0 || cx >= M_width || cy < 0 || cy >= M_height )
             continue;
 
-        Pixel & currentCell = M_grid[cy][cx];
+        Pixel & currentCell = M_sprite.at(cx, cy);
 
         if ( currentCell.brush != targetPixel.brush || currentCell.color != targetPixel.color )
             continue;
@@ -596,7 +593,7 @@ EditorCanvasComponent::beginTranslation()
     if ( M_isTranslating || !M_currentState.selection.isActive ) return;
 
     M_isTranslating = true;
-    M_gridSnapshot = M_grid;
+    M_spriteSnapshot = M_sprite;
 
     int w = M_currentState.selection.width();
     int h = M_currentState.selection.height();
@@ -606,8 +603,8 @@ EditorCanvasComponent::beginTranslation()
     {
         for ( int x = 0; x < w; ++x )
         {
-            M_currentState.floatingSelection[y][x] = M_gridSnapshot[M_currentState.selection.minY() + y][M_currentState.selection.minX() + x];
-            M_gridSnapshot[M_currentState.selection.minY() + y][M_currentState.selection.minX() + x] = Pixel{" ", ftxui::Color::White};
+            M_currentState.floatingSelection[y][x] = M_spriteSnapshot.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y);
+            M_spriteSnapshot.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y) = Pixel{" ", ftxui::Color::White};
         }
     }
 }
@@ -641,13 +638,13 @@ EditorCanvasComponent::translateSelection( int dx, int dy )
     M_currentState.selection.startY += dy;
     M_currentState.selection.endY += dy;
 
-    M_grid = M_gridSnapshot;
+    M_sprite = M_spriteSnapshot;
 
     int w = M_currentState.selection.width();
     int h = M_currentState.selection.height();
     for ( int y = 0; y < h; ++y )
         for ( int x = 0; x < w; ++x )
-            M_grid[M_currentState.selection.minY() + y][M_currentState.selection.minX() + x] = M_currentState.floatingSelection[y][x];
+            M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y) = M_currentState.floatingSelection[y][x];
 
     return true;
 }
