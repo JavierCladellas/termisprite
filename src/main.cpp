@@ -181,7 +181,7 @@ int main( int argc, char** argv )
 
     Component toolsContainer = Container::Vertical({ toolsSection, colorSection });
 
-    Component statusBar = Termisprite::StatusBar();
+    Component statusBar = Termisprite::StatusBar( editorCanvas->currentState() );
 
     Component masterContainer = Container::Vertical({
         menu,
@@ -205,6 +205,7 @@ int main( int argc, char** argv )
                     colorSection->Render()
                 })
             }),
+            filler(),
             statusBar->Render()
         } );
 
