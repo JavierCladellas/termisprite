@@ -11,7 +11,7 @@ namespace Termisprite
 NewProjectModal::NewProjectModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
     : M_editorCanvas( editorCanvas ), M_closeCallback( onClose )
 {
-    M_widthInput = std::to_string( 64 );
+    M_widthInput = std::to_string( 32 );
     M_heightInput = std::to_string( 32 );
 
     Add( ftxui::Container::Vertical({
@@ -117,12 +117,12 @@ ftxui::Element ResizeModal::OnRender()
 
     auto form = vbox({
         hbox({
-            text(" Width:  ") | dim,
+            text(" Width:  ") | dim | vcenter,
             M_widthInputComponent->Render() | border | size(WIDTH, EQUAL, 10),
             text(" px") | dim | vcenter
         }),
         hbox({
-            text(" Height: ") | dim,
+            text(" Height: ") | dim | vcenter,
             M_heightInputComponent->Render() | border | size(WIDTH, EQUAL, 10),
             text(" px") | dim | vcenter
         }),
@@ -244,7 +244,7 @@ ShortcutsModal::OnRender()
 
 Termisprite::Termisprite()
 {
-    M_editorCanvas = EditorCanvas( 64, 32 );
+    M_editorCanvas = EditorCanvas( 32, 32 );
 
     M_menu = Menu({
         { "File", {"New [Ctrl+N]", "Open [Ctrl+O]", "Save [Ctrl+S]", "Import [Ctrl+I]", "Export [Ctrl+E]" ,"Quit [Ctrl+Q]"}, [this](int idx) {
@@ -273,13 +273,14 @@ Termisprite::Termisprite()
                 case 2: M_editorCanvas->flipHorizontal(); break;
             }
         }},
-        { "View", { "Zoom In", "Zoom Out", "Toggle Grid [G]", "Toggle Pan"}, [this](int idx) {
+        { "View", { "Zoom In", "Zoom Out", "Toggle Grid [g]", "Toggle Checkerboard [G]","Toggle Pan"}, [this](int idx) {
             switch (idx)
             {
                 case 0: /* Zoom In */ break;
                 case 1: /* Zoom Out */ break;
                 case 2: M_editorCanvas->toggleGrid(); break;
-                case 3: /* Toggle Pan */ break;
+                case 3: M_editorCanvas->toggleCheckerboardGrid(); break;
+                case 4: /* Toggle Pan */ break;
             }
         }},
         { "Tool", {"Brush [B]", "Eraser [E]", "Rectangle [R]", "Ellipse [C]", "Line [L]", "Eye Dropper [I]", "Paint Fill [F]", "Box Select [S]"}, [this](int idx) {
@@ -445,11 +446,18 @@ Termisprite::processHistoryEvents( ftxui::Event event )
 bool
 Termisprite::processToggleGrid( ftxui::Event event )
 {
-    if ( event == ftxui::Event::Character('g') || event == ftxui::Event::Character('G') )
+    if ( event == ftxui::Event::Character('g')  )
     {
         M_editorCanvas->toggleGrid();
         return true;
     }
+
+    if ( event == ftxui::Event::Character('G') )
+    {
+        M_editorCanvas->toggleCheckerboardGrid();
+        return true;
+    }
+
     return false;
 }
 

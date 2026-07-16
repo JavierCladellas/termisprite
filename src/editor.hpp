@@ -86,7 +86,7 @@ class EditorCanvasComponent
     : public ftxui::ComponentBase
 {
 public:
-    EditorCanvasComponent( int width = 64, int height = 32 )
+    EditorCanvasComponent( int width = 32, int height = 32 )
         : M_width( width ), M_height( height ),
           M_cursorX( 0 ), M_cursorY( 0 ),
           M_sprite( width, height )
@@ -112,9 +112,26 @@ public:
     void flipVertical() { M_sprite.flipVertical(); saveState(); }
     void flipHorizontal() { M_sprite.flipHorizontal(); saveState(); }
 
-    void undo() { M_spriteHistory.undo( M_sprite ); }
-    void redo() { M_spriteHistory.redo( M_sprite ); }
-    void toggleGrid() { M_showGrid = !M_showGrid; }
+    void undo() {
+        M_spriteHistory.undo( M_sprite );
+        auto [width, height] = M_sprite.size();
+        M_width = width;
+        M_height = height;
+    }
+    void redo() {
+        M_spriteHistory.redo( M_sprite );
+        auto [width, height] = M_sprite.size();
+        M_width = width;
+        M_height = height;
+    }
+    void toggleGrid() {
+        M_showPointGrid = !M_showPointGrid;
+        if (M_showPointGrid) M_showCheckerboardGrid = false;
+    }
+    void toggleCheckerboardGrid() {
+        M_showCheckerboardGrid = !M_showCheckerboardGrid;
+        if (M_showCheckerboardGrid) M_showPointGrid = false;
+    }
 
     void copyToClipboard();
     void cutToClipboard();
@@ -172,7 +189,8 @@ private:
     int M_shapeStartX = 0;
     int M_shapeStartY = 0;
 
-    bool M_showGrid = true;
+    bool M_showPointGrid = true;
+    bool M_showCheckerboardGrid = false;
 
 
     //TODO: REFACTOR
@@ -181,12 +199,12 @@ private:
     ftxui::Box M_rightClickModalBox;
     bool M_showRightClickModal = false;
     int M_rightClickModalIndex = 0;
-    std::vector<std::string> M_rightClickModalOptions = { "Grid [g]", "Undo [u]", "Redo [Ctrl+r]", "Clear [Ctrl+d]", "Cancel [Esc]" };
+    std::vector<std::string> M_rightClickModalOptions = { "Grid [g]", "Checkerboard [G]", "Undo [u]", "Redo [Ctrl+r]", "Clear [Ctrl+d]", "Cancel [Esc]" };
     ftxui::Component M_rightClickModal = ftxui::Menu(&M_rightClickModalOptions, &M_rightClickModalIndex);
 
 };
 
 
-std::shared_ptr<EditorCanvasComponent> EditorCanvas( int width = 64, int height = 32 );
+std::shared_ptr<EditorCanvasComponent> EditorCanvas( int width = 32, int height = 32 );
 
 }

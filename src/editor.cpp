@@ -47,9 +47,7 @@ SpriteHistory::redo( Sprite & sprite )
 ftxui::Element
 EditorCanvasComponent::OnRender()
 {
-
     ftxui::Elements rows;
-
 
     for ( int y = 0; y < M_height; ++y )
     {
@@ -57,16 +55,17 @@ EditorCanvasComponent::OnRender()
         for ( int x = 0; x < M_width; ++x )
         {
             Pixel const& cellContent = M_sprite.at(x,y);
-            ftxui::Element cell;
 
-            std::string renderBrush = cellContent.brush;
+            std::string renderBrushL = cellContent.brush;
+            std::string renderBrushR = cellContent.brush;
             ftxui::Color renderColor = cellContent.color;
 
-            if ( renderBrush == " " && M_showGrid)
+            if ( renderBrushL == " " && M_showPointGrid)
             {
                 if ( x % 2 == 0 && y % 1 == 0 )
                 {
-                    renderBrush = "·";
+                    renderBrushL = "·";
+                    renderBrushR = " ";
                     renderColor = ftxui::Color::GrayDark;
                 }
             }
@@ -79,26 +78,45 @@ EditorCanvasComponent::OnRender()
                 bool isLeft = (x == M_currentState.selection.minX());
                 bool isRight = (x == M_currentState.selection.maxX());
 
-                if (isTop && isLeft && isBottom && isRight) renderBrush = "⣿"; // 1x1 selection
-                else if (isTop && isLeft) renderBrush = "⡏";
-                else if (isTop && isRight) renderBrush = "⢹";
-                else if (isBottom && isLeft) renderBrush = "⣇";
-                else if (isBottom && isRight) renderBrush = "⣸";
-                else if (isTop) renderBrush = "⠉";
-                else if (isBottom) renderBrush = "⣀";
-                else if (isLeft) renderBrush = "⡇";
-                else if (isRight) renderBrush = "⢸";
+                // Adjusting borders for 2x1 aspect ratio
+                if (isTop && isLeft && isBottom && isRight) { renderBrushL = "⡏"; renderBrushR = "⢹"; } 
+                else if (isTop && isLeft) { renderBrushL = "⡏"; renderBrushR = "⠉"; }
+                else if (isTop && isRight) { renderBrushL = "⠉"; renderBrushR = "⢹"; }
+                else if (isBottom && isLeft) { renderBrushL = "⣇"; renderBrushR = "⣀"; }
+                else if (isBottom && isRight) { renderBrushL = "⣀"; renderBrushR = "⣸"; }
+                else if (isTop) { renderBrushL = "⠉"; renderBrushR = "⠉"; }
+                else if (isBottom) { renderBrushL = "⣀"; renderBrushR = "⣀"; }
+                else if (isLeft) { renderBrushL = "⡇"; renderBrushR = " "; }
+                else if (isRight) { renderBrushL = " "; renderBrushR = "⢸"; }
 
                 if ( isTop || isBottom || isLeft || isRight )
                     renderColor = ftxui::Color::White;
             }
 
-            cell = ftxui::text( renderBrush ) | ftxui::color( renderColor );
+            ftxui::Element cellL = ftxui::text( renderBrushL ) | ftxui::color( renderColor );
+            ftxui::Element cellR = ftxui::text( renderBrushR ) | ftxui::color( renderColor );
 
+            if ( cellContent.brush == " " && M_showCheckerboardGrid )
+            {
+                if ( (x + y) % 2 == 0 )
+                {
+                    cellL = cellL | ftxui::bgcolor( ftxui::Color::GrayDark );
+                    cellR = cellR | ftxui::bgcolor( ftxui::Color::GrayDark );
+                }
+                else
+                {
+                    cellL = cellL | ftxui::bgcolor( ftxui::Color::Black );
+                    cellR = cellR | ftxui::bgcolor( ftxui::Color::Black );
+                }
+            }
             if ( M_showCursor && x == M_cursorX && y == M_cursorY )
-                cell = ftxui::text( M_currentState.brush ) | ftxui::color( ftxui::Color::Red ) | ftxui::blink;
+            {
+                cellL = ftxui::text( M_currentState.brush ) | ftxui::color( ftxui::Color::Red ) | ftxui::blink;
+                cellR = ftxui::text( M_currentState.brush ) | ftxui::color( ftxui::Color::Red ) | ftxui::blink;
+            }
 
-            row.push_back( cell );
+            row.push_back( cellL );
+            row.push_back( cellR );
         }
         rows.push_back( ftxui::hbox( row ) );
     }
@@ -106,19 +124,17 @@ EditorCanvasComponent::OnRender()
     ftxui::Element canvas = ftxui::vbox( std::move( rows ) )
                               | ftxui::reflect( M_box )
                               | ftxui::border
-                              | ftxui::size( ftxui::WIDTH, ftxui::EQUAL, M_width + 1 )
+                              | ftxui::size( ftxui::WIDTH, ftxui::EQUAL, (M_width * 2) + 1 )
                               | ftxui::size( ftxui::HEIGHT, ftxui::EQUAL, M_height + 2 );
 
-
-    //------------Build axis--------- (refactor into another method)
+    //------------Build axis---------
     ftxui::Elements xAxis = {ftxui::text("─")};
 
-    for ( int i = 0; i < M_width+1; ++i )
+    for ( int i = 0; i < (M_width * 2) + 1; ++i )
         xAxis.push_back(ftxui::text("─"));
 
     xAxis.push_back(ftxui::text("►"));
     xAxis.push_back(ftxui::text(std::to_string(M_width) + "px"));
-
 
     ftxui::Elements yAxis = {ftxui::text(std::to_string(M_height) + "px ▲ ")};
     for (int i = 0; i < M_height+1; ++i )
@@ -313,7 +329,7 @@ EditorCanvasComponent::processMouseDrawing( ftxui::Event event )
     {
         M_showCursor = false;
 
-        int localX = mouse.x - M_box.x_min;
+        int localX = (mouse.x - M_box.x_min) / 2;
         int localY = mouse.y - M_box.y_min;
 
         localX = std::clamp(localX, 0, M_width - 1);
@@ -376,7 +392,7 @@ EditorCanvasComponent::processEyeDropper( ftxui::Event event )
     if ( mouse.motion != ftxui::Mouse::Pressed )
         return false;
 
-    int localX = mouse.x - M_box.x_min;
+    int localX = (mouse.x - M_box.x_min)/2;
     int localY = mouse.y - M_box.y_min;
 
     localX = std::clamp(localX, 0, M_width - 1);
@@ -412,7 +428,7 @@ EditorCanvasComponent::processPaintFill( ftxui::Event event )
     if ( mouse.motion != ftxui::Mouse::Pressed )
         return false;
 
-    int localX = mouse.x - M_box.x_min;
+    int localX = (mouse.x - M_box.x_min) /2;
     int localY = mouse.y - M_box.y_min;
 
     localX = std::clamp(localX, 0, M_width - 1);
@@ -450,7 +466,7 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
     {
         M_showCursor = false;
 
-        int localX = mouse.x - M_box.x_min;
+        int localX = (mouse.x - M_box.x_min)/2;
         int localY = mouse.y - M_box.y_min;
 
         localX = std::clamp(localX, 0, M_width - 1);
@@ -478,7 +494,7 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
 
     if ( mouse.button == ftxui::Mouse::Button::Right )
     {
-        int localX = mouse.x - M_box.x_min;
+        int localX = (mouse.x - M_box.x_min)/2;
         int localY = mouse.y - M_box.y_min;
 
         if ( mouse.motion == ftxui::Mouse::Pressed )
@@ -557,7 +573,7 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
     {
         M_showCursor = false;
 
-        int localX = std::clamp(mouse.x - M_box.x_min, 0, M_width - 1);
+        int localX = std::clamp((mouse.x - M_box.x_min)/2, 0, M_width - 1);
         int localY = std::clamp(mouse.y - M_box.y_min, 0, M_height - 1);
 
         if ( mouse.motion == ftxui::Mouse::Pressed )
@@ -651,7 +667,7 @@ EditorCanvasComponent::processRightClickModal( ftxui::Event event )
         {
             M_showRightClickModal = true;
 
-            M_modalX = std::clamp(mouse.x - M_box.x_min, 0, M_width);
+            M_modalX = std::clamp(mouse.x - M_box.x_min, 0, M_width * 2);
             M_modalY = std::clamp(mouse.y - M_box.y_min, 0, M_height);
 
             return true;
@@ -722,10 +738,11 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
         {
             switch ( M_rightClickModalIndex )
             {
-                case 0: M_showGrid = !M_showGrid; break;
-                case 1: M_spriteHistory.undo( M_sprite ); break;
-                case 2: M_spriteHistory.redo( M_sprite ); break;
-                case 3: this->clear(); break;
+                case 0: M_showPointGrid = !M_showPointGrid; break;
+                case 1: M_showCheckerboardGrid = !M_showCheckerboardGrid; break;
+                case 2: this->undo(); break;
+                case 3: this->redo(); break;
+                case 4: this->clear(); break;
                 default: break;
             }
             M_showRightClickModal = false;

@@ -19,7 +19,7 @@ class Sprite
 public:
     using GridData = std::vector<std::vector<Pixel>>;
 public:
-    Sprite( int width = 64, int height = 32 )
+    Sprite( int width = 32, int height = 32 )
         : M_width( width ), M_height( height )
     {
         M_grid.resize( M_height, std::vector<Pixel>( M_width ) );
@@ -51,6 +51,8 @@ public:
         for ( auto & row : M_grid )
             std::reverse( row.begin(), row.end() );
     }
+
+    std::pair<int, int> size() const { return { M_width, M_height }; }
 
 
 private:
