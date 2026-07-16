@@ -87,6 +87,9 @@ EditorCanvasComponent::OnRender()
                 else if (isBottom) renderBrush = "⣀";
                 else if (isLeft) renderBrush = "⡇";
                 else if (isRight) renderBrush = "⢸";
+
+                if ( isTop || isBottom || isLeft || isRight )
+                    renderColor = ftxui::Color::White;
             }
 
             cell = ftxui::text( renderBrush ) | ftxui::color( renderColor );
