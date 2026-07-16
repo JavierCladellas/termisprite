@@ -81,4 +81,4 @@ Contributions to Termisprite are highly appreciated. To ensure a smooth collabor
 
 ## License
 
-TODO
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
