@@ -17,7 +17,7 @@ StatusBarComponent::initializeShortcuts()
     M_shortcuts = {
         { "g", "Toggle Grid", [](const EditorState&) { return true; } },
         { "Ctrl+Z/u", "Undo", [](const EditorState&) { return true; } },
-        { "Ctrl+Y/r", "Redo", [](const EditorState&) { return true; } },
+        { "Ctrl+Y/Ctrl+r", "Redo", [](const EditorState&) { return true; } },
         { "Arrows/hjkl", "Move", [](const EditorState& s) { return !s.selection.isActive; } },
         { "Ctrl+C/y", "Copy", [](const EditorState& s) { return s.selection.isActive; } },
         { "Ctrl+X/x", "Cut", [](const EditorState& s) { return s.selection.isActive; } },

@@ -128,6 +128,7 @@ private:
     bool processKeyboardDrawing( ftxui::Event event );
     bool processClipboardEvents( ftxui::Event event );
 
+    bool processClearSelection( ftxui::Event event );
     bool processMouseDrawing( ftxui::Event event );
     bool processEyeDropper( ftxui::Event event );
     bool processPaintFill( ftxui::Event event );
@@ -168,7 +169,7 @@ private:
     ftxui::Box M_rightClickModalBox;
     bool M_showRightClickModal = false;
     int M_rightClickModalIndex = 0;
-    std::vector<std::string> M_rightClickModalOptions = { "Grid", "Undo", "Redo", "Clear", "Cancel" };
+    std::vector<std::string> M_rightClickModalOptions = { "Grid [g]", "Undo [u]", "Redo [Ctrl+r]", "Clear [Ctrl+d]", "Cancel [Esc]" };
     ftxui::Component M_rightClickModal = ftxui::Menu(&M_rightClickModalOptions, &M_rightClickModalIndex);
 
 };

@@ -673,8 +673,8 @@ EditorCanvasComponent::processRightClickModal( ftxui::Event event )
         {
             M_showRightClickModal = true;
 
-            M_modalX = std::clamp(mouse.x - M_box.x_min, 0, M_width - 15);
-            M_modalY = std::clamp(mouse.y - M_box.y_min, 0, M_height - 6);
+            M_modalX = std::clamp(mouse.x - M_box.x_min, 0, M_width);
+            M_modalY = std::clamp(mouse.y - M_box.y_min, 0, M_height);
 
             return true;
         }
@@ -692,12 +692,41 @@ EditorCanvasComponent::clear()
 }
 
 bool
+EditorCanvasComponent::processClearSelection( ftxui::Event event )
+{
+    if ( event == ftxui::Event::CtrlD )
+    {
+        if ( M_currentState.selection.isActive )
+        {
+
+            int w = M_currentState.selection.width();
+            int h = M_currentState.selection.height();
+
+            for ( int y = 0; y < h; ++y )
+                for ( int x = 0; x < w; ++x )
+                    M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y) = Pixel{" ", ftxui::Color::White};
+
+            M_currentState.selection.isActive = false;
+            saveState();
+            return true;
+        }
+        else
+        {
+            clear();
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
 EditorCanvasComponent::OnEvent( ftxui::Event event )
 {
 
+    //TODO: Refactor into a separate method
     if ( M_showRightClickModal )
     {
-    bool handled = M_rightClickModal->OnEvent( event );
+        bool handled = M_rightClickModal->OnEvent( event );
 
         bool execute_action = ( event == ftxui::Event::Return || event == ftxui::Event::Character('\n') );
 
@@ -712,6 +741,14 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
                 {
                     M_showRightClickModal = false;
                     return true;
+                }
+            }
+            if ( mouse.button == ftxui::Mouse::Button::Right && mouse.motion == ftxui::Mouse::Pressed )
+            {
+                if ( !M_rightClickModalBox.Contain( mouse.x, mouse.y ) && M_box.Contain( mouse.x, mouse.y ) )
+                {
+                    M_showRightClickModal = false;
+                    return processRightClickModal(event);
                 }
             }
         }
@@ -738,8 +775,6 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
         }
 
         return true;
-
-        return true;
     }
 
     if ( processClipboardEvents( event ) )
@@ -758,6 +793,8 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
     if ( processKeyboardDrawing( event ) )
         return true;
 
+    if ( processClearSelection( event ) )
+        return true;
 
     if ( event.is_mouse() )
     {
