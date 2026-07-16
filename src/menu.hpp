@@ -10,42 +10,37 @@ namespace Termisprite
 {
 
 
-class MenuItemBase
-    : public ftxui::ComponentBase
+struct MenuCategory
 {
-public:
-    MenuItemBase( std::string const& label, std::function<void()> onClick = [](){} )
-        : M_label( std::move( label ) ), M_onClick( std::move( onClick ) ),
-          M_button ( ftxui::Button( M_label, M_onClick, ftxui::ButtonOption::Ascii() ) )
-    {
-        ftxui::ComponentBase::Add( M_button );
-    }
-
-    ftxui::Element OnRender() override;
-
-private:
-    std::string M_label;
-    std::function<void()> M_onClick;
-    ftxui::Component M_button;
+    std::string name;
+    std::vector<std::string> options;
+    std::function<void(int)> onSelect;
 };
-
-ftxui::Component MenuItem( std::string const& label, std::function<void()> onClick = [](){} );
-
 
 class MenuComponent
     : public ftxui::ComponentBase
 {
 public:
-    MenuComponent();
+    MenuComponent( std::vector<MenuCategory> categories );
 
     ftxui::Element OnRender() override;
+    bool OnEvent( ftxui::Event event ) override;
+
+    ftxui::Element RenderOverlay();
 
 private:
-    ftxui::Component M_menuContainer;
+    ftxui::Component M_buttonsContainer;
+
+    std::vector<MenuCategory> M_categories;
+    std::vector<ftxui::Component> M_dropdownMenus;
+    std::vector<int> M_selectedIndices;
+
+    std::vector<ftxui::Box> M_buttonBoxes;
+    ftxui::Box M_dropdownBox;
+
+    int M_activeDropdown = -1;
 };
 
-
-std::shared_ptr<MenuComponent> Menu();
-
+std::shared_ptr<MenuComponent> Menu( std::vector<MenuCategory> categories );
 
 }

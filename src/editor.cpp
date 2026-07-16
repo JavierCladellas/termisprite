@@ -653,7 +653,7 @@ EditorCanvasComponent::processToggleGrid( ftxui::Event event )
 {
     if ( event == ftxui::Event::Character('g') )
     {
-        M_showGrid = !M_showGrid;
+        toggleGrid();
         return true;
     }
     return false;

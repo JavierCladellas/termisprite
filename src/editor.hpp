@@ -104,6 +104,10 @@ public:
     EditorState & currentState() { return M_currentState; }
     void setCurrentState( EditorState state ) { M_currentState = state; }
 
+    void undo() { M_spriteHistory.undo( M_sprite ); }
+    void redo() { M_spriteHistory.redo( M_sprite ); }
+    void clear();
+    void toggleGrid() { M_showGrid = !M_showGrid; }
 
 private:
     std::vector<ftxui::Color> palette() const;
@@ -117,7 +121,6 @@ private:
 
     void floodFillPaint( int x, int y );
 
-    void clear();
 
     void beginTranslation();
     void endTranslation();

@@ -22,9 +22,9 @@ public:
     ftxui::Element OnRender() override;
     bool OnEvent( ftxui::Event event ) override;
 
+    void selectTool( ToolType type );
 private:
     ftxui::Component makeToolButton(std::string icon, std::string name, char shortcut, ToolType type);
-    void selectTool( ToolType type );
 
 private:
 
