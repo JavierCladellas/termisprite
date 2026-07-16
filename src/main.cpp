@@ -195,6 +195,7 @@ int main( int argc, char** argv )
     auto layout = Renderer( masterContainer, [&]() {
         return vbox( {
             menu->Render(),
+            ftxui::separatorEmpty(),
             hbox({
                 vbox({
                     editorCanvas->Render(),
