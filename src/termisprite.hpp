@@ -20,7 +20,16 @@ public:
 
     ftxui::Element OnRender() override;
 
-    // bool OnEvent( ftxui::Event event ) override;
+    bool OnEvent( ftxui::Event event ) override;
+
+private:
+
+    bool processHistoryEvents( ftxui::Event event );
+    bool processClipboardEvents( ftxui::Event event );
+    bool processToggleGrid( ftxui::Event event );
+    bool processClearSelection( ftxui::Event event );
+    bool processToolSelection( ftxui::Event event );
+
 
 private:
     ftxui::Component M_masterComponent;

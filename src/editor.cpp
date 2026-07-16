@@ -1,5 +1,6 @@
 #include "editor.hpp"
 #include <cmath>
+#include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 
 
@@ -155,28 +156,14 @@ EditorCanvasComponent::OnRender()
 
 }
 
-bool
-EditorCanvasComponent::processHistoryEvents( ftxui::Event event )
-{
-    if ( event == ftxui::Event::CtrlZ || event == ftxui::Event::Character('u') )
-    {
-        M_spriteHistory.undo( M_sprite );
-        return true;
-    }
-
-    if ( event == ftxui::Event::CtrlY || event == ftxui::Event::CtrlR )
-    {
-        M_spriteHistory.redo( M_sprite );
-        return true;
-    }
-
-    return false;
-}
 
 
 bool
 EditorCanvasComponent::processKeyboardDrawing( ftxui::Event event )
 {
+    if ( M_currentState.toolType != ToolType::DRAW && M_currentState.toolType != ToolType::ERASER )
+        return false;
+
     if ( event == ftxui::Event::Escape || event == ftxui::Event::Return )
     {
         if ( M_currentState.selection.isActive )
@@ -210,77 +197,64 @@ EditorCanvasComponent::processKeyboardDrawing( ftxui::Event event )
     return false;
 }
 
-bool
-EditorCanvasComponent::processClipboardEvents( ftxui::Event event )
+
+void
+EditorCanvasComponent::copyToClipboard()
 {
-    if ( event == ftxui::Event::CtrlC || event == ftxui::Event::Character('y') )
+    int w = M_currentState.selection.width();
+    int h = M_currentState.selection.height();
+
+    M_currentState.clipboard.data.assign(h, std::vector<Pixel>(w));
+
+    for ( int y = 0; y < h; ++y )
+        for ( int x = 0; x < w; ++x )
+            M_currentState.clipboard.data[y][x] = M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y);
+
+    M_currentState.clipboard.hasData = true;
+}
+
+void
+EditorCanvasComponent::cutToClipboard()
+{
+    int w = M_currentState.selection.width();
+    int h = M_currentState.selection.height();
+
+    M_currentState.clipboard.data.assign(h, std::vector<Pixel>(w));
+
+    for ( int y = 0; y < h; ++y )
     {
-        if ( !M_currentState.selection.isActive ) return false;
-
-        int w = M_currentState.selection.width();
-        int h = M_currentState.selection.height();
-
-        M_currentState.clipboard.data.assign(h, std::vector<Pixel>(w));
-
-        for ( int y = 0; y < h; ++y )
+        for ( int x = 0; x < w; ++x )
         {
-            for ( int x = 0; x < w; ++x )
-            {
-                M_currentState.clipboard.data[y][x] = M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y);
-            }
+            M_currentState.clipboard.data[y][x] = M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y);
+            M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y) = Pixel{" ", ftxui::Color::White};
         }
-        M_currentState.clipboard.hasData = true;
-        return true;
     }
 
-    if ( event == ftxui::Event::CtrlX || event == ftxui::Event::Character('x') )
+    M_currentState.clipboard.hasData = true;
+    M_currentState.selection.isActive = false;
+    saveState();
+}
+
+
+void
+EditorCanvasComponent::pasteClipboard()
+{
+    int h = M_currentState.clipboard.data.size();
+    int w = (h > 0) ? M_currentState.clipboard.data[0].size() : 0;
+
+    for ( int y = 0; y < h; ++y )
     {
-        if ( !M_currentState.selection.isActive ) return false;
-
-        int w = M_currentState.selection.width();
-        int h = M_currentState.selection.height();
-
-        M_currentState.clipboard.data.assign(h, std::vector<Pixel>(w));
-
-        for ( int y = 0; y < h; ++y )
+        for ( int x = 0; x < w; ++x )
         {
-            for ( int x = 0; x < w; ++x )
-            {
-                M_currentState.clipboard.data[y][x] = M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y);
-                M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y) = Pixel{" ", ftxui::Color::White};
-            }
-        }
+            int targetY = M_cursorY + y;
+            int targetX = M_cursorX + x;
 
-        M_currentState.clipboard.hasData = true;
-        M_currentState.selection.isActive = false;
-        saveState();
-        return true;
+            if ( targetY >= 0 && targetY < M_height && targetX >= 0 && targetX < M_width )
+                M_sprite.at(targetX,targetY) = M_currentState.clipboard.data[y][x];
+        }
     }
 
-    if ( event == ftxui::Event::CtrlV || event == ftxui::Event::Character('p') )
-    {
-        if ( !M_currentState.clipboard.hasData ) return false;
-
-        int h = M_currentState.clipboard.data.size();
-        int w = (h > 0) ? M_currentState.clipboard.data[0].size() : 0;
-
-        for ( int y = 0; y < h; ++y )
-        {
-            for ( int x = 0; x < w; ++x )
-            {
-                int targetY = M_cursorY + y;
-                int targetX = M_cursorX + x;
-
-                if ( targetY >= 0 && targetY < M_height && targetX >= 0 && targetX < M_width )
-                    M_sprite.at(targetX,targetY) = M_currentState.clipboard.data[y][x];
-            }
-        }
-
-        saveState();
-        return true;
-    }
-
-    return false;
+    saveState();
 }
 
 bool
@@ -314,10 +288,11 @@ EditorCanvasComponent::processCursorMovement( ftxui::Event event )
 bool
 EditorCanvasComponent::processMouseDrawing( ftxui::Event event )
 {
-    if ( !event.is_mouse() )
-        return false;
 
     if ( M_currentState.toolType != ToolType::DRAW && M_currentState.toolType != ToolType::ERASER )
+        return false;
+
+    if ( !event.is_mouse() )
         return false;
 
     auto mouse = event.mouse();
@@ -372,13 +347,26 @@ EditorCanvasComponent::processMouseDrawing( ftxui::Event event )
 bool
 EditorCanvasComponent::processEyeDropper( ftxui::Event event )
 {
-    if ( !event.is_mouse() )
-        return false;
-
     if ( M_currentState.toolType != ToolType::EYE_DROPPER )
         return false;
 
+    if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
+    {
+        Pixel & cell = M_sprite.at(M_cursorX,M_cursorY);
+
+        M_currentState.brush = cell.brush;
+        M_currentState.color = cell.color;
+
+        M_currentState.toolType = ToolType::DRAW;
+
+        return true;
+    }
+
+    if ( !event.is_mouse() )
+        return false;
+
     auto mouse = event.mouse();
+
 
     if ( !M_box.Contain( mouse.x, mouse.y ) )
         return false;
@@ -408,10 +396,10 @@ EditorCanvasComponent::processEyeDropper( ftxui::Event event )
 bool
 EditorCanvasComponent::processPaintFill( ftxui::Event event )
 {
-    if ( !event.is_mouse() )
+    if ( M_currentState.toolType != ToolType::PAINT_FILL )
         return false;
 
-    if ( M_currentState.toolType != ToolType::PAINT_FILL )
+    if ( !event.is_mouse() )
         return false;
 
     auto mouse = event.mouse();
@@ -438,10 +426,10 @@ EditorCanvasComponent::processPaintFill( ftxui::Event event )
 bool
 EditorCanvasComponent::processBoxSelection( ftxui::Event event )
 {
-    if ( !event.is_mouse() )
+    if ( M_currentState.toolType != ToolType::BOX_SELECT )
         return false;
 
-    if ( M_currentState.toolType != ToolType::BOX_SELECT )
+    if ( !event.is_mouse() )
         return false;
 
     auto mouse = event.mouse();
@@ -542,12 +530,12 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
 bool
 EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
 {
-    if ( !event.is_mouse() )
-        return false;
-
     if ( M_currentState.toolType != ToolType::SQUARE &&
          M_currentState.toolType != ToolType::CIRCLE &&
          M_currentState.toolType != ToolType::LINE )
+        return false;
+
+    if ( !event.is_mouse() )
         return false;
 
     auto mouse = event.mouse();
@@ -648,16 +636,6 @@ EditorCanvasComponent::drawCircle( int x0, int y0, int x1, int y1 )
     }
 }
 
-bool
-EditorCanvasComponent::processToggleGrid( ftxui::Event event )
-{
-    if ( event == ftxui::Event::Character('g') )
-    {
-        toggleGrid();
-        return true;
-    }
-    return false;
-}
 
 bool
 EditorCanvasComponent::processRightClickModal( ftxui::Event event )
@@ -691,33 +669,20 @@ EditorCanvasComponent::clear()
     saveState();
 }
 
-bool
-EditorCanvasComponent::processClearSelection( ftxui::Event event )
+void
+EditorCanvasComponent::deleteSelection()
 {
-    if ( event == ftxui::Event::CtrlD )
-    {
-        if ( M_currentState.selection.isActive )
-        {
+    int w = M_currentState.selection.width();
+    int h = M_currentState.selection.height();
 
-            int w = M_currentState.selection.width();
-            int h = M_currentState.selection.height();
+    for ( int y = 0; y < h; ++y )
+        for ( int x = 0; x < w; ++x )
+            M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y) = Pixel{" ", ftxui::Color::White};
 
-            for ( int y = 0; y < h; ++y )
-                for ( int x = 0; x < w; ++x )
-                    M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y) = Pixel{" ", ftxui::Color::White};
-
-            M_currentState.selection.isActive = false;
-            saveState();
-            return true;
-        }
-        else
-        {
-            clear();
-            return true;
-        }
-    }
-    return false;
+    M_currentState.selection.isActive = false;
+    saveState();
 }
+
 
 bool
 EditorCanvasComponent::OnEvent( ftxui::Event event )
@@ -777,23 +742,14 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
         return true;
     }
 
-    if ( processClipboardEvents( event ) )
-        return true;
-
-    if ( processHistoryEvents( event ) )
-        return true;
 
     if ( processCursorMovement( event ) )
-        return true;
-
-    //TODO: Maybe this outside the canvas
-    if ( processToggleGrid( event ) )
         return true;
 
     if ( processKeyboardDrawing( event ) )
         return true;
 
-    if ( processClearSelection( event ) )
+    if ( processEyeDropper( event ) )
         return true;
 
     if ( event.is_mouse() )
@@ -804,8 +760,6 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
         if ( processShapeDrawing( event ) )
             return true;
 
-        if ( processEyeDropper( event ) )
-            return true;
 
         if ( processPaintFill( event ) )
             return true;

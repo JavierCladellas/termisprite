@@ -106,8 +106,13 @@ public:
 
     void undo() { M_spriteHistory.undo( M_sprite ); }
     void redo() { M_spriteHistory.redo( M_sprite ); }
-    void clear();
     void toggleGrid() { M_showGrid = !M_showGrid; }
+
+    void copyToClipboard();
+    void cutToClipboard();
+    void pasteClipboard();
+    void clear();
+    void deleteSelection();
 
 private:
     std::vector<ftxui::Color> palette() const;
@@ -126,18 +131,14 @@ private:
     void endTranslation();
     bool translateSelection( int dx, int dy );
 
-    bool processHistoryEvents( ftxui::Event event );
     bool processCursorMovement( ftxui::Event event );
     bool processKeyboardDrawing( ftxui::Event event );
-    bool processClipboardEvents( ftxui::Event event );
 
-    bool processClearSelection( ftxui::Event event );
     bool processMouseDrawing( ftxui::Event event );
     bool processEyeDropper( ftxui::Event event );
     bool processPaintFill( ftxui::Event event );
     bool processBoxSelection( ftxui::Event event );
     bool processShapeDrawing( ftxui::Event event );
-    bool processToggleGrid( ftxui::Event event );
     bool processRightClickModal( ftxui::Event event );
 
 private:

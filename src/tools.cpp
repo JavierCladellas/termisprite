@@ -8,7 +8,7 @@ ToolsComponent::ToolsComponent( EditorState & editorState )
     : M_editorState( editorState )
 {
     auto drawGroup = ftxui::Container::Vertical({
-        makeToolButton("✎", "Draw", 'D', ToolType::DRAW),
+        makeToolButton("✎", "Draw", 'B', ToolType::DRAW),
         makeToolButton("✖", "Eraser", 'E', ToolType::ERASER)
     });
 
@@ -72,22 +72,6 @@ ToolsComponent::selectTool( ToolType type )
         M_editorState.brush = "█";
 }
 
-bool
-ToolsComponent::OnEvent( ftxui::Event event )
-{
-    if ( event == ftxui::Event::Character('d') || event == ftxui::Event::Character('D') ) { selectTool(ToolType::DRAW); return true; }
-    if ( event == ftxui::Event::Character('e') || event == ftxui::Event::Character('E') ) { selectTool(ToolType::ERASER); return true; }
-
-    if ( event == ftxui::Event::Character('r') || event == ftxui::Event::Character('R') ) { selectTool(ToolType::SQUARE); return true; }
-    if ( event == ftxui::Event::Character('c') || event == ftxui::Event::Character('C') ) { selectTool(ToolType::CIRCLE); return true; } 
-    if ( event == ftxui::Event::Character('l') || event == ftxui::Event::Character('L') ) { selectTool(ToolType::LINE); return true; }
-
-    if ( event == ftxui::Event::Character('i') || event == ftxui::Event::Character('I') ) { selectTool(ToolType::EYE_DROPPER); return true; } 
-    if ( event == ftxui::Event::Character('f') || event == ftxui::Event::Character('F') ) { selectTool(ToolType::PAINT_FILL); return true; } 
-    if ( event == ftxui::Event::Character('s') || event == ftxui::Event::Character('S') ) { selectTool(ToolType::BOX_SELECT); return true; } 
-
-    return ftxui::ComponentBase::OnEvent(event);
-}
 
 ftxui::Element
 ToolsComponent::OnRender()

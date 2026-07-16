@@ -20,7 +20,6 @@ public:
     ToolsComponent( EditorState & editorState );
 
     ftxui::Element OnRender() override;
-    bool OnEvent( ftxui::Event event ) override;
 
     void selectTool( ToolType type );
 private:
