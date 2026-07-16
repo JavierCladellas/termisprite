@@ -20,6 +20,7 @@ public:
     NewProjectModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose);
 
     ftxui::Element OnRender() override;
+    bool OnEvent( ftxui::Event event ) override;
 
 private:
     EditorCanvasComponent & M_editorCanvas;
@@ -40,9 +41,11 @@ private:
     });
     ftxui::Component M_cancelButton = ftxui::Button("Cancel", [this] { M_closeCallback(); });
 
+    ftxui::Box M_box;
 };
 
 
+//TODO: Refactor into a single component
 class ResizeModal
     : public ftxui::ComponentBase
 {
@@ -50,6 +53,7 @@ public:
     ResizeModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose);
 
     ftxui::Element OnRender() override;
+    bool OnEvent( ftxui::Event event ) override;
 
 private:
     EditorCanvasComponent & M_editorCanvas;
@@ -66,6 +70,8 @@ private:
         M_closeCallback();
     });
     ftxui::Component M_cancelButton = ftxui::Button("Cancel", [this] { M_closeCallback(); });
+
+    ftxui::Box M_box;
 
 };
 

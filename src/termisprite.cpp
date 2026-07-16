@@ -57,13 +57,45 @@ NewProjectModal::OnRender()
         form | center,
         separatorEmpty(),
         buttons
-    }) | size(WIDTH, GREATER_THAN, 40)
+    }) | reflect(M_box)
+       | size(WIDTH, GREATER_THAN, 40)
        | borderDouble
        | bgcolor(Color::Black)
        | clear_under;
 
 }
 
+bool
+NewProjectModal::OnEvent( ftxui::Event event )
+{
+    if ( event == ftxui::Event::Return )
+    {
+        M_editorCanvas.clear();
+        M_editorCanvas.resize(std::stoi(M_widthInput), std::stoi(M_heightInput));
+        M_closeCallback();
+        return true;
+    }
+    if ( event == ftxui::Event::Escape )
+    {
+        M_closeCallback();
+        return true;
+    }
+
+    if ( event.is_mouse() )
+    {
+        auto mouse = event.mouse();
+        if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Pressed )
+        {
+            if ( !M_box.Contain( mouse.x, mouse.y ) )
+            {
+                M_closeCallback();
+                return true;
+            }
+        }
+    }
+
+    return ftxui::ComponentBase::OnEvent( event );
+}
 
 
 ResizeModal::ResizeModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
@@ -110,10 +142,42 @@ ftxui::Element ResizeModal::OnRender()
         form | center,
         separatorEmpty(),
         buttons
-    }) | size(WIDTH, GREATER_THAN, 35)
+    }) | reflect(M_box)
+       | size(WIDTH, GREATER_THAN, 35)
        | borderDouble
        | bgcolor(Color::Black)
        | clear_under;
+}
+
+bool
+ResizeModal::OnEvent( ftxui::Event event )
+{
+    if ( event == ftxui::Event::Return )
+    {
+        M_editorCanvas.resize(std::stoi(M_widthInput), std::stoi(M_heightInput));
+        M_closeCallback();
+        return true;
+    }
+    if ( event == ftxui::Event::Escape )
+    {
+        M_closeCallback();
+        return true;
+    }
+
+    if ( event.is_mouse() )
+    {
+        auto mouse = event.mouse();
+        if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Pressed )
+        {
+            if ( !M_box.Contain( mouse.x, mouse.y ) )
+            {
+                M_closeCallback();
+                return true;
+            }
+        }
+    }
+
+    return ftxui::ComponentBase::OnEvent( event );
 }
 
 AboutModal::AboutModal( std::function<void()> onClose )
@@ -188,7 +252,9 @@ Termisprite::Termisprite()
                 case 0: M_showNewProjectModal = true; break;
                 case 1: /* Open */ break;
                 case 2: /* Save */ break;
-                case 3: exit(0); break;
+                case 3: /* Import */ break;
+                case 4: /* Export */ break;
+                case 5: exit(0); break;
             }
         }},
         { "Edit", {"Undo [Ctrl+Z]", "Redo [Ctrl+Y]", "Clear [Ctrl+D]"}, [this](int idx) {
@@ -199,7 +265,7 @@ Termisprite::Termisprite()
                 case 2: M_editorCanvas->clear(); break;
             }
         }},
-        { "Canvas", {"Resize", "Flip Vertical", "Flip Horizontal"}, [this](int idx) {
+        { "Canvas", {"Resize [H]", "Flip Vertical", "Flip Horizontal"}, [this](int idx) {
             switch (idx)
             {
                 case 0: M_showResizeModal = true; break;
@@ -298,6 +364,12 @@ Termisprite::OnEvent( ftxui::Event event )
     if ( event == ftxui::Event::CtrlN )
     {
         M_showNewProjectModal = true;
+        return true;
+    }
+
+    if ( event == ftxui::Event::Character('H') )
+    {
+        M_showResizeModal = true;
         return true;
     }
 
