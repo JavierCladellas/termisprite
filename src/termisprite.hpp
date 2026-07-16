@@ -18,37 +18,9 @@ class ResizeModal
     : public ftxui::ComponentBase
 {
 public:
-    ResizeModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
-        : M_editorCanvas( editorCanvas ), M_closeCallback( onClose )
-    {
-        auto [width, height] = editorCanvas.size();
-        M_widthInput = std::to_string( width );
-        M_heightInput = std::to_string( height );
+    ResizeModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose);
 
-        Add( ftxui::Container::Vertical({
-            ftxui::Container::Horizontal({ M_widthInputComponent, M_heightInputComponent }),
-            ftxui::Container::Horizontal({ M_okButton, M_cancelButton })
-        }) );
-    }
-
-    ftxui::Element OnRender() override
-    {
-        return ftxui::vbox({
-            ftxui::text("Resize Canvas"),
-            ftxui::separator(),
-            ftxui::hbox({
-                ftxui::vbox({
-                    ftxui::text("Width:"),
-                    M_widthInputComponent->Render()
-                }),
-                ftxui::vbox({
-                    ftxui::text("Height:"),
-                    M_heightInputComponent->Render()
-                }),
-            }) | ftxui::flex,
-            ftxui::hbox({ M_okButton->Render(), M_cancelButton->Render() })
-        })| ftxui::border;
-    }
+    ftxui::Element OnRender() override;
 
 private:
     EditorCanvasComponent & M_editorCanvas;

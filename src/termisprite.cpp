@@ -6,6 +6,59 @@
 namespace Termisprite
 {
 
+
+ResizeModal::ResizeModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
+    : M_editorCanvas( editorCanvas ), M_closeCallback( onClose )
+{
+    auto [width, height] = editorCanvas.size();
+    M_widthInput = std::to_string( width );
+    M_heightInput = std::to_string( height );
+
+    Add( ftxui::Container::Vertical({
+        ftxui::Container::Horizontal({ M_widthInputComponent, M_heightInputComponent }),
+        ftxui::Container::Horizontal({ M_okButton, M_cancelButton })
+    }) );
+}
+
+ftxui::Element ResizeModal::OnRender()
+{
+    using namespace ftxui;
+
+    auto form = vbox({
+        hbox({
+            text(" Width:  ") | dim,
+            M_widthInputComponent->Render() | border | size(WIDTH, EQUAL, 10),
+            text(" px") | dim | vcenter
+        }),
+        hbox({
+            text(" Height: ") | dim,
+            M_heightInputComponent->Render() | border | size(WIDTH, EQUAL, 10),
+            text(" px") | dim | vcenter
+        }),
+    });
+
+    auto buttons = hbox({
+        filler(),
+        M_cancelButton->Render(),
+        text(" "),
+        M_okButton->Render()
+    });
+
+    return vbox({
+        text(" Resize Canvas ") | bold | center,
+        separator(),
+        separatorEmpty(),
+        form | center,
+        separatorEmpty(),
+        buttons
+    }) | size(WIDTH, GREATER_THAN, 35)
+       | borderDouble
+       | bgcolor(Color::Black)
+       | clear_under;
+}
+
+
+
 Termisprite::Termisprite()
 {
     M_editorCanvas = EditorCanvas( 64, 32 );
@@ -85,12 +138,12 @@ Termisprite::Termisprite()
                 M_menu->Render(),
                 ftxui::separatorEmpty(),
                 ftxui::hbox({
-                    ftxui::vbox({ M_editorCanvas->Render(), ftxui::filler() }) | ftxui::flex,
+                    M_editorCanvas->Render() | ftxui::flex,
                     ftxui::vbox({
                         M_tools->Render(),
                         M_colorSection->Render()
                     })
-                }),
+                }) | ftxui::flex,
                 ftxui::filler(),
                 M_statusBar->Render()
             }),
