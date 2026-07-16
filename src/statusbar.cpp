@@ -40,6 +40,7 @@ StatusBarComponent::toolTypeToString( ToolType type ) const
         case ToolType::EYE_DROPPER: return "Eye Dropper";
         case ToolType::PAINT_FILL:  return "Paint Fill";
         case ToolType::BOX_SELECT:  return "Box Select";
+        case ToolType::PAN:         return "Panning";
         default:                    return "Unknown";
     }
 }

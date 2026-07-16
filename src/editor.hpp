@@ -24,7 +24,8 @@ enum class ToolType
     LINE,
     EYE_DROPPER,
     PAINT_FILL,
-    BOX_SELECT
+    BOX_SELECT,
+    PAN
 };
 
 struct SelectionBounds
@@ -140,6 +141,10 @@ public:
     void deleteSelection();
 
 private:
+
+    std::pair<int,int> screenToWorld(int screenX, int screenY) const;
+    std::pair<int,int> worldToScreen(int worldX, int worldY) const;
+
     std::vector<ftxui::Color> palette() const;
 
     void saveState();
@@ -156,6 +161,7 @@ private:
     void endTranslation();
     bool translateSelection( int dx, int dy );
 
+    bool processPanning( ftxui::Event event );
     bool processCursorMovement( ftxui::Event event );
     bool processKeyboardDrawing( ftxui::Event event );
 
@@ -185,6 +191,13 @@ private:
     bool M_isTranslating = false;
     int M_lastDragX = 0;
     int M_lastDragY = 0;
+
+    int M_cameraX = 0;
+    int M_cameraY = 0;
+
+    bool M_isPanning = false;
+    int M_lastPanMouseX = 0;
+    int M_lastPanMouseY = 0;
 
     int M_shapeStartX = 0;
     int M_shapeStartY = 0;

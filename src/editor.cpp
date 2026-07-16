@@ -47,69 +47,73 @@ SpriteHistory::redo( Sprite & sprite )
 ftxui::Element
 EditorCanvasComponent::OnRender()
 {
+    int visibleW = std::max(1, (M_box.x_max - M_box.x_min) / 2);
+    int visibleH = std::max(1, (M_box.y_max - M_box.y_min));
+    M_cameraX = std::clamp(M_cameraX, 0, std::max(0, M_width - visibleW));
+    M_cameraY = std::clamp(M_cameraY, 0, std::max(0, M_height - visibleH));
+
     ftxui::Elements rows;
 
-    for ( int y = 0; y < M_height; ++y )
+    for ( int sy = 0; sy < M_height; ++sy )
     {
         ftxui::Elements row;
-        for ( int x = 0; x < M_width; ++x )
+        for ( int sx = 0; sx < M_width; ++sx )
         {
-            Pixel const& cellContent = M_sprite.at(x,y);
+            int worldX = sx + M_cameraX;
+            int worldY = sy + M_cameraY;
 
-            std::string renderBrushL = cellContent.brush;
-            std::string renderBrushR = cellContent.brush;
-            ftxui::Color renderColor = cellContent.color;
+            std::string renderBrushL = " ";
+            std::string renderBrushR = " ";
+            ftxui::Color renderColor = ftxui::Color::White;
 
-            if ( renderBrushL == " " && M_showPointGrid)
+            bool isOutOfBounds = (worldX < 0 || worldX >= M_width || worldY < 0 || worldY >= M_height);
+
+            // Only grab from M_sprite if it actually exists in the array
+            if ( !isOutOfBounds )
             {
-                if ( x % 2 == 0 && y % 1 == 0 )
+                Pixel const& cellContent = M_sprite.at(worldX, worldY);
+                renderBrushL = cellContent.brush;
+                renderBrushR = cellContent.brush;
+                renderColor = cellContent.color;
+
+                if ( renderBrushL == " " && M_showPointGrid)
                 {
-                    renderBrushL = "·";
-                    renderBrushR = " ";
-                    renderColor = ftxui::Color::GrayDark;
+                    if ( worldX % 2 == 0 && worldY % 1 == 0 )
+                    {
+                        renderBrushL = "·";
+                        renderBrushR = " ";
+                        renderColor = ftxui::Color::GrayDark;
+                    }
                 }
-            }
-            if ( M_currentState.selection.isActive &&
-                 x >= M_currentState.selection.minX() && x <= M_currentState.selection.maxX() &&
-                 y >= M_currentState.selection.minY() && y <= M_currentState.selection.maxY() )
-            {
-                bool isTop = (y == M_currentState.selection.minY());
-                bool isBottom = (y == M_currentState.selection.maxY());
-                bool isLeft = (x == M_currentState.selection.minX());
-                bool isRight = (x == M_currentState.selection.maxX());
 
-                // Adjusting borders for 2x1 aspect ratio
-                if (isTop && isLeft && isBottom && isRight) { renderBrushL = "⡏"; renderBrushR = "⢹"; } 
-                else if (isTop && isLeft) { renderBrushL = "⡏"; renderBrushR = "⠉"; }
-                else if (isTop && isRight) { renderBrushL = "⠉"; renderBrushR = "⢹"; }
-                else if (isBottom && isLeft) { renderBrushL = "⣇"; renderBrushR = "⣀"; }
-                else if (isBottom && isRight) { renderBrushL = "⣀"; renderBrushR = "⣸"; }
-                else if (isTop) { renderBrushL = "⠉"; renderBrushR = "⠉"; }
-                else if (isBottom) { renderBrushL = "⣀"; renderBrushR = "⣀"; }
-                else if (isLeft) { renderBrushL = "⡇"; renderBrushR = " "; }
-                else if (isRight) { renderBrushL = " "; renderBrushR = "⢸"; }
-
-                if ( isTop || isBottom || isLeft || isRight )
-                    renderColor = ftxui::Color::White;
+                if ( M_currentState.selection.isActive &&
+                     worldX >= M_currentState.selection.minX() && worldX <= M_currentState.selection.maxX() &&
+                     worldY >= M_currentState.selection.minY() && worldY <= M_currentState.selection.maxY() )
+                {
+                    // ... [Keep all your selection border logic exactly the same here] ...
+                }
             }
 
             ftxui::Element cellL = ftxui::text( renderBrushL ) | ftxui::color( renderColor );
             ftxui::Element cellR = ftxui::text( renderBrushR ) | ftxui::color( renderColor );
 
-            if ( cellContent.brush == " " && M_showCheckerboardGrid )
+            // Always draw the checkerboard background, even for the out-of-bounds padding!
+            if ( renderBrushL == " " && M_showCheckerboardGrid )
             {
-                if ( (x + y) % 2 == 0 )
+                if ( (worldX + worldY) % 2 == 0 )
                 {
-                    cellL = cellL | ftxui::bgcolor( ftxui::Color::GrayDark );
-                    cellR = cellR | ftxui::bgcolor( ftxui::Color::GrayDark );
+                    cellL |= ftxui::bgcolor( ftxui::Color::GrayDark );
+                    cellR |= ftxui::bgcolor( ftxui::Color::GrayDark );
                 }
                 else
                 {
-                    cellL = cellL | ftxui::bgcolor( ftxui::Color::Black );
-                    cellR = cellR | ftxui::bgcolor( ftxui::Color::Black );
+                    cellL |= ftxui::bgcolor( ftxui::Color::Black );
+                    cellR |= ftxui::bgcolor( ftxui::Color::Black );
                 }
             }
-            if ( M_showCursor && x == M_cursorX && y == M_cursorY )
+            
+            // Only draw the cursor if it is actually hovering over a real canvas pixel
+            if ( !isOutOfBounds && M_showCursor && worldX == M_cursorX && worldY == M_cursorY )
             {
                 cellL = ftxui::text( M_currentState.brush ) | ftxui::color( ftxui::Color::Red ) | ftxui::blink;
                 cellR = ftxui::text( M_currentState.brush ) | ftxui::color( ftxui::Color::Red ) | ftxui::blink;
@@ -329,29 +333,85 @@ EditorCanvasComponent::processMouseDrawing( ftxui::Event event )
     {
         M_showCursor = false;
 
-        int localX = (mouse.x - M_box.x_min) / 2;
-        int localY = mouse.y - M_box.y_min;
+        auto [worldX, worldY ] = screenToWorld(mouse.x, mouse.y);
 
-        localX = std::clamp(localX, 0, M_width - 1);
-        localY = std::clamp(localY, 0, M_height - 1);
+        // Clamp to sprite bounds so we don't draw outside the canvas
+        worldX = std::clamp(worldX, 0, M_width - 1);
+        worldY = std::clamp(worldY, 0, M_height - 1);
 
 
         if ( mouse.motion == ftxui::Mouse::Pressed )
         {
             TakeFocus();
             M_isDrawing = true;
-            M_lastDrawX = localX;
-            M_lastDrawY = localY;
-            Pixel & cell = M_sprite.at(localX, localY);
+            M_lastDrawX = worldX;
+            M_lastDrawY = worldY;
+            Pixel & cell = M_sprite.at(worldX, worldY);
             cell.brush = M_currentState.brush;
             cell.color = M_currentState.color;
             return true;
         }
         else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
         {
-            drawLine( M_lastDrawX, M_lastDrawY, localX, localY );
-            M_lastDrawX = localX;
-            M_lastDrawY = localY;
+            drawLine( M_lastDrawX, M_lastDrawY, worldX, worldY );
+            M_lastDrawX = worldX;
+            M_lastDrawY = worldY;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+bool
+EditorCanvasComponent::processPanning( ftxui::Event event )
+{
+    if ( !event.is_mouse() ) return false;
+    auto mouse = event.mouse();
+
+    bool isPanTrigger = ( mouse.button == ftxui::Mouse::Button::Middle ) ||
+                        ( M_currentState.toolType == ToolType::PAN && mouse.button == ftxui::Mouse::Button::Left );
+
+    if ( mouse.motion == ftxui::Mouse::Pressed && !M_isPanning )
+    {
+        if ( isPanTrigger && M_box.Contain(mouse.x, mouse.y) )
+        {
+            TakeFocus();
+            M_isPanning = true;
+            M_showCursor = false;
+            M_lastPanMouseX = mouse.x;
+            M_lastPanMouseY = mouse.y;
+            return true;
+        }
+    }
+    else if ( M_isPanning )
+    {
+        if ( mouse.motion == ftxui::Mouse::Released )
+        {
+            M_isPanning = false;
+            return true;
+        }
+
+        if ( mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed )
+        {
+            int dx = (mouse.x - M_lastPanMouseX) / 2;
+            int dy = mouse.y - M_lastPanMouseY;
+
+            if ( dx != 0 || dy != 0 )
+            {
+                int visibleW = std::max(1, (M_box.x_max - M_box.x_min + 1) / 2);
+                int visibleH = std::max(1, (M_box.y_max - M_box.y_min + 1));
+
+                int maxCameraX = std::max(0, M_width - visibleW);
+                int maxCameraY = std::max(0, M_height - visibleH);
+
+                M_cameraX = std::clamp(M_cameraX - dx, 0, maxCameraX);
+                M_cameraY = std::clamp(M_cameraY - dy, 0, maxCameraY);
+
+                M_lastPanMouseX += (dx * 2);
+                M_lastPanMouseY += dy;
+            }
             return true;
         }
     }
@@ -787,6 +847,9 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
         if ( processRightClickModal( event ) )
             return true;
 
+        if ( processPanning( event ) )
+            return true;
+
     }
 
     return false;
@@ -814,6 +877,23 @@ EditorCanvasComponent::saveState()
 {
     M_spriteHistory.save( M_sprite );
     M_currentState.palette = palette();
+}
+
+
+std::pair<int,int>
+EditorCanvasComponent::screenToWorld(int screenX, int screenY) const
+{
+    int worldX = ((screenX - M_box.x_min) / 2) + M_cameraX;
+    int worldY = (screenY - M_box.y_min) + M_cameraY;
+    return {worldX, worldY};
+}
+
+std::pair<int,int>
+ EditorCanvasComponent::worldToScreen(int worldX, int worldY) const
+{
+    int screenX = ((worldX - M_cameraX) * 2) + M_box.x_min;
+    int screenY = (worldY - M_cameraY) + M_box.y_min;
+    return {screenX, screenY};
 }
 
 void
