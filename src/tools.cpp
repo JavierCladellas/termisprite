@@ -1,99 +1,114 @@
 #include "tools.hpp"
 #include <ftxui/dom/elements.hpp>
 
-
 namespace Termisprite
 {
 
 ToolsComponent::ToolsComponent( EditorState & editorState )
     : M_editorState( editorState )
 {
-    ftxui::MenuOption drawingOption;
-    drawingOption.on_change = [this] { M_activeCategory = Category::DRAWING; updateState(); };
+    auto drawGroup = ftxui::Container::Vertical({
+        makeToolButton("✎", "Draw", 'D', ToolType::DRAW),
+        makeToolButton("✖", "Eraser", 'E', ToolType::ERASER)
+    });
 
-    ftxui::MenuOption shapeOption;
-    shapeOption.on_change = [this] { M_activeCategory = Category::SHAPES; updateState(); };
+    auto shapeGroup = ftxui::Container::Vertical({
+        makeToolButton("▭", "Rectangle", 'R', ToolType::SQUARE),
+        makeToolButton("◯", "Ellipse", 'C', ToolType::CIRCLE),
+        makeToolButton("╱", "Line", 'L', ToolType::LINE)
+    });
 
-    ftxui::MenuOption toolOption;
-    toolOption.on_change = [this] { M_activeCategory = Category::TOOLS; updateState(); };
+    auto utilGroup = ftxui::Container::Vertical({
+        makeToolButton("◧", "Picker", 'I', ToolType::EYE_DROPPER),
+        makeToolButton("▼", "Fill", 'F', ToolType::PAINT_FILL),
+        makeToolButton("⬚", "Select", 'S', ToolType::BOX_SELECT)
+    });
 
-    M_drawingMenu = ftxui::Menu( &M_drawingModes, &M_drawingIndex, drawingOption );
-    M_shapeMenu   = ftxui::Menu( &M_shapeModes,   &M_shapeIndex,   shapeOption );
-    M_toolMenu    = ftxui::Menu( &M_toolModes,    &M_toolIndex,    toolOption );
-
-    M_container = ftxui::Container::Vertical({ M_drawingMenu, M_shapeMenu, M_toolMenu });
+    M_container = ftxui::Container::Vertical({ drawGroup, shapeGroup, utilGroup });
 
     ftxui::ComponentBase::Add( M_container );
+}
 
-    updateState();
+ftxui::Component
+ToolsComponent::makeToolButton( std::string icon, std::string name, char shortcut, ToolType type )
+{
+    ftxui::ButtonOption option;
+
+    option.transform = [this, icon, name, shortcut, type](const ftxui::EntryState& s)
+    {
+        bool isActive = (M_editorState.toolType == type);
+
+        auto prefix = isActive ? ftxui::text("▶ ") | ftxui::bold : ftxui::text("  ");
+
+        auto content = ftxui::hbox({
+            prefix,
+            ftxui::text(icon + " " + name) | ftxui::flex,
+            ftxui::text(std::string(1, shortcut)) | ftxui::dim
+        });
+
+        if (isActive)
+            return content | ftxui::color(ftxui::Color::Cyan) | ftxui::bold;
+
+        if (s.focused)
+            return content | ftxui::inverted;
+
+        return content;
+    };
+
+    return ftxui::Button("", [this, type] { selectTool(type); }, option);
 }
 
 void
-ToolsComponent::updateState()
+ToolsComponent::selectTool( ToolType type )
 {
-    std::string selectedMode;
+    M_editorState.toolType = type;
 
-    if ( M_activeCategory == Category::DRAWING )
-        selectedMode = M_drawingModes[M_drawingIndex];
-    else if ( M_activeCategory == Category::SHAPES )
-        selectedMode = M_shapeModes[M_shapeIndex];
-    else if ( M_activeCategory == Category::TOOLS )
-        selectedMode = M_toolModes[M_toolIndex];
-
-    if ( selectedMode != "Box Select" )
+    if ( M_editorState.toolType != ToolType::BOX_SELECT )
         M_editorState.selection.isActive = false;
 
-    if ( selectedMode != "Eraser" )
-        M_editorState.brush = "█";
-
-    if ( selectedMode == "Draw" )
-        M_editorState.toolType = ToolType::DRAW;
-    else if ( selectedMode == "Eraser" )
-    {
-        M_editorState.toolType = ToolType::ERASER;
+    if ( M_editorState.toolType == ToolType::ERASER )
         M_editorState.brush = " ";
-    }
-    else if ( selectedMode == "Rectangle" )
-        M_editorState.toolType = ToolType::SQUARE;
-    else if ( selectedMode == "Ellipse" )
-        M_editorState.toolType = ToolType::CIRCLE;
-    else if ( selectedMode == "Line" )
-        M_editorState.toolType = ToolType::LINE;
-    else if ( selectedMode == "Eye Dropper" )
-        M_editorState.toolType = ToolType::EYE_DROPPER;
-    else if ( selectedMode == "Paint Fill" )
-        M_editorState.toolType = ToolType::PAINT_FILL;
-    else if ( selectedMode == "Box Select" )
-        M_editorState.toolType = ToolType::BOX_SELECT;
+    else
+        M_editorState.brush = "█";
+}
+
+bool
+ToolsComponent::OnEvent( ftxui::Event event )
+{
+    if ( event == ftxui::Event::Character('d') || event == ftxui::Event::Character('D') ) { selectTool(ToolType::DRAW); return true; }
+    if ( event == ftxui::Event::Character('e') || event == ftxui::Event::Character('E') ) { selectTool(ToolType::ERASER); return true; }
+
+    if ( event == ftxui::Event::Character('r') || event == ftxui::Event::Character('R') ) { selectTool(ToolType::SQUARE); return true; }
+    if ( event == ftxui::Event::Character('c') || event == ftxui::Event::Character('C') ) { selectTool(ToolType::CIRCLE); return true; } 
+    if ( event == ftxui::Event::Character('l') || event == ftxui::Event::Character('L') ) { selectTool(ToolType::LINE); return true; }
+
+    if ( event == ftxui::Event::Character('i') || event == ftxui::Event::Character('I') ) { selectTool(ToolType::EYE_DROPPER); return true; } 
+    if ( event == ftxui::Event::Character('f') || event == ftxui::Event::Character('F') ) { selectTool(ToolType::PAINT_FILL); return true; } 
+    if ( event == ftxui::Event::Character('s') || event == ftxui::Event::Character('S') ) { selectTool(ToolType::BOX_SELECT); return true; } 
+
+    return ftxui::ComponentBase::OnEvent(event);
 }
 
 ftxui::Element
 ToolsComponent::OnRender()
 {
     using namespace ftxui;
-    auto renderMenu = [this](ftxui::Component& menu, Category cat) {
-        if (M_activeCategory == cat)
-            return menu->Render();
-        return menu->Render() | dim;
-    };
+
 
     return window( text(" Tools ") | bold | center,
         vbox({
-            text(" Drawing ") | bold | color(Color::Cyan),
-            separatorLight(),
-            renderMenu(M_drawingMenu, Category::DRAWING),
+            text(" Drawing ") | dim,
+            M_container->ChildAt(0)->Render(),
 
             separatorEmpty(),
 
-            text(" Shapes ") | bold | color(Color::Cyan),
-            separatorLight(),
-            renderMenu(M_shapeMenu, Category::SHAPES),
+            text(" Shapes ") | dim,
+            M_container->ChildAt(1)->Render(),
 
             separatorEmpty(),
 
-            text(" Tools ") | bold | color(Color::Cyan),
-            separatorLight(),
-            renderMenu(M_toolMenu, Category::TOOLS),
+            text(" Utility ") | dim,
+            M_container->ChildAt(2)->Render(),
         })
     );
 }
