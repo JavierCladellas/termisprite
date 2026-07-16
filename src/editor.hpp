@@ -104,6 +104,10 @@ public:
     EditorState & currentState() { return M_currentState; }
     void setCurrentState( EditorState state ) { M_currentState = state; }
 
+
+    std::pair<int, int> size() const { return { M_width, M_height }; }
+    void resize( int width, int height ) { M_width = width; M_height = height; M_sprite.resize( width, height ); saveState(); }
+
     void undo() { M_spriteHistory.undo( M_sprite ); }
     void redo() { M_spriteHistory.redo( M_sprite ); }
     void toggleGrid() { M_showGrid = !M_showGrid; }

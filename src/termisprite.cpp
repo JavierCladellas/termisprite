@@ -30,7 +30,7 @@ Termisprite::Termisprite()
         { "Canvas", {"Resize", "Flip Vertical", "Flip Horizontal", "Rotate 90°"}, [this](int idx) {
             switch (idx)
             {
-                case 0: /* Resize */ break;
+                case 0: M_showResizeModal = true; break;
                 case 1: break;
                 case 2: break;
                 case 3: break;
@@ -70,13 +70,35 @@ Termisprite::Termisprite()
     M_colorSection = ColorSection( M_editorCanvas->currentState() );
     M_statusBar = StatusBar( M_editorCanvas->currentState() );
 
-    ftxui::Component toolsContainer = ftxui::Container::Vertical({ M_tools, M_colorSection });
+    M_resizeModal = std::make_shared<ResizeModal>( *M_editorCanvas, [this]{ M_showResizeModal = false; });
 
-    M_masterComponent = ftxui::Container::Vertical({
+    ftxui::Component toolsContainer = ftxui::Container::Vertical({ M_tools, M_colorSection });
+    ftxui::Component baseContainer = ftxui::Container::Vertical({
         M_menu,
         ftxui::Container::Horizontal({ M_editorCanvas, toolsContainer }),
         M_statusBar
     });
+
+    ftxui::Component mainLayoutRenderer = ftxui::Renderer(baseContainer, [this] {
+        return ftxui::dbox({
+            ftxui::vbox({
+                M_menu->Render(),
+                ftxui::separatorEmpty(),
+                ftxui::hbox({
+                    ftxui::vbox({ M_editorCanvas->Render(), ftxui::filler() }) | ftxui::flex,
+                    ftxui::vbox({
+                        M_tools->Render(),
+                        M_colorSection->Render()
+                    })
+                }),
+                ftxui::filler(),
+                M_statusBar->Render()
+            }),
+            M_menu->RenderOverlay()
+        });
+    });
+
+    M_masterComponent = ftxui::Modal(mainLayoutRenderer, M_resizeModal, &M_showResizeModal);
 
     ftxui::ComponentBase::Add(M_masterComponent);
 }
@@ -85,22 +107,7 @@ Termisprite::Termisprite()
 ftxui::Element
 Termisprite::OnRender()
 {
-    return ftxui::dbox({
-        ftxui::vbox({
-            M_menu->Render(),
-            ftxui::separatorEmpty(),
-            ftxui::hbox({
-                ftxui::vbox({ M_editorCanvas->Render(), ftxui::filler() }) | ftxui::flex,
-                ftxui::vbox({
-                    M_tools->Render(),
-                    M_colorSection->Render()
-                })
-            }),
-            ftxui::filler(),
-            M_statusBar->Render()
-        }),
-        M_menu->RenderOverlay()
-    });
+    return M_masterComponent->Render();
 }
 
 
