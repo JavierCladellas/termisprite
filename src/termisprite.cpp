@@ -1,3 +1,4 @@
+#include <ftxui/component/component_base.hpp>
 #include <ftxui/dom/elements.hpp>
 
 #include "termisprite.hpp"
@@ -19,6 +20,66 @@ ResizeModal::ResizeModal( EditorCanvasComponent & editorCanvas, std::function<vo
         ftxui::Container::Horizontal({ M_okButton, M_cancelButton })
     }) );
 }
+
+
+AboutModal::AboutModal( std::function<void()> onClose )
+    : M_closeCallback( onClose )
+{
+    M_closeButton = ftxui::Button("Close", [this] { M_closeCallback(); });
+    ftxui::ComponentBase::Add(M_closeButton);
+}
+
+
+ftxui::Element
+AboutModal::OnRender()
+{
+    using namespace ftxui;
+
+    auto content = vbox({
+        text("Termisprite") | bold | center,
+        separator(),
+        text("A terminal-based sprite editor built with FTXUI.") | center,
+        separatorEmpty(),
+        text("Version 1.0.0") | center,
+        separatorEmpty(),
+        text("Author: Javier Cladellas") | center,
+        separatorEmpty(),
+        M_closeButton->Render() | center
+    }) | size(WIDTH, GREATER_THAN, 40)
+       | borderDouble
+       | bgcolor(Color::Black)
+       | clear_under;
+
+    return content;
+
+}
+
+
+
+ShortcutsModal::ShortcutsModal( std::function<void()> onClose )
+    : M_closeCallback( onClose )
+{
+    M_closeButton = ftxui::Button("Close", [this] { M_closeCallback(); });
+    ftxui::ComponentBase::Add(M_closeButton);
+}
+
+ftxui::Element
+ShortcutsModal::OnRender()
+{
+    using namespace ftxui;
+
+    auto content = vbox({
+        text("Shortcuts") | bold | center,
+        M_closeButton->Render() | center
+    }) | size(WIDTH, GREATER_THAN, 40)
+       | borderDouble
+       | bgcolor(Color::Black)
+       | clear_under;
+
+    return content;
+}
+
+
 
 ftxui::Element ResizeModal::OnRender()
 {
@@ -110,11 +171,11 @@ Termisprite::Termisprite()
                 case 7: M_tools->selectTool( ToolType::BOX_SELECT ); break;
             }
         }},
-        { "Help", {"About","Shortcuts"}, [](int idx) {
+        { "Help", {"About","Shortcuts"}, [this](int idx) {
              switch(idx)
              {
-                case 0: /* About */ break;
-                case 1: /* Shortcuts */ break;
+                case 0: M_showAboutModal = true; break;
+                case 1: M_showShortcutsModal = true; break;
              }
         }}
     });
@@ -123,6 +184,8 @@ Termisprite::Termisprite()
     M_statusBar = StatusBar( M_editorCanvas->currentState() );
 
     M_resizeModal = std::make_shared<ResizeModal>( *M_editorCanvas, [this]{ M_showResizeModal = false; });
+    M_aboutModal = std::make_shared<AboutModal>( [this]{ M_showAboutModal = false; });
+    M_shortcutsModal = std::make_shared<ShortcutsModal>( [this]{ M_showShortcutsModal = false; });
 
     ftxui::Component toolsContainer = ftxui::Container::Vertical({ M_tools, M_colorSection });
     ftxui::Component baseContainer = ftxui::Container::Vertical({
@@ -151,6 +214,8 @@ Termisprite::Termisprite()
     });
 
     M_masterComponent = ftxui::Modal(mainLayoutRenderer, M_resizeModal, &M_showResizeModal);
+    M_masterComponent |= ftxui::Modal(M_aboutModal, &M_showAboutModal);
+    M_masterComponent |= ftxui::Modal(M_shortcutsModal, &M_showShortcutsModal);
 
     ftxui::ComponentBase::Add(M_masterComponent);
 }

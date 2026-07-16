@@ -41,6 +41,33 @@ private:
 };
 
 
+class AboutModal
+    : public ftxui::ComponentBase
+{
+public:
+    AboutModal( std::function<void()> onClose );
+
+    ftxui::Element OnRender() override;
+
+private:
+    std::function<void()> M_closeCallback;
+    ftxui::Component M_closeButton;
+};
+
+class ShortcutsModal
+    : public ftxui::ComponentBase
+{
+public:
+    ShortcutsModal( std::function<void()> onClose );
+
+    ftxui::Element OnRender() override;
+
+private:
+    std::function<void()> M_closeCallback;
+    ftxui::Component M_closeButton;
+};
+
+
 
 class Termisprite
     : public ftxui::ComponentBase
@@ -73,7 +100,11 @@ private:
     bool M_showResizeModal = false;
     std::shared_ptr<ResizeModal> M_resizeModal;
 
+    bool M_showAboutModal = false;
+    std::shared_ptr<AboutModal> M_aboutModal;
 
+    bool M_showShortcutsModal = false;
+    std::shared_ptr<ShortcutsModal> M_shortcutsModal;
 };
 
 
