@@ -8,6 +8,64 @@ namespace Termisprite
 {
 
 
+NewProjectModal::NewProjectModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
+    : M_editorCanvas( editorCanvas ), M_closeCallback( onClose )
+{
+    M_widthInput = std::to_string( 64 );
+    M_heightInput = std::to_string( 32 );
+
+    Add( ftxui::Container::Vertical({
+        ftxui::Container::Vertical({M_projectNameInputComponent, M_widthInputComponent, M_heightInputComponent }),
+        ftxui::Container::Horizontal({ M_cancelButton,  M_okButton})
+    }) );
+}
+
+
+ftxui::Element
+NewProjectModal::OnRender()
+{
+    using namespace ftxui;
+
+    auto form = vbox({
+        hbox({
+            text(" Project Name: ") | dim | vcenter,
+            M_projectNameInputComponent->Render() | border | size(WIDTH, EQUAL, 20)
+        }),
+        hbox({
+            text(" Width:  ") | dim | vcenter,
+            M_widthInputComponent->Render() | border | size(WIDTH, EQUAL, 10),
+            text(" px") | dim | vcenter
+        }),
+        hbox({
+            text(" Height: ") | dim | vcenter,
+            M_heightInputComponent->Render() | border | size(WIDTH, EQUAL, 10),
+            text(" px") | dim | vcenter
+        }),
+    });
+
+    auto buttons = hbox({
+        filler(),
+        M_cancelButton->Render(),
+        text(" "),
+        M_okButton->Render()
+    });
+
+    return vbox({
+        text(" New Project ") | bold | center,
+        separator(),
+        separatorEmpty(),
+        form | center,
+        separatorEmpty(),
+        buttons
+    }) | size(WIDTH, GREATER_THAN, 40)
+       | borderDouble
+       | bgcolor(Color::Black)
+       | clear_under;
+
+}
+
+
+
 ResizeModal::ResizeModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
     : M_editorCanvas( editorCanvas ), M_closeCallback( onClose )
 {
@@ -16,11 +74,47 @@ ResizeModal::ResizeModal( EditorCanvasComponent & editorCanvas, std::function<vo
     M_heightInput = std::to_string( height );
 
     Add( ftxui::Container::Vertical({
-        ftxui::Container::Horizontal({ M_widthInputComponent, M_heightInputComponent }),
-        ftxui::Container::Horizontal({ M_okButton, M_cancelButton })
+        ftxui::Container::Vertical({ M_widthInputComponent, M_heightInputComponent }),
+        ftxui::Container::Horizontal({ M_cancelButton,  M_okButton})
     }) );
 }
 
+ftxui::Element ResizeModal::OnRender()
+{
+    using namespace ftxui;
+
+    auto form = vbox({
+        hbox({
+            text(" Width:  ") | dim,
+            M_widthInputComponent->Render() | border | size(WIDTH, EQUAL, 10),
+            text(" px") | dim | vcenter
+        }),
+        hbox({
+            text(" Height: ") | dim,
+            M_heightInputComponent->Render() | border | size(WIDTH, EQUAL, 10),
+            text(" px") | dim | vcenter
+        }),
+    });
+
+    auto buttons = hbox({
+        filler(),
+        M_cancelButton->Render(),
+        text(" "),
+        M_okButton->Render()
+    });
+
+    return vbox({
+        text(" Resize Canvas ") | bold | center,
+        separator(),
+        separatorEmpty(),
+        form | center,
+        separatorEmpty(),
+        buttons
+    }) | size(WIDTH, GREATER_THAN, 35)
+       | borderDouble
+       | bgcolor(Color::Black)
+       | clear_under;
+}
 
 AboutModal::AboutModal( std::function<void()> onClose )
     : M_closeCallback( onClose )
@@ -81,42 +175,6 @@ ShortcutsModal::OnRender()
 
 
 
-ftxui::Element ResizeModal::OnRender()
-{
-    using namespace ftxui;
-
-    auto form = vbox({
-        hbox({
-            text(" Width:  ") | dim,
-            M_widthInputComponent->Render() | border | size(WIDTH, EQUAL, 10),
-            text(" px") | dim | vcenter
-        }),
-        hbox({
-            text(" Height: ") | dim,
-            M_heightInputComponent->Render() | border | size(WIDTH, EQUAL, 10),
-            text(" px") | dim | vcenter
-        }),
-    });
-
-    auto buttons = hbox({
-        filler(),
-        M_cancelButton->Render(),
-        text(" "),
-        M_okButton->Render()
-    });
-
-    return vbox({
-        text(" Resize Canvas ") | bold | center,
-        separator(),
-        separatorEmpty(),
-        form | center,
-        separatorEmpty(),
-        buttons
-    }) | size(WIDTH, GREATER_THAN, 35)
-       | borderDouble
-       | bgcolor(Color::Black)
-       | clear_under;
-}
 
 
 
@@ -125,9 +183,9 @@ Termisprite::Termisprite()
     M_editorCanvas = EditorCanvas( 64, 32 );
 
     M_menu = Menu({
-        { "File", {"New [Ctrl+N]", "Open [Ctrl+O]", "Save [Ctrl+S]", "Import [Ctrl+I]", "Export [Ctrl+E]" ,"Quit [Ctrl+Q]"}, [](int idx) {
+        { "File", {"New [Ctrl+N]", "Open [Ctrl+O]", "Save [Ctrl+S]", "Import [Ctrl+I]", "Export [Ctrl+E]" ,"Quit [Ctrl+Q]"}, [this](int idx) {
             switch (idx) {
-                case 0: /* New */ break;
+                case 0: M_showNewProjectModal = true; break;
                 case 1: /* Open */ break;
                 case 2: /* Save */ break;
                 case 3: exit(0); break;
@@ -183,6 +241,7 @@ Termisprite::Termisprite()
     M_colorSection = ColorSection( M_editorCanvas->currentState() );
     M_statusBar = StatusBar( M_editorCanvas->currentState() );
 
+    M_newProjectModal = std::make_shared<NewProjectModal>( *M_editorCanvas, [this]{ M_showNewProjectModal = false; });
     M_resizeModal = std::make_shared<ResizeModal>( *M_editorCanvas, [this]{ M_showResizeModal = false; });
     M_aboutModal = std::make_shared<AboutModal>( [this]{ M_showAboutModal = false; });
     M_shortcutsModal = std::make_shared<ShortcutsModal>( [this]{ M_showShortcutsModal = false; });
@@ -213,7 +272,8 @@ Termisprite::Termisprite()
         });
     });
 
-    M_masterComponent = ftxui::Modal(mainLayoutRenderer, M_resizeModal, &M_showResizeModal);
+    M_masterComponent = ftxui::Modal(mainLayoutRenderer, M_newProjectModal, &M_showNewProjectModal);
+    M_masterComponent |= ftxui::Modal(M_resizeModal, &M_showResizeModal);
     M_masterComponent |= ftxui::Modal(M_aboutModal, &M_showAboutModal);
     M_masterComponent |= ftxui::Modal(M_shortcutsModal, &M_showShortcutsModal);
 
@@ -231,6 +291,15 @@ Termisprite::OnRender()
 bool
 Termisprite::OnEvent( ftxui::Event event )
 {
+
+    if ( event == ftxui::Event::CtrlQ )
+        exit(0);
+
+    if ( event == ftxui::Event::CtrlN )
+    {
+        M_showNewProjectModal = true;
+        return true;
+    }
 
     if ( processClipboardEvents( event ) )
         return true;

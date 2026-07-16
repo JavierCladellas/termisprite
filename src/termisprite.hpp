@@ -13,6 +13,35 @@
 namespace Termisprite
 {
 
+class NewProjectModal
+    : public ftxui::ComponentBase
+{
+public:
+    NewProjectModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose);
+
+    ftxui::Element OnRender() override;
+
+private:
+    EditorCanvasComponent & M_editorCanvas;
+    std::function<void()> M_closeCallback;
+
+    std::string M_projectNameInput = "";
+    std::string M_widthInput;
+    std::string M_heightInput;
+
+    ftxui::Component M_projectNameInputComponent = ftxui::Input(&M_projectNameInput, "Project Name");
+    ftxui::Component M_widthInputComponent = ftxui::Input(&M_widthInput, "Width");
+    ftxui::Component M_heightInputComponent = ftxui::Input(&M_heightInput, "Height");
+
+    ftxui::Component M_okButton = ftxui::Button("OK", [this] {
+        M_editorCanvas.clear();
+        M_editorCanvas.resize(std::stoi(M_widthInput), std::stoi(M_heightInput));
+        M_closeCallback();
+    });
+    ftxui::Component M_cancelButton = ftxui::Button("Cancel", [this] { M_closeCallback(); });
+
+};
+
 
 class ResizeModal
     : public ftxui::ComponentBase
@@ -96,6 +125,9 @@ private:
     std::shared_ptr<ToolsComponent> M_tools;
     std::shared_ptr<ColorSectionComponent> M_colorSection;
     std::shared_ptr<StatusBarComponent> M_statusBar;
+
+    bool M_showNewProjectModal = false;
+    std::shared_ptr<NewProjectModal> M_newProjectModal;
 
     bool M_showResizeModal = false;
     std::shared_ptr<ResizeModal> M_resizeModal;
