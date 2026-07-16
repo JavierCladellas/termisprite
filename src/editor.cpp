@@ -257,7 +257,7 @@ EditorCanvasComponent::processClipboardEvents( ftxui::Event event )
         return true;
     }
 
-    if ( event == ftxui::Event::CtrlV || event == ftxui::Event::Character('v') )
+    if ( event == ftxui::Event::CtrlV || event == ftxui::Event::Character('p') )
     {
         if ( !M_currentState.clipboard.hasData ) return false;
 
