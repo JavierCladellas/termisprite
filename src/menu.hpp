@@ -21,16 +21,7 @@ public:
         ftxui::ComponentBase::Add( M_button );
     }
 
-    ftxui::Element OnRender() override
-    {
-        return M_button->Render();
-    }
-
-
-    bool OnEvent( ftxui::Event event ) override
-    {
-        return M_button->OnEvent( event );
-    }
+    ftxui::Element OnRender() override;
 
 private:
     std::string M_label;
@@ -38,51 +29,23 @@ private:
     ftxui::Component M_button;
 };
 
-ftxui::Component MenuItem( std::string const& label, std::function<void()> onClick = [](){} )
-{
-    auto menuItem = std::make_shared<MenuItemBase>( label, onClick );
-    return menuItem;
-}
-
+ftxui::Component MenuItem( std::string const& label, std::function<void()> onClick = [](){} );
 
 
 class MenuComponent
     : public ftxui::ComponentBase
 {
 public:
-    MenuComponent()
-    {
-        M_menuContainer = ftxui::Container::Horizontal({
-            MenuItem("File"),
-            MenuItem("Edit"),
-            MenuItem("Canvas"),
-            MenuItem("View"),
-            MenuItem("Tools"),
-            MenuItem("Help")
-        } );
+    MenuComponent();
 
-        ftxui::ComponentBase::Add( M_menuContainer );
-    };
-
-    ftxui::Element OnRender() override
-    {
-        return M_menuContainer->Render() | ftxui::xflex;
-    }
-
-    bool OnEvent( ftxui::Event event ) override
-    {
-        return M_menuContainer->OnEvent( event );
-    }
+    ftxui::Element OnRender() override;
 
 private:
     ftxui::Component M_menuContainer;
 };
 
 
-ftxui::Component Menu()
-{
-    return std::make_shared<MenuComponent>();
-}
+std::shared_ptr<MenuComponent> Menu();
 
 
 }

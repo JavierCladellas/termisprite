@@ -1,15 +1,11 @@
 //!
 
-#include "editor.hpp"
-#include "tools.hpp"
-#include "colorpicker.hpp"
-#include "menu.hpp"
-#include "statusbar.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 
+#include "termisprite.hpp"
 
 // struct PixelInfo
 // {
@@ -173,120 +169,9 @@ int main( int argc, char** argv )
     screen.ForceHandleCtrlZ(false);
     screen.ForceHandleCtrlC(true);
 
-    auto menu = Termisprite::Menu();
-    auto editorCanvas = Termisprite::EditorCanvas( 64, 32 );
+    auto termispriteApp = std::make_shared<Termisprite::Termisprite>();
 
-    auto toolsSection = Termisprite::ToolsSection( editorCanvas->currentState() );
-    auto colorSection = Termisprite::ColorSection( editorCanvas->currentState() );
-
-    Component toolsContainer = Container::Vertical({ toolsSection, colorSection });
-
-    Component statusBar = Termisprite::StatusBar( editorCanvas->currentState() );
-
-    Component masterContainer = Container::Vertical({
-        menu,
-        Container::Horizontal({
-            editorCanvas,
-            toolsContainer
-        }),
-        statusBar
-    });
-
-    auto layout = Renderer( masterContainer, [&]() {
-        return vbox( {
-            menu->Render(),
-            ftxui::separatorEmpty(),
-            hbox({
-                vbox({
-                    editorCanvas->Render(),
-                    filler()
-                }) | flex,
-                vbox({
-                    toolsSection->Render(),
-                    colorSection->Render()
-                })
-            }),
-            filler(),
-            statusBar->Render()
-        } );
-
-    } );
-
-
-    screen.Loop(layout);
-
-
-
-#if 0
-
-    // ====== BRUSHES ========= //
-    int selectedBrush = 0;
-    std::vector<std::string> brushes = { "█","▓","▒","░"," "};
-
-    Component brushSelector = RadioSelector( &brushes, &selectedBrush, "Brushes" );
-    //=======================================//
-
-    //========== COLORS ==================//
-
-    ftxui::Color activeColor = ftxui::Color::White; // State to hold the current color
-    auto colorPicker = ColorPicker(&activeColor);
-
-    // ======= EDITOR CANVAS ============= //
-    auto editorCanvas = std::make_shared<EditorCanvas>( true, true );
-
-    // ====== EDITOR ========= //
-
-
-    Component toolsContainer = Container::Vertical({ brushSelector, colorPicker });
-
-    // Create the side panel renderer with a live preview
-    auto sidePanelRenderer = Renderer(toolsContainer, [&]() {
-        return vbox({
-            brushSelector->Render(),
-            window(text(" TrueColors: 24bits "), vbox({
-                colorPicker->Render(),
-                separator(),
-                // Live preview block
-                text("   PREVIEW   ") 
-                    | bold 
-                    | center 
-                    | bgcolor(activeColor)
-                    | color(Color::White) // Adjust contrast if needed
-            }))
-        });
-    });
-    Component editorContainer = Container::Horizontal( { editorCanvas, sidePanelRenderer } );
-
-    //=======================================//
-
-    //================== TABS ==================
-    int selectedTab = 0;
-    std::vector<std::string> inputTabs = { "Editor" };
-
-    Component tabsMenu = Menu( &inputTabs, &selectedTab );
-
-    Component tabsContainer = Container::Tab( { editorContainer }, &selectedTab );
-
-    //=======================================//
-
-    Component masterContainer = Container::Horizontal({ tabsMenu, tabsContainer });
-
-    auto layout = Renderer( masterContainer, [&tabsMenu, &tabsContainer, editorCanvas, &brushes, &selectedBrush, &activeColor]() {
-
-        editorCanvas->setBrush( brushes[selectedBrush] );
-        editorCanvas->setColor( activeColor );
-
-        return vbox( {
-            tabsMenu->Render(),
-            separator(),
-            tabsContainer->Render() | flex
-        } );
-    } );
-
-
-    screen.Loop(layout);
-
-#endif
+    screen.Loop(termispriteApp);
 
     return 0;
 }

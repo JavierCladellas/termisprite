@@ -35,7 +35,7 @@ private:
 };
 
 
-ftxui::Component StatusBar( EditorState & editorState );
+std::shared_ptr<StatusBarComponent> StatusBar( EditorState & editorState );
 
 
 }

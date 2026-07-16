@@ -97,7 +97,7 @@ StatusBarComponent::OnRender()
 }
 
 
-ftxui::Component StatusBar( EditorState & editorState )
+std::shared_ptr<StatusBarComponent> StatusBar( EditorState & editorState )
 {
     return std::make_shared<StatusBarComponent>( editorState );
 }
