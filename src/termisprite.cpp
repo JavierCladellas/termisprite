@@ -18,7 +18,7 @@ Termisprite::Termisprite()
 
     M_masterComponent = ftxui::Container::Vertical({
         M_menu,
-        ftxui::Container::Horizontal({ M_editorCanvas, M_tools }),
+        ftxui::Container::Horizontal({ M_editorCanvas, toolsContainer }),
         M_statusBar
     });
 

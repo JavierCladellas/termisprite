@@ -11,7 +11,7 @@ ColorPickerComponent::OnRender()
     const int valueIncrement = 8;
     const int hueIncrement = 6;
 
-    int current_y = 0;
+    int currentY = 0;
 
     ftxui::Elements gridRows;
 
