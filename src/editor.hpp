@@ -109,8 +109,8 @@ public:
     void resize( int width, int height ) { M_width = width; M_height = height; M_sprite.resize( width, height ); saveState(); }
 
     //TODO: Implement flipVertical and flipHorizontal in Sprite class
-    void flipVertical() { std::reverse( M_sprite.begin(), M_sprite.end() ); saveState(); }
-    void flipHorizontal() { for ( auto & row : M_sprite ) std::reverse( row.begin(), row.end() ); saveState(); }
+    void flipVertical() { M_sprite.flipVertical(); saveState(); }
+    void flipHorizontal() { M_sprite.flipHorizontal(); saveState(); }
 
     void undo() { M_spriteHistory.undo( M_sprite ); }
     void redo() { M_spriteHistory.redo( M_sprite ); }
