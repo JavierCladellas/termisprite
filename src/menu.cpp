@@ -82,8 +82,13 @@ bool MenuComponent::OnEvent( ftxui::Event event )
                         }
                     }
 
-                    if ( !clickedOtherButton ) M_activeDropdown = -1;
-                    else return true;
+                    if ( !clickedOtherButton )
+                    {
+                        M_activeDropdown = -1;
+                        return false;
+                    }
+                    else
+                        return true;
                 }
             }
         }
