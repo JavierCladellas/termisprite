@@ -80,13 +80,12 @@ Termisprite::Termisprite()
                 case 2: M_editorCanvas->clear(); break;
             }
         }},
-        { "Canvas", {"Resize", "Flip Vertical", "Flip Horizontal", "Rotate 90°"}, [this](int idx) {
+        { "Canvas", {"Resize", "Flip Vertical", "Flip Horizontal"}, [this](int idx) {
             switch (idx)
             {
                 case 0: M_showResizeModal = true; break;
-                case 1: break;
-                case 2: break;
-                case 3: break;
+                case 1: M_editorCanvas->flipVertical(); break;
+                case 2: M_editorCanvas->flipHorizontal(); break;
             }
         }},
         { "View", { "Zoom In", "Zoom Out", "Toggle Grid [G]", "Toggle Pan"}, [this](int idx) {

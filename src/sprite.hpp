@@ -41,6 +41,18 @@ public:
     void clear() { M_grid.assign(M_height, std::vector<Pixel>(M_width)); };
     void resize( int width, int height );
 
+    void flipVertical()
+    {
+        std::reverse( M_grid.begin(), M_grid.end() );
+    }
+
+    void flipHorizontal()
+    {
+        for ( auto & row : M_grid )
+            std::reverse( row.begin(), row.end() );
+    }
+
+
 private:
     int M_width, M_height;
     GridData M_grid;
