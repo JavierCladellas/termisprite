@@ -105,13 +105,38 @@ EditorCanvasComponent::OnRender()
                               | ftxui::size( ftxui::WIDTH, ftxui::EQUAL, M_width + 1 )
                               | ftxui::size( ftxui::HEIGHT, ftxui::EQUAL, M_height + 2 );
 
+
+    //------------Build axis--------- (refactor into another method)
+    ftxui::Elements xAxis = {ftxui::text("─")};
+
+    for ( int i = 0; i < M_width+1; ++i )
+        xAxis.push_back(ftxui::text("─"));
+
+    xAxis.push_back(ftxui::text("►"));
+    xAxis.push_back(ftxui::text(std::to_string(M_width) + "px"));
+
+
+    ftxui::Elements yAxis = {ftxui::text(std::to_string(M_height) + "px ▲ ")};
+    for (int i = 0; i < M_height+1; ++i )
+        yAxis.push_back(ftxui::text("│ ") | ftxui::align_right);
+
+    yAxis.push_back(ftxui::text("─┼─") | ftxui::align_right);
+
+    auto axisColor = ftxui::Color::GrayDark; //TODO: Use palette
+    ftxui::Element canvasWithAxes = ftxui::hbox({
+        ftxui::vbox(std::move(yAxis)) | ftxui::color(axisColor),
+        ftxui::vbox({ canvas, ftxui::hbox(std::move(xAxis)) | ftxui::color(axisColor) })
+    });
+    //-----------------------------//
+
+
     if ( M_showRightClickModal )
     {
         ftxui::Element modal = ftxui::window( ftxui::text(" Options "), M_rightClickModal->Render() )
                              | ftxui::clear_under
                              | ftxui::reflect( M_rightClickModalBox );
 
-        ftxui::Element positioned_modal = ftxui::vbox({
+        ftxui::Element positionedModal = ftxui::vbox({
             ftxui::text("") | ftxui::size(ftxui::HEIGHT, ftxui::EQUAL, M_modalY),
             ftxui::hbox({
                 ftxui::text("") | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, M_modalX),
@@ -119,16 +144,12 @@ EditorCanvasComponent::OnRender()
             })
         });
 
-        return ftxui::dbox({ canvas, positioned_modal });
+        return ftxui::dbox({ canvasWithAxes, positionedModal });
     }
 
-    return canvas;
+    return canvasWithAxes;
 
 
-    return ftxui::vbox( std::move( rows ) ) | ftxui::reflect( M_box )
-                                            | ftxui::border
-                                            | ftxui::size( ftxui::WIDTH, ftxui::EQUAL, M_width + 1 )
-                                            | ftxui::size( ftxui::HEIGHT, ftxui::EQUAL, M_height + 2 );
 }
 
 bool
