@@ -12,8 +12,6 @@ namespace Termisprite
 NewProjectModal::NewProjectModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
     : M_editorCanvas( editorCanvas ), M_closeCallback( onClose )
 {
-    M_widthInput = std::to_string( 32 );
-    M_heightInput = std::to_string( 32 );
 
     Add( ftxui::Container::Vertical({
         ftxui::Container::Vertical({M_projectNameInputComponent, M_widthInputComponent, M_heightInputComponent }),
@@ -71,8 +69,15 @@ NewProjectModal::OnEvent( ftxui::Event event )
 {
     if ( event == ftxui::Event::Return )
     {
+        if ( M_widthInput.empty() )
+            M_widthInput = "32";
+        if ( M_heightInput.empty() )
+            M_heightInput = "32";
         M_editorCanvas.clear();
         M_editorCanvas.resize(std::stoi(M_widthInput), std::stoi(M_heightInput));
+        M_projectNameInput = "";
+        M_widthInput = "";
+        M_heightInput = "";
         M_closeCallback();
         return true;
     }
@@ -102,10 +107,25 @@ NewProjectModal::OnEvent( ftxui::Event event )
 ResizeModal::ResizeModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
     : M_editorCanvas( editorCanvas ), M_closeCallback( onClose )
 {
-    auto [width, height] = editorCanvas.size();
-    M_widthInput = std::to_string( width );
-    M_heightInput = std::to_string( height );
+    auto [width, height] = M_editorCanvas.size();
+    M_placeholderWidth = std::to_string(width);
+    M_placeholderHeight = std::to_string(height);
+    M_widthInputComponent = ftxui::Input(&M_widthInput, &M_placeholderWidth);
+    M_heightInputComponent = ftxui::Input(&M_heightInput, &M_placeholderHeight);
 
+    M_okButton = ftxui::Button("OK", [this] {
+        auto [width, height] = M_editorCanvas.size();
+        M_placeholderWidth = std::to_string(width);
+        M_placeholderHeight = std::to_string(height);
+        if ( !M_widthInput.empty() )
+            M_placeholderWidth = M_widthInput;
+        if ( !M_heightInput.empty() )
+            M_placeholderHeight = M_heightInput;
+        M_editorCanvas.resize(std::stoi(M_placeholderWidth), std::stoi(M_placeholderHeight));
+        M_widthInput = "";
+        M_heightInput = "";
+        M_closeCallback();
+    });
     Add( ftxui::Container::Vertical({
         ftxui::Container::Vertical({ M_widthInputComponent, M_heightInputComponent }),
         ftxui::Container::Horizontal({ M_cancelButton,  M_okButton})
@@ -153,9 +173,19 @@ ftxui::Element ResizeModal::OnRender()
 bool
 ResizeModal::OnEvent( ftxui::Event event )
 {
+
+    auto [width, height] = M_editorCanvas.size();
+    M_placeholderWidth = std::to_string(width);
+    M_placeholderHeight = std::to_string(height);
     if ( event == ftxui::Event::Return )
     {
-        M_editorCanvas.resize(std::stoi(M_widthInput), std::stoi(M_heightInput));
+        if ( !M_widthInput.empty() )
+            M_placeholderWidth = M_widthInput;
+        if ( !M_heightInput.empty() )
+            M_placeholderHeight = M_heightInput;
+        M_editorCanvas.resize(std::stoi(M_placeholderWidth), std::stoi(M_placeholderHeight));
+        M_widthInput = "";
+        M_heightInput = "";
         M_closeCallback();
         return true;
     }

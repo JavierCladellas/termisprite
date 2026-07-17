@@ -31,12 +31,19 @@ private:
     std::string M_heightInput;
 
     ftxui::Component M_projectNameInputComponent = ftxui::Input(&M_projectNameInput, "Project Name");
-    ftxui::Component M_widthInputComponent = ftxui::Input(&M_widthInput, "Width");
-    ftxui::Component M_heightInputComponent = ftxui::Input(&M_heightInput, "Height");
+    ftxui::Component M_widthInputComponent = ftxui::Input(&M_widthInput, "32");
+    ftxui::Component M_heightInputComponent = ftxui::Input(&M_heightInput, "32");
 
     ftxui::Component M_okButton = ftxui::Button("OK", [this] {
+        if ( M_widthInput.empty() )
+            M_widthInput = "32";
+        if ( M_heightInput.empty() )
+            M_heightInput = "32";
         M_editorCanvas.clear();
         M_editorCanvas.resize(std::stoi(M_widthInput), std::stoi(M_heightInput));
+        M_projectNameInput = "";
+        M_widthInput = "";
+        M_heightInput = "";
         M_closeCallback();
     });
     ftxui::Component M_cancelButton = ftxui::Button("Cancel", [this] { M_closeCallback(); });
@@ -59,16 +66,15 @@ private:
     EditorCanvasComponent & M_editorCanvas;
     std::function<void()> M_closeCallback;
 
+    std::string M_placeholderWidth;
+    std::string M_placeholderHeight;
     std::string M_widthInput;
     std::string M_heightInput;
 
-    ftxui::Component M_widthInputComponent = ftxui::Input(&M_widthInput, "Width");
-    ftxui::Component M_heightInputComponent = ftxui::Input(&M_heightInput, "Height");
+    ftxui::Component M_widthInputComponent;
+    ftxui::Component M_heightInputComponent;
 
-    ftxui::Component M_okButton = ftxui::Button("OK", [this] {
-        M_editorCanvas.resize(std::stoi(M_widthInput), std::stoi(M_heightInput));
-        M_closeCallback();
-    });
+    ftxui::Component M_okButton;
     ftxui::Component M_cancelButton = ftxui::Button("Cancel", [this] { M_closeCallback(); });
 
     ftxui::Box M_box;
