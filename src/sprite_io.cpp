@@ -54,6 +54,24 @@ bool SpriteImporter::importImage(const std::string& filepath, Sprite& targetSpri
     return true;
 }
 
+bool
+SpriteExporter::exportProject( std::string const& filepath,
+                               std::string const& projectName,
+                               Sprite const& targetSprite,
+                               EditorState const& editorState )
+{
+    //TODO:
+    return true;
+}
+
+
+bool
+SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSprite, ExportFormat format )
+{
+    //TODO
+    return true;
+}
+
 
 
 }

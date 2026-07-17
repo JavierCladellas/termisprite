@@ -1,5 +1,6 @@
 #pragma once
 
+#include "editor.hpp"
 #include "sprite.hpp"
 #include <string>
 
@@ -22,8 +23,22 @@ class SpriteExporter
 public:
     SpriteExporter() = default;
 
-    static bool exportProject( std::string const& projectName, Sprite & targetSprite );
+    static bool
+    exportProject( std::string const& filepath,
+                   std::string const& projectName,
+                   Sprite const& targetSprite,
+                   EditorState const& editorState );
 
+    enum class ExportFormat
+    {
+        PNG,
+        JPG,
+        ASCII
+    };
+    static bool
+    exportImage( std::string const& filepath, Sprite const& targetSprite, ExportFormat format = ExportFormat::PNG );
+
+private:
 };
 
 
