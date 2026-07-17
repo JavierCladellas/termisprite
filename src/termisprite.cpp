@@ -269,8 +269,30 @@ ShortcutsModal::OnRender()
 }
 
 
+//TODO: Impl closing on esc or outside click (refactored with other modals)
+BackgroundColorModal::BackgroundColorModal( EditorState & editorState, std::function<void()> onClose )
+    : M_closeCallback( onClose )
+{
+    M_colorPicker = ColorPicker( editorState.backgroundColor );
+    M_closeButton = ftxui::Button("Close", [this] { M_closeCallback(); });
 
+    Add( ftxui::Container::Vertical({ M_colorPicker, M_closeButton }) );
+}
 
+ftxui::Element BackgroundColorModal::OnRender()
+{
+    using namespace ftxui;
+    return vbox({
+        text(" Canvas Background Color ") | bold | center,
+        separator(),
+        M_colorPicker->Render(),
+        separatorEmpty(),
+        M_closeButton->Render() | center
+    }) | size(WIDTH, GREATER_THAN, 40)
+       | borderDouble
+       | bgcolor(Color::Black)
+       | clear_under;
+}
 
 
 Termisprite::Termisprite()
@@ -296,12 +318,13 @@ Termisprite::Termisprite()
                 case 2: M_editorCanvas->clear(); break;
             }
         }},
-        { "Canvas", {"Resize [H]", "Flip Vertical", "Flip Horizontal"}, [this](int idx) {
+        { "Canvas", {"Resize [H]", "Flip Vertical", "Flip Horizontal", "Background"}, [this](int idx) {
             switch (idx)
             {
                 case 0: M_showResizeModal = true; break;
                 case 1: M_editorCanvas->flipVertical(); break;
                 case 2: M_editorCanvas->flipHorizontal(); break;
+                case 3: M_showBackgroundColorModal = true; break;
             }
         }},
         { "View", { "Zoom In", "Zoom Out", "Toggle Grid [g]", "Toggle Checkerboard [G]","Toggle Pan [M]"}, [this](int idx) {
@@ -349,6 +372,9 @@ Termisprite::Termisprite()
     M_aboutModal = std::make_shared<AboutModal>( [this]{ M_showAboutModal = false; });
     M_shortcutsModal = std::make_shared<ShortcutsModal>( [this]{ M_showShortcutsModal = false; });
 
+    M_editorCanvas->onBackgroundChangeRequested = [this] { M_showBackgroundColorModal = true; };
+    M_backgroundColorModal = std::make_shared<BackgroundColorModal>( M_editorCanvas->currentState(), [this]{ M_showBackgroundColorModal = false; });
+
     ftxui::Component toolsContainer = ftxui::Container::Vertical({ M_tools, M_colorSection });
     ftxui::Component baseContainer = ftxui::Container::Vertical({
         M_menu,
@@ -379,6 +405,7 @@ Termisprite::Termisprite()
     M_masterComponent |= ftxui::Modal(M_resizeModal, &M_showResizeModal);
     M_masterComponent |= ftxui::Modal(M_aboutModal, &M_showAboutModal);
     M_masterComponent |= ftxui::Modal(M_shortcutsModal, &M_showShortcutsModal);
+    M_masterComponent |= ftxui::Modal(M_backgroundColorModal, &M_showBackgroundColorModal);
 
     ftxui::ComponentBase::Add(M_masterComponent);
 }

@@ -58,7 +58,7 @@ ColorPickerComponent::OnEvent( ftxui::Event event )
                 int hue = selectedX * 6;
                 int value = selectedY * 16;
 
-                M_editorState.color = ftxui::Color::HSV(hue, M_saturation, value);
+                M_targetColor = ftxui::Color::HSV(hue, M_saturation, value);
 
 
                 return true;
@@ -71,11 +71,10 @@ ColorPickerComponent::OnEvent( ftxui::Event event )
 
 
 std::shared_ptr<ColorPickerComponent>
-ColorPicker( EditorState & editorState )
+ColorPicker( ftxui::Color & targetColor )
 {
-    return std::make_shared<ColorPickerComponent>( editorState );
+    return std::make_shared<ColorPickerComponent>( targetColor );
 }
-
 
 
 ftxui::Element

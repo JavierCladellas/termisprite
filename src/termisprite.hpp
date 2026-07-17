@@ -108,6 +108,18 @@ private:
     ftxui::Component M_closeButton;
 };
 
+class BackgroundColorModal
+    : public ftxui::ComponentBase
+{
+public:
+    BackgroundColorModal( EditorState & editorState, std::function<void()> onClose );
+    ftxui::Element OnRender() override;
+
+private:
+    std::function<void()> M_closeCallback;
+    std::shared_ptr<ColorPickerComponent> M_colorPicker;
+    ftxui::Component M_closeButton;
+};
 
 
 class Termisprite
@@ -149,6 +161,10 @@ private:
 
     bool M_showShortcutsModal = false;
     std::shared_ptr<ShortcutsModal> M_shortcutsModal;
+
+    bool M_showBackgroundColorModal = false;
+    std::shared_ptr<BackgroundColorModal> M_backgroundColorModal;
+
 };
 
 

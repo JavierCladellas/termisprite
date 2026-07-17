@@ -53,6 +53,7 @@ struct EditorState
 {
     std::string brush = "█";
     ftxui::Color color = ftxui::Color::White;
+    ftxui::Color backgroundColor = ftxui::Color::Black;
     ToolType toolType = ToolType::DRAW;
     std::vector<ftxui::Color> palette;
 
@@ -140,6 +141,8 @@ public:
     void clear();
     void deleteSelection();
 
+    std::function<void()> onBackgroundChangeRequested;
+
 private:
 
     std::pair<int,int> screenToWorld(int screenX, int screenY) const;
@@ -212,7 +215,7 @@ private:
     ftxui::Box M_rightClickModalBox;
     bool M_showRightClickModal = false;
     int M_rightClickModalIndex = 0;
-    std::vector<std::string> M_rightClickModalOptions = { "Grid [g]", "Checkerboard [G]", "Undo [u]", "Redo [Ctrl+r]", "Clear [Ctrl+d]", "Cancel [Esc]" };
+    std::vector<std::string> M_rightClickModalOptions = { "Background", "Grid [g]", "Checkerboard [G]", "Undo [u]", "Redo [Ctrl+r]", "Clear [Ctrl+d]", "Cancel [Esc]" };
     ftxui::Component M_rightClickModal = ftxui::Menu(&M_rightClickModalOptions, &M_rightClickModalIndex);
 
 };

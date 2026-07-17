@@ -17,8 +17,8 @@ namespace Termisprite
 class ColorPickerComponent : public ftxui::ComponentBase
 {
 public:
-    ColorPickerComponent( EditorState & editorState )
-        : M_editorState( editorState )
+    ColorPickerComponent( ftxui::Color & targetColor )
+        : M_targetColor( targetColor )
     {
         M_saturationSlider = ftxui::Slider(" Saturation:", &M_saturation, 0, 255, 1) | ftxui::color(ftxui::Color::White);
         ftxui::ComponentBase::Add(M_saturationSlider);
@@ -29,7 +29,7 @@ public:
 
 
 private:
-    EditorState & M_editorState;
+    ftxui::Color & M_targetColor;
 
     int M_saturation = 255;
     ftxui::Component M_saturationSlider;
@@ -38,7 +38,7 @@ private:
 };
 
 
-std::shared_ptr<ColorPickerComponent> ColorPicker( EditorState & editorState );
+std::shared_ptr<ColorPickerComponent> ColorPicker( ftxui::Color & targetColor );
 
 
 class ColorPaletteComponent
@@ -70,7 +70,7 @@ class ColorSectionComponent
 public:
     ColorSectionComponent( EditorState & editorState )
         : M_editorState( editorState ),
-          M_colorPicker( ColorPicker( editorState ) ),
+          M_colorPicker( ColorPicker( editorState.color ) ),
           M_colorPalette( ColorPalette( editorState ) )
     {
         ftxui::ComponentBase::Add( M_colorPicker );

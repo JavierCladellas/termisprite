@@ -111,7 +111,12 @@ EditorCanvasComponent::OnRender()
                     cellR |= ftxui::bgcolor( ftxui::Color::Black );
                 }
             }
-            
+            else
+            {
+                cellL |= ftxui::bgcolor( M_currentState.backgroundColor );
+                cellR |= ftxui::bgcolor( M_currentState.backgroundColor );
+            }
+
             // Only draw the cursor if it is actually hovering over a real canvas pixel
             if ( !isOutOfBounds && M_showCursor && worldX == M_cursorX && worldY == M_cursorY )
             {
@@ -769,7 +774,7 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
     {
         bool handled = M_rightClickModal->OnEvent( event );
 
-        bool execute_action = ( event == ftxui::Event::Return || event == ftxui::Event::Character('\n') );
+        bool executeAction = ( event == ftxui::Event::Return || event == ftxui::Event::Character('\n') );
 
         if ( event.is_mouse() )
         {
@@ -777,7 +782,7 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
             if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Pressed )
             {
                 if ( M_rightClickModalBox.Contain( mouse.x, mouse.y ) )
-                    execute_action = true;
+                    executeAction = true;
                 else
                 {
                     M_showRightClickModal = false;
@@ -794,15 +799,17 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
             }
         }
 
-        if ( execute_action )
+        if ( executeAction )
         {
             switch ( M_rightClickModalIndex )
             {
-                case 0: M_showPointGrid = !M_showPointGrid; break;
-                case 1: M_showCheckerboardGrid = !M_showCheckerboardGrid; break;
-                case 2: this->undo(); break;
-                case 3: this->redo(); break;
-                case 4: this->clear(); break;
+                //TODO: Use enums
+                case 0: if ( onBackgroundChangeRequested ) onBackgroundChangeRequested(); break;
+                case 1: M_showPointGrid = !M_showPointGrid; break;
+                case 2: M_showCheckerboardGrid = !M_showCheckerboardGrid; break;
+                case 3: this->undo(); break;
+                case 4: this->redo(); break;
+                case 5: this->clear(); break;
                 default: break;
             }
             M_showRightClickModal = false;
