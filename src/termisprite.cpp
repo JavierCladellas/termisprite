@@ -1,3 +1,4 @@
+#include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/dom/elements.hpp>
 
@@ -298,20 +299,28 @@ ImportModal::ImportModal( EditorCanvasComponent & editorCanvas, std::function<vo
     : M_editorCanvas( editorCanvas ), M_closeCallback( onClose )
 {
     M_okButton = ftxui::Button("Import", [this] {
-        if (!M_filepathInput.empty()) {
-            M_editorCanvas.importImage(M_filepathInput);
-        }
+        if ( M_targetWidthInput.empty() )
+            M_targetWidthInput = "64";
+        if ( M_targetHeightInput.empty() )
+            M_targetHeightInput = "64";
+        if (!M_filepathInput.empty())
+            M_editorCanvas.importImage(M_filepathInput,std::stoi(M_targetWidthInput), std::stoi(M_targetHeightInput));
         M_filepathInput = "";
+        M_targetWidthInput = "";
+        M_targetHeightInput = "";
         M_closeCallback();
     });
 
     M_cancelButton = ftxui::Button("Cancel", [this] {
         M_filepathInput = "";
+        M_targetWidthInput = "";
+        M_targetHeightInput = "";
         M_closeCallback();
     });
 
     Add( ftxui::Container::Vertical({
         M_filepathInputComponent,
+        ftxui::Container::Horizontal({ M_targetWidthInputComponent, M_targetHeightInputComponent }),
         ftxui::Container::Horizontal({ M_cancelButton,  M_okButton})
     }) );
 }
@@ -328,6 +337,13 @@ ftxui::Element ImportModal::OnRender()
             M_filepathInputComponent->Render() | border | size(WIDTH, EQUAL, 30)
         }) | center,
         separatorEmpty(),
+        hbox({
+            M_targetWidthInputComponent->Render() | border | size(WIDTH, EQUAL, 10),
+            text(" px") | dim | vcenter,
+            text(" x ") | dim | vcenter,
+            M_targetHeightInputComponent->Render() | border | size(WIDTH, EQUAL, 10),
+            text(" px") | dim | vcenter
+        }) | center,
         hbox({ filler(), M_cancelButton->Render(), text(" "), M_okButton->Render() })
     }) | reflect(M_box)
        | size(WIDTH, GREATER_THAN, 45)
@@ -341,14 +357,23 @@ ImportModal::OnEvent( ftxui::Event event )
 {
     if ( event == ftxui::Event::Return )
     {
-        if (!M_filepathInput.empty()) M_editorCanvas.importImage(M_filepathInput);
+        if ( M_targetWidthInput.empty() )
+            M_targetWidthInput = "64";
+        if ( M_targetHeightInput.empty() )
+            M_targetHeightInput = "64";
+        if (!M_filepathInput.empty())
+            M_editorCanvas.importImage(M_filepathInput,std::stoi(M_targetWidthInput), std::stoi(M_targetHeightInput));
         M_filepathInput = "";
+        M_targetWidthInput = "";
+        M_targetHeightInput = "";
         M_closeCallback();
         return true;
     }
     if ( event == ftxui::Event::Escape )
     {
         M_filepathInput = "";
+        M_targetWidthInput = "";
+        M_targetHeightInput = "";
         M_closeCallback();
         return true;
     }
@@ -358,17 +383,13 @@ ImportModal::OnEvent( ftxui::Event event )
         if ( !M_box.Contain( event.mouse().x, event.mouse().y ) )
         {
             M_filepathInput = "";
+            M_targetWidthInput = "";
+            M_targetHeightInput = "";
             M_closeCallback();
             return true;
         }
     }
-    if ( event.is_character() )
-    {
-        M_filepathInputComponent->OnEvent(event);
-        return true;
-    }
-    else
-        return ftxui::ComponentBase::OnEvent( event );
+    return ftxui::ComponentBase::OnEvent( event );
 }
 
 Termisprite::Termisprite()

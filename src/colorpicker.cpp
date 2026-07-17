@@ -125,7 +125,7 @@ ColorPaletteComponent::OnRender()
     return ftxui::vbox({
         ftxui::text( " Palette " ),
         M_container->Render()
-    });
+    }) | ftxui::size( ftxui::HEIGHT, ftxui::LESS_THAN, 6  );
 }
 
 

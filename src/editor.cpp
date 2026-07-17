@@ -1,5 +1,5 @@
 #include "editor.hpp"
-#include "import.hpp"
+#include "sprite_io.hpp"
 #include <cmath>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -183,9 +183,12 @@ EditorCanvasComponent::OnRender()
 }
 
 void
-EditorCanvasComponent::importImage(const std::string& filepath)
+EditorCanvasComponent::importImage( std::string const& filepath, int targetWidth, int targetHeight)
 {
-    if ( SpriteImporter::importImage( filepath, M_sprite, M_width, M_height ) )
+    int newWidth = (targetWidth > 0) ? targetWidth : M_width;
+    int newHeight = (targetHeight > 0) ? targetHeight : M_height;
+    this->resize(newWidth, newHeight);
+    if ( SpriteImporter::importImage( filepath, M_sprite, newWidth, newHeight ) )
         saveState();
 }
 

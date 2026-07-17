@@ -143,7 +143,7 @@ public:
 
     std::function<void()> onBackgroundChangeRequested;
 
-    void importImage( std::string const& filepath );
+    void importImage( std::string const& filepath, int targetWidth = -1 , int targetHeight = -1 );
 
 private:
 

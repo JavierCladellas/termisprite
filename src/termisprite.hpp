@@ -135,6 +135,11 @@ private:
     std::function<void()> M_closeCallback;
 
     std::string M_filepathInput = "";
+    std::string M_targetWidthInput = "";
+    std::string M_targetHeightInput = "";
+
+    ftxui::Component M_targetWidthInputComponent = ftxui::Input(&M_targetWidthInput, "64");
+    ftxui::Component M_targetHeightInputComponent = ftxui::Input(&M_targetHeightInput, "64");
     ftxui::Component M_filepathInputComponent = ftxui::Input(&M_filepathInput, "path/to/image.png");
 
     ftxui::Component M_okButton;
