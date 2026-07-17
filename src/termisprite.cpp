@@ -281,7 +281,12 @@ Termisprite::Termisprite()
                 case 1: /* Zoom Out */ break;
                 case 2: M_editorCanvas->toggleGrid(); break;
                 case 3: M_editorCanvas->toggleCheckerboardGrid(); break;
-                case 4: M_tools->selectTool(ToolType::PAN); break;
+                case 4:
+                    if ( M_editorCanvas->currentState().toolType == ToolType::PAN )
+                        M_tools->selectTool(ToolType::DRAW);
+                    else
+                        M_tools->selectTool(ToolType::PAN);
+                    break;
             }
         }},
         { "Tool", {"Brush [B]", "Eraser [E]", "Rectangle [R]", "Ellipse [C]", "Line [L]", "Eye Dropper [I]", "Paint Fill [F]", "Box Select [S]"}, [this](int idx) {
@@ -377,7 +382,10 @@ Termisprite::OnEvent( ftxui::Event event )
 
     if ( event == ftxui::Event::Character('m') || event == ftxui::Event::Character('M') )
     {
-        M_tools->selectTool(ToolType::PAN);
+        if ( M_editorCanvas->currentState().toolType == ToolType::PAN )
+            M_tools->selectTool(ToolType::DRAW);
+        else
+            M_tools->selectTool(ToolType::PAN);
         return true;
     }
 
