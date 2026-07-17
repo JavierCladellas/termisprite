@@ -1,4 +1,5 @@
 #include "editor.hpp"
+#include "import.hpp"
 #include <cmath>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -181,6 +182,12 @@ EditorCanvasComponent::OnRender()
 
 }
 
+void
+EditorCanvasComponent::importImage(const std::string& filepath)
+{
+    if ( SpriteImporter::importImage( filepath, M_sprite, M_width, M_height ) )
+        saveState();
+}
 
 
 bool

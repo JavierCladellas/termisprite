@@ -294,18 +294,94 @@ ftxui::Element BackgroundColorModal::OnRender()
        | clear_under;
 }
 
+ImportModal::ImportModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
+    : M_editorCanvas( editorCanvas ), M_closeCallback( onClose )
+{
+    M_okButton = ftxui::Button("Import", [this] {
+        if (!M_filepathInput.empty()) {
+            M_editorCanvas.importImage(M_filepathInput);
+        }
+        M_filepathInput = "";
+        M_closeCallback();
+    });
+
+    M_cancelButton = ftxui::Button("Cancel", [this] {
+        M_filepathInput = "";
+        M_closeCallback();
+    });
+
+    Add( ftxui::Container::Vertical({
+        M_filepathInputComponent,
+        ftxui::Container::Horizontal({ M_cancelButton,  M_okButton})
+    }) );
+}
+
+ftxui::Element ImportModal::OnRender()
+{
+    using namespace ftxui;
+    return vbox({
+        text(" Import Sprite ") | bold | center,
+        separator(),
+        separatorEmpty(),
+        hbox({
+            text(" Filepath: ") | dim | vcenter,
+            M_filepathInputComponent->Render() | border | size(WIDTH, EQUAL, 30)
+        }) | center,
+        separatorEmpty(),
+        hbox({ filler(), M_cancelButton->Render(), text(" "), M_okButton->Render() })
+    }) | reflect(M_box)
+       | size(WIDTH, GREATER_THAN, 45)
+       | borderDouble
+       | bgcolor(Color::Black)
+       | clear_under;
+}
+
+bool
+ImportModal::OnEvent( ftxui::Event event )
+{
+    if ( event == ftxui::Event::Return )
+    {
+        if (!M_filepathInput.empty()) M_editorCanvas.importImage(M_filepathInput);
+        M_filepathInput = "";
+        M_closeCallback();
+        return true;
+    }
+    if ( event == ftxui::Event::Escape )
+    {
+        M_filepathInput = "";
+        M_closeCallback();
+        return true;
+    }
+
+    if ( event.is_mouse() && event.mouse().button == ftxui::Mouse::Button::Left && event.mouse().motion == ftxui::Mouse::Pressed )
+    {
+        if ( !M_box.Contain( event.mouse().x, event.mouse().y ) )
+        {
+            M_filepathInput = "";
+            M_closeCallback();
+            return true;
+        }
+    }
+    if ( event.is_character() )
+    {
+        M_filepathInputComponent->OnEvent(event);
+        return true;
+    }
+    else
+        return ftxui::ComponentBase::OnEvent( event );
+}
 
 Termisprite::Termisprite()
 {
     M_editorCanvas = EditorCanvas( 32, 32 );
 
     M_menu = Menu({
-        { "File", {"New [Ctrl+N]", "Open [Ctrl+O]", "Save [Ctrl+S]", "Import [Ctrl+I]", "Export [Ctrl+E]" ,"Quit [Ctrl+Q]"}, [this](int idx) {
+        { "File", {"New [Ctrl+N]", "Open [Ctrl+O]", "Save [Ctrl+S]", "Import [Ctrl+P]", "Export [Ctrl+E]" ,"Quit [Ctrl+Q]"}, [this](int idx) {
             switch (idx) {
                 case 0: M_showNewProjectModal = true; break;
                 case 1: /* Open */ break;
                 case 2: /* Save */ break;
-                case 3: /* Import */ break;
+                case 3: M_showImportModal = true; break;
                 case 4: /* Export */ break;
                 case 5: exit(0); break;
             }
@@ -375,6 +451,8 @@ Termisprite::Termisprite()
     M_editorCanvas->onBackgroundChangeRequested = [this] { M_showBackgroundColorModal = true; };
     M_backgroundColorModal = std::make_shared<BackgroundColorModal>( M_editorCanvas->currentState(), [this]{ M_showBackgroundColorModal = false; });
 
+    M_importModal = std::make_shared<ImportModal>( *M_editorCanvas, [this]{ M_showImportModal = false; });
+
     ftxui::Component toolsContainer = ftxui::Container::Vertical({ M_tools, M_colorSection });
     ftxui::Component baseContainer = ftxui::Container::Vertical({
         M_menu,
@@ -406,6 +484,7 @@ Termisprite::Termisprite()
     M_masterComponent |= ftxui::Modal(M_aboutModal, &M_showAboutModal);
     M_masterComponent |= ftxui::Modal(M_shortcutsModal, &M_showShortcutsModal);
     M_masterComponent |= ftxui::Modal(M_backgroundColorModal, &M_showBackgroundColorModal);
+    M_masterComponent |= ftxui::Modal(M_importModal, &M_showImportModal);
 
     ftxui::ComponentBase::Add(M_masterComponent);
 }
@@ -421,6 +500,8 @@ Termisprite::OnRender()
 bool
 Termisprite::OnEvent( ftxui::Event event )
 {
+    if ( ftxui::ComponentBase::OnEvent( event ) )
+        return true;
 
     if ( event == ftxui::Event::CtrlQ )
         exit(0);
@@ -434,6 +515,12 @@ Termisprite::OnEvent( ftxui::Event event )
     if ( event == ftxui::Event::Character('H') )
     {
         M_showResizeModal = true;
+        return true;
+    }
+
+    if ( event == ftxui::Event::CtrlP )
+    {
+        M_showImportModal = true;
         return true;
     }
 
@@ -453,7 +540,7 @@ Termisprite::OnEvent( ftxui::Event event )
     if ( processToolSelection( event ) )
         return true;
 
-    return ftxui::ComponentBase::OnEvent( event );
+    return false;
 
 }
 

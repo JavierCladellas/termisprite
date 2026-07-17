@@ -121,6 +121,27 @@ private:
     ftxui::Component M_closeButton;
 };
 
+class ImportModal
+    : public ftxui::ComponentBase
+{
+public:
+    ImportModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose);
+
+    ftxui::Element OnRender() override;
+    bool OnEvent( ftxui::Event event ) override;
+
+private:
+    EditorCanvasComponent & M_editorCanvas;
+    std::function<void()> M_closeCallback;
+
+    std::string M_filepathInput = "";
+    ftxui::Component M_filepathInputComponent = ftxui::Input(&M_filepathInput, "path/to/image.png");
+
+    ftxui::Component M_okButton;
+    ftxui::Component M_cancelButton;
+    ftxui::Box M_box;
+};
+
 
 class Termisprite
     : public ftxui::ComponentBase
@@ -164,6 +185,9 @@ private:
 
     bool M_showBackgroundColorModal = false;
     std::shared_ptr<BackgroundColorModal> M_backgroundColorModal;
+
+    bool M_showImportModal = false;
+    std::shared_ptr<ImportModal> M_importModal;
 
 };
 

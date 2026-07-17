@@ -4,7 +4,8 @@ add_library( termisprite_lib termisprite.cpp
                              colorpicker.cpp
                              menu.cpp
                              sprite.cpp
-                             statusbar.cpp )
+                             statusbar.cpp
+                             import.cpp )
 
 target_link_libraries(termisprite_lib PUBLIC ftxui::screen ftxui::dom ftxui::component)
 

@@ -143,6 +143,8 @@ public:
 
     std::function<void()> onBackgroundChangeRequested;
 
+    void importImage( std::string const& filepath );
+
 private:
 
     std::pair<int,int> screenToWorld(int screenX, int screenY) const;
