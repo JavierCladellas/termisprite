@@ -380,14 +380,6 @@ Termisprite::OnEvent( ftxui::Event event )
         return true;
     }
 
-    if ( event == ftxui::Event::Character('m') || event == ftxui::Event::Character('M') )
-    {
-        if ( M_editorCanvas->currentState().toolType == ToolType::PAN )
-            M_tools->selectTool(ToolType::DRAW);
-        else
-            M_tools->selectTool(ToolType::PAN);
-        return true;
-    }
 
     if ( processClipboardEvents( event ) )
         return true;
@@ -540,6 +532,14 @@ Termisprite::processToolSelection( ftxui::Event event )
     if ( event == ftxui::Event::Character('s') || event == ftxui::Event::Character('S') )
     {
         M_tools->selectTool(ToolType::BOX_SELECT);
+        return true;
+    }
+    if ( event == ftxui::Event::Character('m') || event == ftxui::Event::Character('M') )
+    {
+        if ( M_editorCanvas->currentState().toolType == ToolType::PAN )
+            M_tools->selectTool(ToolType::DRAW);
+        else
+            M_tools->selectTool(ToolType::PAN);
         return true;
     }
 
