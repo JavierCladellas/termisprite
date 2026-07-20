@@ -91,14 +91,30 @@ EditorCanvasComponent::OnRender()
                      worldX >= M_currentState.selection.minX() && worldX <= M_currentState.selection.maxX() &&
                      worldY >= M_currentState.selection.minY() && worldY <= M_currentState.selection.maxY() )
                 {
-                    // ... [Keep all your selection border logic exactly the same here] ...
+                    bool isTop = (worldY == M_currentState.selection.minY());
+                    bool isBottom = (worldY == M_currentState.selection.maxY());
+                    bool isLeft = (worldX == M_currentState.selection.minX());
+                    bool isRight = (worldX == M_currentState.selection.maxX());
+
+                    // Adjusting borders for 2x1 aspect ratio
+                    if (isTop && isLeft && isBottom && isRight) { renderBrushL = "⡏"; renderBrushR = "⢹"; } 
+                    else if (isTop && isLeft) { renderBrushL = "⡏"; renderBrushR = "⠉"; }
+                    else if (isTop && isRight) { renderBrushL = "⠉"; renderBrushR = "⢹"; }
+                    else if (isBottom && isLeft) { renderBrushL = "⣇"; renderBrushR = "⣀"; }
+                    else if (isBottom && isRight) { renderBrushL = "⣀"; renderBrushR = "⣸"; }
+                    else if (isTop) { renderBrushL = "⠉"; renderBrushR = "⠉"; }
+                    else if (isBottom) { renderBrushL = "⣀"; renderBrushR = "⣀"; }
+                    else if (isLeft) { renderBrushL = "⡇"; renderBrushR = " "; }
+                    else if (isRight) { renderBrushL = " "; renderBrushR = "⢸"; }
+
+                    if ( isTop || isBottom || isLeft || isRight )
+                        renderColor = ftxui::Color::White;
                 }
             }
 
             ftxui::Element cellL = ftxui::text( renderBrushL ) | ftxui::color( renderColor );
             ftxui::Element cellR = ftxui::text( renderBrushR ) | ftxui::color( renderColor );
 
-            // Always draw the checkerboard background, even for the out-of-bounds padding!
             if ( renderBrushL == " " && M_showCheckerboardGrid )
             {
                 if ( (worldX + worldY) % 2 == 0 )
@@ -118,7 +134,6 @@ EditorCanvasComponent::OnRender()
                 cellR |= ftxui::bgcolor( M_currentState.backgroundColor );
             }
 
-            // Only draw the cursor if it is actually hovering over a real canvas pixel
             if ( !isOutOfBounds && M_showCursor && worldX == M_cursorX && worldY == M_cursorY )
             {
                 cellL = ftxui::text( M_currentState.brush ) | ftxui::color( ftxui::Color::Red ) | ftxui::blink;
@@ -467,8 +482,7 @@ EditorCanvasComponent::processEyeDropper( ftxui::Event event )
     if ( mouse.motion != ftxui::Mouse::Pressed )
         return false;
 
-    int localX = (mouse.x - M_box.x_min)/2;
-    int localY = mouse.y - M_box.y_min;
+    auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
 
     localX = std::clamp(localX, 0, M_width - 1);
     localY = std::clamp(localY, 0, M_height - 1);
@@ -503,8 +517,7 @@ EditorCanvasComponent::processPaintFill( ftxui::Event event )
     if ( mouse.motion != ftxui::Mouse::Pressed )
         return false;
 
-    int localX = (mouse.x - M_box.x_min) /2;
-    int localY = mouse.y - M_box.y_min;
+    auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
 
     localX = std::clamp(localX, 0, M_width - 1);
     localY = std::clamp(localY, 0, M_height - 1);
@@ -541,8 +554,7 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
     {
         M_showCursor = false;
 
-        int localX = (mouse.x - M_box.x_min)/2;
-        int localY = mouse.y - M_box.y_min;
+        auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
 
         localX = std::clamp(localX, 0, M_width - 1);
         localY = std::clamp(localY, 0, M_height - 1);
@@ -569,9 +581,8 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
 
     if ( mouse.button == ftxui::Mouse::Button::Right )
     {
-        int localX = (mouse.x - M_box.x_min)/2;
-        int localY = mouse.y - M_box.y_min;
 
+        auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
         if ( mouse.motion == ftxui::Mouse::Pressed )
         {
             if ( M_currentState.selection.isActive )
