@@ -207,6 +207,24 @@ EditorCanvasComponent::importImage( std::string const& filepath, int targetWidth
         saveState();
 }
 
+void
+EditorCanvasComponent::importProject( std::string const& filepath )
+{
+    if ( SpriteImporter::importProject( filepath, M_sprite, M_currentState ) )
+    {
+        auto [width, height] = M_sprite.size();
+        M_width = width;
+        M_height = height;
+        saveState();
+    }
+}
+
+void
+EditorCanvasComponent::exportProject( std::string const& filepath, std::string const& projectName )
+{
+    SpriteExporter::exportProject( filepath, projectName, M_sprite, M_currentState );
+}
+
 
 bool
 EditorCanvasComponent::processKeyboardDrawing( ftxui::Event event )

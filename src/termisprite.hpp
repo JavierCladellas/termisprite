@@ -82,6 +82,48 @@ private:
 };
 
 
+class SaveModal
+    : public ftxui::ComponentBase
+{
+public:
+    SaveModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose);
+
+    ftxui::Element OnRender() override;
+
+private:
+    EditorCanvasComponent & M_editorCanvas;
+    std::function<void()> M_closeCallback;
+
+    std::string M_filepathInput = "";
+    ftxui::Component M_filepathInputComponent = ftxui::Input(&M_filepathInput, "path/to/save.png");
+
+    ftxui::Component M_okButton;
+    ftxui::Component M_cancelButton = ftxui::Button("Cancel", [this] { M_closeCallback(); });
+
+    ftxui::Box M_box;
+};
+
+class OpenProjectModal
+    : public ftxui::ComponentBase
+{
+public:
+    OpenProjectModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose );
+
+    ftxui::Element OnRender() override;
+
+private:
+    EditorCanvasComponent & M_editorCanvas;
+    std::function<void()> M_closeCallback;
+
+    std::string M_filepathInput = "";
+    ftxui::Component M_filepathInputComponent = ftxui::Input(&M_filepathInput, "path/to/project.json");
+
+    ftxui::Component M_okButton;
+    ftxui::Component M_cancelButton = ftxui::Button("Cancel", [this] { M_closeCallback(); });
+
+    ftxui::Box M_box;
+};
+
 class AboutModal
     : public ftxui::ComponentBase
 {
@@ -179,6 +221,9 @@ private:
     bool M_showNewProjectModal = false;
     std::shared_ptr<NewProjectModal> M_newProjectModal;
 
+    bool M_showSaveModal = false;
+    std::shared_ptr<SaveModal> M_saveModal;
+
     bool M_showResizeModal = false;
     std::shared_ptr<ResizeModal> M_resizeModal;
 
@@ -193,6 +238,9 @@ private:
 
     bool M_showImportModal = false;
     std::shared_ptr<ImportModal> M_importModal;
+
+    bool M_showOpenProjectModal = false;
+    std::shared_ptr<OpenProjectModal> M_openProjectModal;
 
 };
 

@@ -144,6 +144,8 @@ public:
     std::function<void()> onBackgroundChangeRequested;
 
     void importImage( std::string const& filepath, int targetWidth = -1 , int targetHeight = -1 );
+    void importProject( std::string const& filepath );
+    void exportProject( std::string const& filepath, std::string const& projectName = "Untitled" );
 
 private:
 

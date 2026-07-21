@@ -26,8 +26,16 @@ public:
     }
 
 
-    std::vector<Pixel> operator[]( int y ) { return M_grid[y]; }
-    Pixel & at( int x, int y ) {
+    std::vector<Pixel> & operator[]( int y ) { return M_grid[y]; }
+    Pixel & at( int x, int y )
+    {
+        if ( x < 0 || x >= M_width || y < 0 || y >= M_height )
+            throw std::out_of_range("Sprite::at: Coordinates out of bounds");
+        return M_grid[y][x];
+    }
+
+    Pixel const& at( int x, int y ) const
+    {
         if ( x < 0 || x >= M_width || y < 0 || y >= M_height )
             throw std::out_of_range("Sprite::at: Coordinates out of bounds");
         return M_grid[y][x];

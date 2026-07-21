@@ -1,8 +1,11 @@
 #pragma once
 
+#include <string>
+
+#include <nlohmann/json.hpp>
+
 #include "editor.hpp"
 #include "sprite.hpp"
-#include <string>
 
 namespace Termisprite
 {
@@ -13,6 +16,8 @@ public:
     SpriteImporter() = default;
 
     static bool importImage( std::string const& filepath, Sprite & targetSprite, int targetWidth, int targetHeight);
+
+    static bool importProject( std::string const& filepath, Sprite & targetSprite, EditorState & editorState );
 
 private:
 
