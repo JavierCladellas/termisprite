@@ -844,8 +844,8 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
             {
                 //TODO: Use enums
                 case 0: if ( onBackgroundChangeRequested ) onBackgroundChangeRequested(); break;
-                case 1: M_showPointGrid = !M_showPointGrid; break;
-                case 2: M_showCheckerboardGrid = !M_showCheckerboardGrid; break;
+                case 1: toggleGrid(); break;
+                case 2: toggleCheckerboardGrid(); break;
                 case 3: this->undo(); break;
                 case 4: this->redo(); break;
                 case 5: this->clear(); break;

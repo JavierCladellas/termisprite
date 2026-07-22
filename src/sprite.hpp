@@ -11,7 +11,7 @@ namespace Termisprite
 struct Pixel
 {
     std::string brush = " ";
-    ftxui::Color color = ftxui::Color::White;
+    ftxui::Color color = ftxui::Color::RGB(255, 255, 255);
 };
 
 class Sprite

@@ -20,7 +20,7 @@ public:
     ColorPickerComponent( ftxui::Color & targetColor )
         : M_targetColor( targetColor )
     {
-        M_saturationSlider = ftxui::Slider(" Saturation:", &M_saturation, 0, 255, 1) | ftxui::color(ftxui::Color::White);
+        M_saturationSlider = ftxui::Slider(" Saturation:", &M_saturation, 0, 255, 1);
         ftxui::ComponentBase::Add(M_saturationSlider);
     }
 

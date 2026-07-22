@@ -40,8 +40,12 @@ bool SpriteImporter::importProject( std::string const& filepath, Sprite & target
 
     if ( importJson.contains("background_color") )
     {
-        nlohmann::json bgColor = importJson["background_color"];
-        editorState.backgroundColor = ftxui::Color::RGB( bgColor.value("r", 0), bgColor.value("g", 0), bgColor.value("b", 0) );
+        std::string bgColorCode = importJson["background_color"];
+
+        unsigned int r = 255, g = 255, b = 255;
+        if ( sscanf( bgColorCode.c_str(), "48;2;%u;%u;%u", &r, &g, &b ) == 3 )
+            editorState.backgroundColor = ftxui::Color::RGB(r, g, b);
+
     }
 
     if ( importJson.contains( "sprite" ) && importJson["sprite"].is_array() )
@@ -53,13 +57,15 @@ bool SpriteImporter::importProject( std::string const& filepath, Sprite & target
             int x = item.value("x", -1);
             int y = item.value("y", -1);
             std::string brush = item.value("brush", " ");
-            nlohmann::json color = item.value("color", nlohmann::json::object());
+            std::string colorCode = item.value("color", "");
+            unsigned int r = 255, g = 255, b = 255;
 
             if ( x >= 0 && x < w && y >= 0 && y < h )
             {
                 Pixel & cell = targetSprite.at( x, y );
                 cell.brush = brush;
-                cell.color = ftxui::Color::RGB( color.value("r", 0), color.value("g", 0), color.value("b", 0) );
+                if ( sscanf( colorCode.c_str(), "38;2;%u;%u;%u", &r, &g, &b ) == 3 )
+                    cell.color = ftxui::Color::RGB(r, g, b);
             }
         }
     }
@@ -127,11 +133,7 @@ SpriteExporter::exportProject( std::string const& filepath,
     exportJson["height"] = h;
 
     std::string backgroundColor;
-    exportJson["background_color"] = {
-        {"r", editorState.backgroundColor.Red},
-        {"g", editorState.backgroundColor.Green},
-        {"b", editorState.backgroundColor.Blue}
-    };
+    exportJson["background_color"] = editorState.backgroundColor.Print(true);
     exportJson["sprite"] = nlohmann::json::array();
 
     for ( int y = 0; y < h; ++y )
@@ -148,11 +150,7 @@ SpriteExporter::exportProject( std::string const& filepath,
                 {"x", x},
                 {"y", y},
                 {"brush", cell.brush},
-                {"color", {
-                    {"r", cell.color.Red},
-                    {"g", cell.color.Green},
-                    {"b", cell.color.Blue}
-                }}
+                {"color", cell.color.Print(false)}
             });
         }
     }
