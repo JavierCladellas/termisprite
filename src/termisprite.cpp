@@ -95,10 +95,8 @@ Termisprite::Termisprite()
 
     M_importModal = std::make_shared<ImportModal>( *M_editorCanvas, [this]{ M_showImportModal = false; });
 
-    ftxui::Component toolsContainer = ftxui::Container::Vertical({ M_tools, M_colorSection });
     ftxui::Component baseContainer = ftxui::Container::Vertical({
-        M_menu,
-        ftxui::Container::Horizontal({ M_editorCanvas, toolsContainer }),
+        ftxui::Container::Horizontal({ M_menu, M_editorCanvas,  M_tools, M_colorSection }),
         M_statusBar
     });
 
@@ -121,7 +119,6 @@ Termisprite::Termisprite()
         });
     });
 
-    
     M_masterComponent |= ftxui::Modal(M_newProjectModal, &M_showNewProjectModal);
     M_masterComponent |= ftxui::Modal(M_saveModal, &M_showSaveModal);
     M_masterComponent |= ftxui::Modal(M_exportModal, &M_showExportModal);

@@ -44,13 +44,13 @@ ToolsComponent::makeToolButton( std::string icon, std::string name, char shortcu
             prefix,
             ftxui::text(icon + " " + name) | ftxui::flex,
             ftxui::text(std::string(1, shortcut)) | ftxui::dim
-        }); 
+        });
 
         if (isActive)
             content |= ftxui::color(ftxui::Color::Cyan) | ftxui::bold;
-        else 
+        else
             content |= ftxui::color( ftxui::Color::White );
-            
+
 
         if (s.focused)
             return content | ftxui::inverted;
@@ -59,6 +59,16 @@ ToolsComponent::makeToolButton( std::string icon, std::string name, char shortcu
     };
 
     return ftxui::Button("", [this, type] { selectTool(type); }, option);
+}
+
+
+bool
+ToolsComponent::OnEvent( ftxui::Event event )
+{
+    if (event == ftxui::Event::Tab || event == ftxui::Event::TabReverse)
+        return false;
+
+    return ftxui::ComponentBase::OnEvent(event);
 }
 
 void

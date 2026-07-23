@@ -62,6 +62,9 @@ ftxui::Element MenuComponent::RenderOverlay()
 
 bool MenuComponent::OnEvent( ftxui::Event event )
 {
+    if (event == ftxui::Event::Tab || event == ftxui::Event::TabReverse)
+        return false;
+
     if ( M_activeDropdown != -1 )
     {
         if ( event == ftxui::Event::Escape )
