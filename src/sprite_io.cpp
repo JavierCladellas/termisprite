@@ -7,6 +7,8 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb_image_resize2.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 namespace Termisprite
 {
@@ -171,10 +173,65 @@ SpriteExporter::exportProject( std::string const& filepath,
 
 
 bool
-SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSprite, ExportFormat format )
+SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSprite, std::string const& format )
 {
-    //TODO
-    return true;
+    std::map<std::string, ExportFormat> formatMap = {
+        {"png", ExportFormat::PNG},
+        {"jpg", ExportFormat::JPG},
+        {"jpeg", ExportFormat::JPG},
+        {"ascii", ExportFormat::ASCII}
+    };
+
+
+
+    auto [w, h] = targetSprite.size();
+    if (w <= 0 || h <= 0)
+        return false;
+
+    std::vector<unsigned char> exportData(w * h * 4, 0);
+
+    switch ( formatMap[format] )
+    {
+        case ExportFormat::PNG:
+            for (int y = 0; y < h; ++y)
+            {
+                for (int x = 0; x < w; ++x)
+                {
+                    Pixel const& cell = targetSprite.at(x, y);
+                    int index = (y * w + x) * 4;
+
+                    if (cell.brush == " ")
+                    {
+                        exportData[index + 0] = 0;   // R
+                        exportData[index + 1] = 0;   // G
+                        exportData[index + 2] = 0;   // B
+                        exportData[index + 3] = 0;
+                    }
+                    else
+                    {
+                        unsigned int r = 255, g = 255, b = 255;
+                        std::string colorCode = cell.color.Print(false);
+                        sscanf(colorCode.c_str(), "38;2;%u;%u;%u", &r, &g, &b);
+
+                        exportData[index + 0] = static_cast<unsigned char>(r);
+                        exportData[index + 1] = static_cast<unsigned char>(g);
+                        exportData[index + 2] = static_cast<unsigned char>(b);
+                        exportData[index + 3] = 255;
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+    }
+
+    std::string parsedFilepath = filepath;
+    if (!parsedFilepath.ends_with(".png"))
+        parsedFilepath += ".png";
+
+    int result = stbi_write_png(parsedFilepath.c_str(), w, h, 4, exportData.data(), w * 4);
+
+    return result != 0;
 }
 
 

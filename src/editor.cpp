@@ -225,6 +225,12 @@ EditorCanvasComponent::exportProject( std::string const& filepath, std::string c
     SpriteExporter::exportProject( filepath, projectName, M_sprite, M_currentState );
 }
 
+void
+EditorCanvasComponent::exportImage( std::string const& filepath, std::string const& format )
+{
+    SpriteExporter::exportImage( filepath, M_sprite, format );
+}
+
 
 bool
 EditorCanvasComponent::processKeyboardDrawing( ftxui::Event event )
