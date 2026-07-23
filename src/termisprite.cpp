@@ -102,7 +102,7 @@ Termisprite::Termisprite()
         M_statusBar
     });
 
-    ftxui::Component mainLayoutRenderer = ftxui::Renderer(baseContainer, [this] {
+    M_masterComponent = ftxui::Renderer(baseContainer, [this] {
         return ftxui::dbox({
             ftxui::vbox({
                 M_menu->Render(),
@@ -121,7 +121,8 @@ Termisprite::Termisprite()
         });
     });
 
-    M_masterComponent = ftxui::Modal(mainLayoutRenderer, M_newProjectModal, &M_showNewProjectModal);
+    
+    M_masterComponent |= ftxui::Modal(M_newProjectModal, &M_showNewProjectModal);
     M_masterComponent |= ftxui::Modal(M_saveModal, &M_showSaveModal);
     M_masterComponent |= ftxui::Modal(M_exportModal, &M_showExportModal);
     M_masterComponent |= ftxui::Modal(M_openProjectModal, &M_showOpenProjectModal);
