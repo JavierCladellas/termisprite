@@ -292,6 +292,54 @@ SaveModal::OnRender()
 }
 
 
+
+ExportModal::ExportModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
+    : M_editorCanvas( editorCanvas ), M_closeCallback( onClose )
+{
+    M_okButton = ftxui::Button("Export", [this] {
+        if (!M_filepathInput.empty())
+            M_editorCanvas.exportImage(M_filepathInput, M_formatOptions[M_selectedFormatIndex] );
+        M_filepathInput = "";
+        M_closeCallback();
+    });
+
+    Add( ftxui::Container::Vertical({
+        ftxui::Container::Horizontal({ M_filepathInputComponent, M_formatDropdown }),
+        ftxui::Container::Horizontal({ M_cancelButton,  M_okButton})
+    }) );
+}
+
+ftxui::Element
+ExportModal::OnRender()
+{
+    using namespace ftxui;
+
+    return vbox({
+        text(" Export Sprite ") | bold | center,
+        separator(),
+        separatorEmpty(),
+        hbox({
+            text(" Filepath: ") | dim | vcenter,
+            M_filepathInputComponent->Render() | border | size(WIDTH, EQUAL, 30)
+        }) | center,
+        separatorEmpty(),
+        hbox({
+            text(" Format: ") | dim | vcenter,
+            M_formatDropdown->Render() | border
+        }) | center,
+        separatorEmpty(),
+        hbox({ filler(), M_cancelButton->Render(), text(" "), M_okButton->Render() })
+    }) | reflect(M_box)
+       | size(WIDTH, GREATER_THAN, 45)
+       | borderDouble
+       | bgcolor(Color::Black)
+       | clear_under;
+
+}
+
+
+
+
 AboutModal::AboutModal( std::function<void()> onClose )
     : M_closeCallback( onClose )
 {
@@ -483,7 +531,7 @@ Termisprite::Termisprite()
                 case 1: M_showOpenProjectModal = true; break;
                 case 2: M_showSaveModal = true; break;
                 case 3: M_showImportModal = true; break;
-                case 4: /* Export */ break;
+                case 4: M_showExportModal = true; break;
                 case 5: exit(0); break;
             }
         }},
@@ -547,6 +595,7 @@ Termisprite::Termisprite()
     M_newProjectModal = std::make_shared<NewProjectModal>( *M_editorCanvas, [this]{ M_showNewProjectModal = false; });
     M_openProjectModal = std::make_shared<OpenProjectModal>( *M_editorCanvas, [this]{ M_showOpenProjectModal = false; });
     M_saveModal = std::make_shared<SaveModal>( *M_editorCanvas, [this]{ M_showSaveModal = false; });
+    M_exportModal = std::make_shared<ExportModal>( *M_editorCanvas, [this]{ M_showExportModal = false; });
     M_resizeModal = std::make_shared<ResizeModal>( *M_editorCanvas, [this]{ M_showResizeModal = false; });
     M_aboutModal = std::make_shared<AboutModal>( [this]{ M_showAboutModal = false; });
     M_shortcutsModal = std::make_shared<ShortcutsModal>( [this]{ M_showShortcutsModal = false; });
@@ -584,6 +633,7 @@ Termisprite::Termisprite()
 
     M_masterComponent = ftxui::Modal(mainLayoutRenderer, M_newProjectModal, &M_showNewProjectModal);
     M_masterComponent |= ftxui::Modal(M_saveModal, &M_showSaveModal);
+    M_masterComponent |= ftxui::Modal(M_exportModal, &M_showExportModal);
     M_masterComponent |= ftxui::Modal(M_openProjectModal, &M_showOpenProjectModal);
     M_masterComponent |= ftxui::Modal(M_resizeModal, &M_showResizeModal);
     M_masterComponent |= ftxui::Modal(M_aboutModal, &M_showAboutModal);
@@ -626,6 +676,13 @@ Termisprite::OnEvent( ftxui::Event event )
     if ( event == ftxui::Event::CtrlS )
     {
         M_showSaveModal = true;
+        return true;
+    }
+
+
+    if ( event == ftxui::Event::CtrlE )
+    {
+        M_showExportModal = true;
         return true;
     }
 

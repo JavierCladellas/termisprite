@@ -6,6 +6,7 @@
 #include "statusbar.hpp"
 #include "tools.hpp"
 
+#include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <functional>
 
@@ -95,7 +96,33 @@ private:
     std::function<void()> M_closeCallback;
 
     std::string M_filepathInput = "";
-    ftxui::Component M_filepathInputComponent = ftxui::Input(&M_filepathInput, "path/to/save.png");
+    ftxui::Component M_filepathInputComponent = ftxui::Input(&M_filepathInput, "path/to/save.json");
+
+    ftxui::Component M_okButton;
+    ftxui::Component M_cancelButton = ftxui::Button("Cancel", [this] { M_closeCallback(); });
+
+    ftxui::Box M_box;
+};
+
+
+class ExportModal
+    : public ftxui::ComponentBase
+{
+public:
+    ExportModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose);
+
+    ftxui::Element OnRender() override;
+
+private:
+    EditorCanvasComponent & M_editorCanvas;
+    std::function<void()> M_closeCallback;
+
+    std::string M_filepathInput = "";
+    ftxui::Component M_filepathInputComponent = ftxui::Input(&M_filepathInput, "path/to/export.png");
+
+    int M_selectedFormatIndex = 0;
+    std::vector<std::string> M_formatOptions = { "png" };
+    ftxui::Component M_formatDropdown = ftxui::Dropdown( M_formatOptions, &M_selectedFormatIndex);
 
     ftxui::Component M_okButton;
     ftxui::Component M_cancelButton = ftxui::Button("Cancel", [this] { M_closeCallback(); });
@@ -223,6 +250,9 @@ private:
 
     bool M_showSaveModal = false;
     std::shared_ptr<SaveModal> M_saveModal;
+
+    bool M_showExportModal = false;
+    std::shared_ptr<ExportModal> M_exportModal;
 
     bool M_showResizeModal = false;
     std::shared_ptr<ResizeModal> M_resizeModal;

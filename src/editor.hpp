@@ -52,8 +52,8 @@ struct Clipboard
 struct EditorState
 {
     std::string brush = "█";
-    ftxui::Color color = ftxui::Color::White;
-    ftxui::Color backgroundColor = ftxui::Color::Black;
+    ftxui::Color color = ftxui::Color::RGB(255, 255, 255);
+    ftxui::Color backgroundColor = ftxui::Color();
     ToolType toolType = ToolType::DRAW;
     std::vector<ftxui::Color> palette;
 
@@ -146,6 +146,7 @@ public:
     void importImage( std::string const& filepath, int targetWidth = -1 , int targetHeight = -1 );
     void importProject( std::string const& filepath );
     void exportProject( std::string const& filepath, std::string const& projectName = "Untitled" );
+    void exportImage( std::string const& filepath, std::string const& format = "png" );
 
 private:
 

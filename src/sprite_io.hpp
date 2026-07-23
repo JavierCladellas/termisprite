@@ -41,7 +41,7 @@ public:
         ASCII
     };
     static bool
-    exportImage( std::string const& filepath, Sprite const& targetSprite, ExportFormat format = ExportFormat::PNG );
+    exportImage( std::string const& filepath, Sprite const& targetSprite, std::string const& format = "png" );
 
 private:
 };
