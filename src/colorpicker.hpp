@@ -78,6 +78,7 @@ public:
     }
 
     ftxui::Element OnRender() override;
+    bool Focusable() const override { return true; }
 
 private:
     std::shared_ptr<ColorPickerComponent> M_colorPicker;

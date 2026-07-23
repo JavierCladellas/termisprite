@@ -29,8 +29,14 @@ ftxui::Element MenuComponent::OnRender()
 {
     ftxui::Elements buttonElements;
     for ( size_t i = 0; i < M_categories.size(); ++i )
-        buttonElements.push_back( M_buttonsContainer->ChildAt(i)->Render() | ftxui::reflect(M_buttonBoxes[i]) );
+    {
+        auto & btn = M_buttonsContainer->ChildAt(i);
+        auto btnElt = btn->Render() | ftxui::reflect(M_buttonBoxes[i]);
+        if ( btn->Focused() )
+            btnElt |= ftxui::color( ftxui::Color::Cyan );
 
+        buttonElements.push_back( btnElt );
+    }
     return ftxui::hbox( std::move(buttonElements) ) | ftxui::xflex;
 }
 

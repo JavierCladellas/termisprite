@@ -9,42 +9,6 @@ namespace Termisprite
 {
 
 
-
-void
-SpriteHistory::save( Sprite const& sprite )
-{
-    if ( M_currentIndex < static_cast<int>(M_history.size()) - 1 )
-        M_history.erase( M_history.begin() + M_currentIndex + 1, M_history.end() );
-
-    M_history.push_back( sprite );
-
-    if ( M_history.size() > M_maxSize )
-        M_history.erase( M_history.begin() );
-    else
-        M_currentIndex++;
-}
-
-void
-SpriteHistory::undo( Sprite & sprite )
-{
-    if ( M_currentIndex > 0 )
-    {
-        M_currentIndex--;
-        sprite = M_history[M_currentIndex];
-    }
-}
-
-void
-SpriteHistory::redo( Sprite & sprite )
-{
-    if ( M_currentIndex < static_cast<int>(M_history.size()) - 1 )
-    {
-        M_currentIndex++;
-        sprite = M_history[M_currentIndex];
-    }
-}
-
-
 ftxui::Element
 EditorCanvasComponent::OnRender()
 {
@@ -136,8 +100,8 @@ EditorCanvasComponent::OnRender()
 
             if ( !isOutOfBounds && M_showCursor && worldX == M_cursorX && worldY == M_cursorY )
             {
-                cellL = ftxui::text( M_currentState.brush ) | ftxui::color( ftxui::Color::Red ) | ftxui::blink;
-                cellR = ftxui::text( M_currentState.brush ) | ftxui::color( ftxui::Color::Red ) | ftxui::blink;
+                cellL = ftxui::text( M_currentState.brush ) | ftxui::color( M_currentState.color ) | ftxui::bgcolor( ftxui::Color::Red ) | ftxui::blink;
+                cellR = ftxui::text( M_currentState.brush ) | ftxui::color( M_currentState.color ) | ftxui::bgcolor( ftxui::Color::Red ) | ftxui::blink;
             }
 
             row.push_back( cellL );
@@ -146,9 +110,11 @@ EditorCanvasComponent::OnRender()
         rows.push_back( ftxui::hbox( row ) );
     }
 
+    ftxui::Color borderColor = Focused() ? ftxui::Color::Cyan : ftxui::Color::White;
+
     ftxui::Element canvas = ftxui::vbox( std::move( rows ) )
                               | ftxui::reflect( M_box )
-                              | ftxui::border
+                              | ftxui::borderStyled( borderColor )
                               | ftxui::size( ftxui::WIDTH, ftxui::EQUAL, (M_width * 2) + 1 )
                               | ftxui::size( ftxui::HEIGHT, ftxui::EQUAL, M_height + 2 );
 

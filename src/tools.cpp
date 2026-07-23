@@ -44,10 +44,13 @@ ToolsComponent::makeToolButton( std::string icon, std::string name, char shortcu
             prefix,
             ftxui::text(icon + " " + name) | ftxui::flex,
             ftxui::text(std::string(1, shortcut)) | ftxui::dim
-        });
+        }); 
 
         if (isActive)
-            return content | ftxui::color(ftxui::Color::Cyan) | ftxui::bold;
+            content |= ftxui::color(ftxui::Color::Cyan) | ftxui::bold;
+        else 
+            content |= ftxui::color( ftxui::Color::White );
+            
 
         if (s.focused)
             return content | ftxui::inverted;
@@ -79,22 +82,24 @@ ToolsComponent::OnRender()
     using namespace ftxui;
 
 
+    ftxui::Color borderColor = Focused() ? ftxui::Color::Cyan : ftxui::Color::White;
+
     return window( text(" Tools ") | bold | center,
         vbox({
-            text(" Drawing ") | dim,
+            text(" Drawing ") | dim | ftxui::color( ftxui::Color::White ),
             M_container->ChildAt(0)->Render(),
 
             separatorEmpty(),
 
-            text(" Shapes ") | dim,
+            text(" Shapes ") | dim | ftxui::color( ftxui::Color::White ),
             M_container->ChildAt(1)->Render(),
 
             separatorEmpty(),
 
-            text(" Utility ") | dim,
+            text(" Utility ") | dim | ftxui::color( ftxui::Color::White ),
             M_container->ChildAt(2)->Render(),
         })
-    );
+    ) | ftxui::color( borderColor );
 }
 
 std::shared_ptr<ToolsComponent> ToolsSection( EditorState & editorState )

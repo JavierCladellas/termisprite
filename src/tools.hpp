@@ -4,7 +4,6 @@
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
-#include <optional>
 #include "editor.hpp"
 
 

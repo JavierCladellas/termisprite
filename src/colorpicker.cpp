@@ -1,4 +1,5 @@
 #include "colorpicker.hpp"
+#include <ftxui/dom/elements.hpp>
 
 
 namespace Termisprite
@@ -82,7 +83,7 @@ ColorPaletteComponent::OnRender()
 {
     if ( M_editorState.palette.empty() )
         return ftxui::vbox({
-            ftxui::text( " Palette " ),
+            ftxui::text( " Palette " ) | ftxui::color( ftxui::Color::White ),
             ftxui::text( "" )
         });
 
@@ -138,6 +139,9 @@ ColorPalette( EditorState & editorState )
 ftxui::Element
 ColorSectionComponent::OnRender()
 {
+
+    ftxui::Color borderColor = Focused() ? ftxui::Color::Cyan : ftxui::Color::White;
+
     return ftxui::window( ftxui::text(" Color ") | ftxui::bold | ftxui::center,
         ftxui::vbox({
             M_colorPicker->Render(),
@@ -145,14 +149,14 @@ ColorSectionComponent::OnRender()
             ftxui::hbox({
                 ftxui::text( " Active Color: " ) | ftxui::color( ftxui::Color::White ),
                 ftxui::text( " " ) | ftxui::center
-                                            | ftxui::bgcolor( M_editorState.color )
-                                            | ftxui::size( ftxui::HEIGHT, ftxui::EQUAL, 1 )
-                                            | ftxui::xflex
+                                   | ftxui::bgcolor( M_editorState.color )
+                                   | ftxui::size( ftxui::HEIGHT, ftxui::EQUAL, 1 )
+                                   | ftxui::xflex
             }),
             ftxui::separator(),
             M_colorPalette->Render()
         })
-    );
+    ) | ftxui::color( borderColor );
 }
 
 

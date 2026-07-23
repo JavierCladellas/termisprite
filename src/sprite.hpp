@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <deque>
 
 #include <ftxui/screen/color.hpp>
 
@@ -71,5 +72,24 @@ private:
 
 };
 
+
+class SpriteHistory
+{
+public:
+    SpriteHistory( int maxSize = 50 )
+        : M_maxSize( maxSize ), M_currentIndex( 0 )
+    { }
+
+    void push( Sprite const & sprite ) { M_history.push_back( sprite ); }
+    void save( Sprite const& sprite );
+    void undo( Sprite & sprite );
+    void redo( Sprite & sprite );
+
+
+private:
+    std::deque<Sprite> M_history;
+    int M_maxSize = 50;
+    int M_currentIndex = 0;
+};
 
 }
