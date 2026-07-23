@@ -494,6 +494,13 @@ EditorCanvasComponent::processPaintFill( ftxui::Event event )
     if ( M_currentState.toolType != ToolType::PAINT_FILL )
         return false;
 
+    if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
+    {
+        floodFillPaint(M_cursorX, M_cursorY);
+        saveState();
+        return true;
+    }
+
     if ( !event.is_mouse() )
         return false;
 
@@ -523,95 +530,167 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
     if ( M_currentState.toolType != ToolType::BOX_SELECT )
         return false;
 
-    if ( !event.is_mouse() )
-        return false;
-
-    auto mouse = event.mouse();
-
-    if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Released )
+    // -------------------------
+    // 1. MOUSE INPUT HANDLING
+    // -------------------------
+    if ( event.is_mouse() )
     {
-        if ( M_isDrawing )
+        auto mouse = event.mouse();
+
+        if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Released )
         {
-            M_isDrawing = false;
-            return true;
+            if ( M_isDrawing )
+            {
+                M_isDrawing = false;
+                return true;
+            }
         }
+
+        if ( !M_box.Contain( mouse.x, mouse.y ) )
+            return false;
+
+        if ( mouse.button == ftxui::Mouse::Button::Left )
+        {
+            M_showCursor = false;
+
+            auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
+
+            localX = std::clamp(localX, 0, M_width - 1);
+            localY = std::clamp(localY, 0, M_height - 1);
+
+            if ( mouse.motion == ftxui::Mouse::Pressed )
+            {
+                TakeFocus();
+                M_isDrawing = true;
+                M_currentState.selection.isActive = true;
+
+                M_currentState.selection.startX = localX;
+                M_currentState.selection.startY = localY;
+                M_currentState.selection.endX = localX;
+                M_currentState.selection.endY = localY;
+                return true;
+            }
+            else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
+            {
+                M_currentState.selection.endX = localX;
+                M_currentState.selection.endY = localY;
+                return true;
+            }
+        }
+
+        if ( mouse.button == ftxui::Mouse::Button::Right )
+        {
+            auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
+            if ( mouse.motion == ftxui::Mouse::Pressed )
+            {
+                if ( M_currentState.selection.isActive )
+                {
+                    if ( localX >= M_currentState.selection.minX() && localX <= M_currentState.selection.maxX() &&
+                         localY >= M_currentState.selection.minY() && localY <= M_currentState.selection.maxY() )
+                    {
+                        beginTranslation();
+                        M_lastDragX = localX;
+                        M_lastDragY = localY;
+                        return true;
+                    }
+                    else
+                    {
+                        endTranslation();
+                        M_currentState.selection.isActive = false;
+                        saveState();
+                        return true;
+                    }
+                }
+            }
+            else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isTranslating )
+            {
+                int dx = localX - M_lastDragX;
+                int dy = localY - M_lastDragY;
+
+                if ( dx != 0 || dy != 0 )
+                {
+                    if ( translateSelection( dx, dy ) )
+                    {
+                        M_lastDragX = localX;
+                        M_lastDragY = localY;
+                    }
+                }
+                return true;
+            }
+            else if ( mouse.motion == ftxui::Mouse::Released && M_isTranslating )
+            {
+                endTranslation();
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    if ( !M_box.Contain( mouse.x, mouse.y ) )
-        return false;
+    // -------------------------
+    // 2. KEYBOARD INPUT HANDLING
+    // -------------------------
 
-    if ( mouse.button == ftxui::Mouse::Button::Left )
+    // Cancel an ongoing box drawing with Escape
+    if ( M_isDrawing && event == ftxui::Event::Escape )
     {
-        M_showCursor = false;
+        M_isDrawing = false;
+        M_currentState.selection.isActive = false;
+        return true;
+    }
 
-        auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
+    // If we have an active selection but aren't drawing, Escape or Return drops/stamps it
+    if ( !M_isDrawing && M_currentState.selection.isActive && 
+         (event == ftxui::Event::Escape || event == ftxui::Event::Return) )
+    {
+        endTranslation();
+        M_currentState.selection.isActive = false;
+        saveState();
+        return true;
+    }
 
-        localX = std::clamp(localX, 0, M_width - 1);
-        localY = std::clamp(localY, 0, M_height - 1);
+    // Start / Finish drawing the selection box with Space or Return
+    if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
+    {
+        M_showCursor = true;
+        TakeFocus();
 
-        if ( mouse.motion == ftxui::Mouse::Pressed )
+        if ( !M_isDrawing )
         {
-            TakeFocus();
             M_isDrawing = true;
             M_currentState.selection.isActive = true;
-
-            M_currentState.selection.startX = localX;
-            M_currentState.selection.startY = localY;
-            M_currentState.selection.endX = localX;
-            M_currentState.selection.endY = localY;
-            return true;
+            
+            M_currentState.selection.startX = M_cursorX;
+            M_currentState.selection.startY = M_cursorY;
+            M_currentState.selection.endX = M_cursorX;
+            M_currentState.selection.endY = M_cursorY;
         }
-        else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
+        else
         {
-            M_currentState.selection.endX = localX;
-            M_currentState.selection.endY = localY;
-            return true;
+            // Finish the box shape
+            M_isDrawing = false;
         }
+        return true;
     }
 
-    if ( mouse.button == ftxui::Mouse::Button::Right )
+    // Live preview update during movement
+    if ( M_isDrawing )
     {
+        // Trick: processCursorMovement normally translates the selection if isActive == true.
+        // Since we are actively resizing the box, we temporarily set isActive = false so 
+        // the method only moves the M_cursorX/Y coordinates, then we restore it.
+        bool wasActive = M_currentState.selection.isActive;
+        M_currentState.selection.isActive = false;
+        
+        bool moved = processCursorMovement(event);
+        
+        M_currentState.selection.isActive = wasActive;
 
-        auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
-        if ( mouse.motion == ftxui::Mouse::Pressed )
+        if ( moved )
         {
-            if ( M_currentState.selection.isActive )
-            {
-                if ( localX >= M_currentState.selection.minX() && localX <= M_currentState.selection.maxX() &&
-                     localY >= M_currentState.selection.minY() && localY <= M_currentState.selection.maxY() )
-                {
-                    beginTranslation();
-                    M_lastDragX = localX;
-                    M_lastDragY = localY;
-                    return true;
-                }
-                else
-                {
-                    endTranslation();
-                    M_currentState.selection.isActive = false;
-                    saveState();
-                    return true;
-                }
-            }
-        }
-        else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isTranslating )
-        {
-            int dx = localX - M_lastDragX;
-            int dy = localY - M_lastDragY;
-
-            if ( dx != 0 || dy != 0 )
-            {
-                if ( translateSelection( dx, dy ) )
-                {
-                    M_lastDragX = localX;
-                    M_lastDragY = localY;
-                }
-            }
-            return true;
-        }
-        else if ( mouse.motion == ftxui::Mouse::Released && M_isTranslating )
-        {
-            endTranslation();
+            M_showCursor = true;
+            M_currentState.selection.endX = M_cursorX;
+            M_currentState.selection.endY = M_cursorY;
             return true;
         }
     }
@@ -627,51 +706,130 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
          M_currentState.toolType != ToolType::LINE )
         return false;
 
-    if ( !event.is_mouse() )
-        return false;
-
-    auto mouse = event.mouse();
-
-    if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Released )
+    if ( event.is_mouse() )
     {
-        if ( M_isDrawing )
+        auto mouse = event.mouse();
+
+        if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Released )
         {
-            M_isDrawing = false;
-            saveState();
-            return true;
+            if ( M_isDrawing )
+            {
+                M_isDrawing = false;
+                saveState();
+                return true;
+            }
         }
+
+        if ( !M_box.Contain( mouse.x, mouse.y ) )
+            return false;
+
+        if ( mouse.button == ftxui::Mouse::Button::Left )
+        {
+            M_showCursor = false;
+
+            int localX = std::clamp((mouse.x - M_box.x_min)/2, 0, M_width - 1);
+            int localY = std::clamp(mouse.y - M_box.y_min, 0, M_height - 1);
+
+            if ( mouse.motion == ftxui::Mouse::Pressed )
+            {
+                TakeFocus();
+                M_isDrawing = true;
+                M_shapeStartX = localX;
+                M_shapeStartY = localY;
+
+                M_spriteSnapshot = M_sprite;
+                return true;
+            }
+            else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
+            {
+                M_sprite = M_spriteSnapshot;
+
+                if ( M_currentState.toolType == ToolType::SQUARE )
+                    drawSquare( M_shapeStartX, M_shapeStartY, localX, localY );
+                else if ( M_currentState.toolType == ToolType::CIRCLE )
+                    drawCircle( M_shapeStartX, M_shapeStartY, localX, localY );
+                else if ( M_currentState.toolType == ToolType::LINE )
+                    drawLine( M_shapeStartX, M_shapeStartY, localX, localY );
+
+                return true;
+            }
+        }
+        return false;
     }
 
-    if ( !M_box.Contain( mouse.x, mouse.y ) )
-        return false;
-
-    if ( mouse.button == ftxui::Mouse::Button::Left )
+    if ( M_isDrawing && event == ftxui::Event::Escape )
     {
-        M_showCursor = false;
+        M_isDrawing = false;
+        M_sprite = M_spriteSnapshot; 
+        return true;
+    }
 
-        int localX = std::clamp((mouse.x - M_box.x_min)/2, 0, M_width - 1);
-        int localY = std::clamp(mouse.y - M_box.y_min, 0, M_height - 1);
-
-        if ( mouse.motion == ftxui::Mouse::Pressed )
+    // Start / Finish drawing with Space or Return
+    if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
+    {
+        M_showCursor = true;
+        if ( !M_isDrawing )
         {
-            TakeFocus();
             M_isDrawing = true;
-            M_shapeStartX = localX;
-            M_shapeStartY = localY;
-
+            M_shapeStartX = M_cursorX;
+            M_shapeStartY = M_cursorY;
             M_spriteSnapshot = M_sprite;
-            return true;
+            
+            // Draw initial 1x1 point
+            M_sprite = M_spriteSnapshot;
+            if ( M_currentState.toolType == ToolType::SQUARE )
+                drawSquare( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
+            else if ( M_currentState.toolType == ToolType::CIRCLE )
+                drawCircle( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
+            else if ( M_currentState.toolType == ToolType::LINE )
+                drawLine( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
         }
-        else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
+        else
         {
+            // Finish the shape
+            M_isDrawing = false;
+            saveState();
+        }
+        return true;
+    }
+
+    if ( M_isDrawing )
+    {
+        bool moved = false;
+        
+        if ( event == ftxui::Event::ArrowUp || event == ftxui::Event::Character('k') )
+        {
+            M_cursorY = std::max(0, M_cursorY - 1);
+            moved = true;
+        }
+        else if ( event == ftxui::Event::ArrowDown || event == ftxui::Event::Character('j') )
+        {
+            M_cursorY = std::min(M_height - 1, M_cursorY + 1);
+            moved = true;
+        }
+        else if ( event == ftxui::Event::ArrowLeft || event == ftxui::Event::Character('h') )
+        {
+            M_cursorX = std::max(0, M_cursorX - 1);
+            moved = true;
+        }
+        else if ( event == ftxui::Event::ArrowRight || event == ftxui::Event::Character('l') )
+        {
+            M_cursorX = std::min(M_width - 1, M_cursorX + 1);
+            moved = true;
+        }
+
+        if ( moved )
+        {
+            M_showCursor = true;
             M_sprite = M_spriteSnapshot;
 
+            // Draw the temporary shape mapping from the start point to the new cursor position
             if ( M_currentState.toolType == ToolType::SQUARE )
-                drawSquare( M_shapeStartX, M_shapeStartY, localX, localY );
+                drawSquare( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
             else if ( M_currentState.toolType == ToolType::CIRCLE )
-                drawCircle( M_shapeStartX, M_shapeStartY, localX, localY );
+                drawCircle( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
             else if ( M_currentState.toolType == ToolType::LINE )
-                drawLine( M_shapeStartX, M_shapeStartY, localX, localY );
+                drawLine( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
 
             return true;
         }
@@ -838,28 +996,28 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
     }
 
 
-    if ( processCursorMovement( event ) )
-        return true;
 
     if ( processKeyboardDrawing( event ) )
+        return true;
+
+    if ( processShapeDrawing( event ) )
         return true;
 
     if ( processEyeDropper( event ) )
         return true;
 
+    if ( processPaintFill( event ) )
+        return true;
+
+    if ( processBoxSelection( event ) )
+        return true;
+
+    if ( processCursorMovement( event ) )
+        return true;
+
     if ( event.is_mouse() )
     {
         if ( processMouseDrawing( event ) )
-            return true;
-
-        if ( processShapeDrawing( event ) )
-            return true;
-
-
-        if ( processPaintFill( event ) )
-            return true;
-
-        if ( processBoxSelection( event ) )
             return true;
 
         if ( processRightClickModal( event ) )
