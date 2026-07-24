@@ -13,6 +13,7 @@ FetchContent_Declare(
     ftxui
     GIT_REPOSITORY https://github.com/ArthurSonzogni/FTXUI.git
     GIT_TAG v7.0.0
+    EXCLUDE_FROM_ALL
 )
 
 FetchContent_MakeAvailable(ftxui)
@@ -20,7 +21,12 @@ FetchContent_MakeAvailable(ftxui)
 FetchContent_Declare(
     json
     URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
+    EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(json)
 
 add_subdirectory( src )
+
+set(CPACK_PACKAGE_FILE_NAME "termisprite-${PROJECT_VERSION}-Linux")
+include(CPack)
+
