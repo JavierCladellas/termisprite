@@ -1,0 +1,42 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-package:
+    name: Build Linux
+    runs-on: ubuntu-latest
+
+  permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Install Build Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+
+      - name: Configure CMake
+        run: cmake --preset default -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build termisprite
+        run: cmake --build --preset default --config Release -j $(nproc)
+
+      - name: Build Debian Package (.deb)
+        run: |
+          cd build
+          cpack -G DEB
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            build/termisprite
+            build/*.deb
+          generate_release_notes: true
