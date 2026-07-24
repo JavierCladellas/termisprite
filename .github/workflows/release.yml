@@ -40,3 +40,27 @@ jobs:
             build/default/termisprite
             build/default/*.deb
             generate_release_notes: true
+
+  build-mac:
+    name: Build macOS
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake --preset default -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build termisprite
+        run: cmake --build --preset default --config Release -j $(sysctl -n hw.logicalcpu)
+
+      - name: Rename macOS Binary
+        run: mv build/termisprite build/termisprite-macos
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: build/termisprite-macos
