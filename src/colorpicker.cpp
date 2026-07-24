@@ -5,50 +5,57 @@
 namespace Termisprite
 {
 
+void
+ColorGridComponent::updateColorFromCursor()
+{
+    int hue = M_cursorX * 6;
+    int value = M_cursorY * 16;
+    M_targetColor = ftxui::Color::HSV(hue, M_saturation, value);
+}
+
 ftxui::Element
-ColorPickerComponent::OnRender()
+ColorGridComponent::OnRender()
 {
     const int maxValue = 255;
-    const int valueIncrement = 8;
+    const int valueIncrement = 16;
     const int hueIncrement = 6;
 
-    int currentY = 0;
-
     ftxui::Elements gridRows;
+    int gridY = 0;
 
-    for ( int value = 0; value < maxValue; value += 2 * valueIncrement )
+    for ( int value = 0; value < maxValue; value += valueIncrement )
     {
         ftxui::Elements line;
+        int gridX = 0;
 
         for ( int hue = 0; hue < maxValue; hue += hueIncrement )
         {
-            line.push_back(
-                ftxui::text( "▀" )
-                | ftxui::color( ftxui::Color::HSV( hue, M_saturation, value ) )
-                | ftxui::bgcolor( ftxui::Color::HSV( hue, M_saturation, value + valueIncrement ) )
-            );
+            bool isCursor = Focused() && ( gridX == M_cursorX ) && ( gridY == M_cursorY );
+
+            std::string textContent = isCursor ? "X" : "█";
+
+            ftxui::Element cell = ftxui::text( textContent ) | ftxui::color( ftxui::Color::HSV( hue, M_saturation, value ) );
+
+            if (isCursor)
+                cell = cell | ftxui::inverted;
+
+            line.push_back( cell );
+            gridX++;
         }
         gridRows.push_back( ftxui::hbox( std::move( line ) ) );
+        gridY++;
     }
 
-    ftxui::Element colorGrid = ftxui::vbox( std::move( gridRows ) ) | ftxui::reflect( M_box );
-
-
-    return ftxui::vbox({
-        colorGrid,
-        ftxui::separatorEmpty(),
-        M_saturationSlider->Render()
-    });
+    return ftxui::vbox( std::move( gridRows ) ) | ftxui::reflect( M_box );
 }
 
 
 bool
-ColorPickerComponent::OnEvent( ftxui::Event event )
+ColorGridComponent::OnEvent( ftxui::Event event )
 {
     if ( event.is_mouse() )
     {
         auto mouse = event.mouse();
-
         if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Pressed ) 
         {
             if ( M_box.Contain( mouse.x, mouse.y ) )
@@ -56,19 +63,92 @@ ColorPickerComponent::OnEvent( ftxui::Event event )
                 int selectedX = mouse.x - M_box.x_min;
                 int selectedY = mouse.y - M_box.y_min;
 
-                int hue = selectedX * 6;
-                int value = selectedY * 16;
+                M_cursorX = std::max(0, std::min(42, selectedX));
+                M_cursorY = std::max(0, std::min(15, selectedY));
 
-                M_targetColor = ftxui::Color::HSV(hue, M_saturation, value);
-
-
+                TakeFocus();
+                updateColorFromCursor();
                 return true;
             }
         }
     }
-    return ComponentBase::OnEvent(event);
+
+    if ( Focused() )
+    {
+        if (event == ftxui::Event::ArrowLeft && M_cursorX > 0)
+        {
+            M_cursorX--;
+            updateColorFromCursor();
+            return true;
+        }
+        if (event == ftxui::Event::ArrowRight && M_cursorX < 42)
+        {
+            M_cursorX++;
+            updateColorFromCursor();
+            return true;
+        }
+        if (event == ftxui::Event::ArrowUp && M_cursorY > 0)
+        {
+            M_cursorY--;
+            updateColorFromCursor();
+            return true;
+        }
+        if (event == ftxui::Event::ArrowDown && M_cursorY < 15)
+        {
+            M_cursorY++;
+            updateColorFromCursor();
+            return true;
+        }
+        if (event == ftxui::Event::Character(' ') || event == ftxui::Event::Return)
+        {
+            updateColorFromCursor();
+            return true;
+        }
+    }
+
+    return false;
 }
 
+
+ftxui::Element
+ColorPickerComponent::OnRender()
+{
+
+    auto focusIndicator = M_saturationSlider->Focused() ? ftxui::text("> ") | ftxui::color(ftxui::Color::Cyan) | ftxui::bold : ftxui::text("  ");
+
+    return ftxui::vbox({
+        M_gridComponent->Render(),
+        ftxui::separatorEmpty(),
+        ftxui::hbox({
+            focusIndicator,
+            M_saturationSlider->Render()
+        })
+    });
+}
+
+bool
+ColorPickerComponent::OnEvent( ftxui::Event event )
+{
+    if ( M_saturationSlider->Focused() )
+        if ( event == ftxui::Event::Tab || event == ftxui::Event::ArrowDown )
+            return false;
+
+    if ( M_gridComponent->Focused() )
+    {
+        if ( event == ftxui::Event::TabReverse )
+            return false;
+
+        if ( event == ftxui::Event::ArrowUp )
+        {
+            if ( M_gridComponent->OnEvent(event) )
+                return true;
+
+            return false;
+        }
+    }
+
+    return ComponentBase::OnEvent(event);
+}
 
 
 std::shared_ptr<ColorPickerComponent>
@@ -78,15 +158,15 @@ ColorPicker( ftxui::Color & targetColor )
 }
 
 
-ftxui::Element
-ColorPaletteComponent::OnRender()
+ColorPaletteComponent::ColorPaletteComponent( EditorState & editorState )
+    : M_editorState( editorState )
 {
-    if ( M_editorState.palette.empty() )
-        return ftxui::vbox({
-            ftxui::text( " Palette " ) | ftxui::color( ftxui::Color::White ),
-            ftxui::text( "" )
-        });
+    ftxui::ComponentBase::Add( M_container );
+}
 
+
+void ColorPaletteComponent::rebuildPalette()
+{
     M_container->DetachAllChildren();
 
     auto grid = ftxui::Container::Vertical({});
@@ -122,6 +202,21 @@ ColorPaletteComponent::OnRender()
         grid->Add( currentRow );
 
     M_container->Add( grid );
+    M_lastPalette = M_editorState.palette;
+}
+
+
+ftxui::Element
+ColorPaletteComponent::OnRender()
+{
+    if ( M_editorState.palette != M_lastPalette )
+        this->rebuildPalette();
+
+    if ( M_editorState.palette.empty() )
+        return ftxui::vbox({
+            ftxui::text( " Palette " ) | ftxui::color( ftxui::Color::White ),
+            ftxui::text( "" )
+        });
 
     return ftxui::vbox({
         ftxui::text( " Palette " ),
@@ -129,6 +224,34 @@ ColorPaletteComponent::OnRender()
     }) | ftxui::size( ftxui::HEIGHT, ftxui::LESS_THAN, 6  );
 }
 
+
+bool
+ColorSectionComponent::OnEvent( ftxui::Event event )
+{
+    if ( M_colorPalette->Focused() )
+    {
+        if ( event == ftxui::Event::Tab )
+            return false;
+        if ( event == ftxui::Event::TabReverse )
+        {
+            M_colorPicker->TakeFocus();
+            return true;
+        }
+    }
+
+    if ( M_colorPicker->Focused() )
+    {
+        if ( event == ftxui::Event::TabReverse )
+        {
+            if ( M_colorPicker->OnEvent(event) )
+                return true;
+
+            return false;
+        }
+    }
+
+    return ComponentBase::OnEvent(event);
+}
 
 std::shared_ptr<ColorPaletteComponent>
 ColorPalette( EditorState & editorState )
