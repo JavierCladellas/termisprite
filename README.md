@@ -2,12 +2,51 @@
 
 Termisprite is a terminal-based pixel art sprite editor written in C++. It allows you to create, edit, and manipulate pixel art directly from your command-line interface.
 
+
+
 ## Features
 
 * **Terminal-Based Interface:** No graphical desktop environment required; runs directly in your terminal window.
 * **Pixel Art Editing:** Built-in tools for drafting and drawing sprites using standard keyboard inputs.
+* **Full Mouse and keyboard support:** Both mouse and keyboard inputs are supported for a more intuitive editing experience.
+* **Tools**: Includes basic drawing tools such as pencil, eraser, fill, and selection tools, as well as basic shapes like ellipses and rectangles.
+* **Color Palette:** Supports a wide range of colors and allows you to create custom palettes for your projects.
+* **Import/Export:** Load and save your pixel art in various formats
 
 ## Installation
+
+
+### From releases
+
+**MacOS**
+
+Download the macOS .zip archive from the [Releases](https://github.com/JavierCladellas/termisprite/releases/) page and extract it.
+
+Because the binary is not signed through an Apple Developer account, macOS will quarantine the file. You must remove this flag before you can run it:
+
+```bash
+tar -xzf termisprite-macos-universal.tar.gz
+xattr -d com.apple.quarantine termisprite-macos-universal
+./termisprite-macos-universal
+```
+
+**Linux (Debian / Ubuntu)**
+
+Download the latest .deb package from the Releases page and install it via apt:
+
+```bash
+sudo apt install ./termisprite-linux-x86_64.deb
+```
+
+**Other Linux distributions**
+
+```bash
+unzip termisprite-linux-x86_64.tar.gz
+./termisprite-linux-x86_64
+```
+
+
+
 
 ### Package Managers (TODO)
 
@@ -23,12 +62,17 @@ Termisprite is a terminal-based pixel art sprite editor written in C++. It allow
 # TODO: sudo pacman -S termisprite
 ```
 
+**MacOS (Homebrew):**
+```bash
+# TODO: brew install javiercladellas/tap/termisprite
+```
+
 ### Building from Source
 
 To build Termisprite locally from source, ensure your system has the following prerequisites installed:
 
 * A modern C++ compiler (GCC, Clang, or MSVC)
-* CMake (version 3.10 or higher)
+* CMake (version 3.28 or higher)
 * A build system (Make, Ninja, etc.)
 
 **1. Clone the repository:**
