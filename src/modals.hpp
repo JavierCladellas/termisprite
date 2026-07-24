@@ -2,6 +2,7 @@
 
 #include "colorpicker.hpp"
 #include "editor.hpp"
+#include "shortcuts.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/screen/box.hpp>
@@ -249,14 +250,17 @@ class ShortcutsModal
     : public Modal
 {
 public:
-    ShortcutsModal( std::function<void()> onClose)
-        : Modal( onClose, "Shortcuts")
+    ShortcutsModal( ShortcutManager * shortcutManager, std::function<void()> onClose)
+        : Modal( onClose, "Shortcuts"), M_shortcutManager( shortcutManager )
     {
         Modal::initTree();
     }
 
 private:
     ftxui::Element renderModalContent() override;
+
+private:
+    ShortcutManager * M_shortcutManager;
 };
 
 

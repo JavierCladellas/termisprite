@@ -82,6 +82,11 @@ public:
     Shortcut getShortcut( ShortcutType type ) const { return M_definitions.at(type); }
     void execute( ShortcutType type ) const;
 
+    std::unordered_map<ShortcutType, Shortcut> const& getAllShortcuts() const
+    {
+        return M_definitions;
+    };
+
 private:
     void bindAllActions( Termisprite * app );
     void bindAction(ShortcutType type, std::function<void()> action);

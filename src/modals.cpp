@@ -348,7 +348,7 @@ BackgroundColorModal::buildContentComponent() const
     return M_colorPicker;
 }
 
-ftxui::Element 
+ftxui::Element
 BackgroundColorModal::renderModalContent()
 {
     return M_colorPicker->Render();
@@ -356,7 +356,7 @@ BackgroundColorModal::renderModalContent()
 
 
 
-ftxui::Element 
+ftxui::Element
 AboutModal::renderModalContent()
 {
     using namespace ftxui;
@@ -369,17 +369,29 @@ AboutModal::renderModalContent()
         text("Version 1.0.0") | center,
         separatorEmpty(),
         text("Author: Javier Cladellas") | center,
-    }); 
+    });
 }
 
 
 
-ftxui::Element 
+ftxui::Element
 ShortcutsModal::renderModalContent()
 {
     using namespace ftxui;
 
-    return vbox(); 
+    ftxui::Elements shortcutElements;
+    for ( auto const& [shortcutType, shortcut] : M_shortcutManager->getAllShortcuts() )
+    {
+        shortcutElements.push_back(
+            hbox({
+                text(shortcut.displayName) | bold,
+                text(" - ") | dim,
+                text(shortcut.hotkeyText) | dim
+            })
+        );
+    }
+
+    return vbox(std::move(shortcutElements));
 }
 
 
