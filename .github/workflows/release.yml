@@ -6,61 +6,75 @@ on:
       - 'v*'
 
 jobs:
-  build-and-package:
-    name: Build Linux
-    runs-on: ubuntu-latest
-
+  build-and-release:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
     permissions:
-        contents: write
+      contents: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: Linux (x86_64)
+            cmake_args: ''
+            binary_name: termisprite-linux-x86_64
+
+          - os: macos-latest
+            name: macOS (Universal)
+            cmake_args: '-DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"'
+            binary_name: termisprite-macos-universal
+
+          - os: windows-latest
+            name: Windows (x64)
+            cmake_args: ''
+            binary_name: termisprite-windows.exe
 
     steps:
       - name: Checkout Source
         uses: actions/checkout@v4
 
-      - name: Install Build Tools
+      - name: Install Linux Build Tools
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake
 
       - name: Configure CMake
-        run: cmake --preset default -DCMAKE_BUILD_TYPE=Release
+        run: cmake --preset default -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_args }}
 
       - name: Build termisprite
-        run: cmake --build --preset default --config Release -j $(nproc)
+        run: cmake --build --preset default --config Release --parallel
 
-      - name: Build Debian Package (.deb)
+      - name: Build Debian Package (Linux only)
+        if: runner.os == 'Linux'
         run: |
           cd build/default/
           cpack -G DEB
 
-      - name: Publish GitHub Release
+      - name: Package Binary into Tarball
+        shell: bash
+        run: |
+          BIN_PATH="build/default/src/termisprite"
+          mv $BIN_PATH build/default/${{ matrix.binary_name }}
+          chmod +x build/default/${{ matrix.binary_name }}
+          cd build/default
+          tar -czvf ${{ matrix.binary_name }}.tar.gz ${{ matrix.binary_name }}
+
+      - name: Publish Linux Release
+        if: runner.os == 'Linux'
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            build/default/termisprite
+            build/default/${{ matrix.binary_name }}.tar.gz
             build/default/*.deb
-            generate_release_notes: true
+          generate_release_notes: true
 
-  build-mac:
-    name: Build macOS
-    runs-on: macos-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout Source
-        uses: actions/checkout@v4
-
-      - name: Configure CMake
-        run: cmake --preset default -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build termisprite
-        run: cmake --build --preset default --config Release -j $(sysctl -n hw.logicalcpu)
-
-      - name: Rename macOS Binary
-        run: mv build/default/src/termisprite build/default/termisprite-macos
-
-      - name: Publish GitHub Release
+      - name: Publish macOS Release
+        if: runner.os == 'macOS'
         uses: softprops/action-gh-release@v3
         with:
-          files: build/default/termisprite-macos
+          files: |
+            build/default/${{ matrix.binary_name }}.tar.gz
+          generate_release_notes: true
