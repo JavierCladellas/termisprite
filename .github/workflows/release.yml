@@ -10,8 +10,8 @@ jobs:
     name: Build Linux
     runs-on: ubuntu-latest
 
-  permissions:
-      contents: write
+    permissions:
+        contents: write
 
     steps:
       - name: Checkout Source
@@ -39,4 +39,4 @@ jobs:
           files: |
             build/termisprite
             build/*.deb
-          generate_release_notes: true
+            generate_release_notes: true
