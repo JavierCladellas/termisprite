@@ -361,14 +361,32 @@ AboutModal::renderModalContent()
 {
     using namespace ftxui;
 
-    return vbox({
-        text("Termisprite") | bold | center,
+return vbox({
+        text(" Termisprite ") | bold | color(Color::Cyan) | center,
+        text("v1.0.0") | dim | center,
+
         separator(),
-        text("A terminal-based sprite editor built with FTXUI.") | center,
         separatorEmpty(),
-        text("Version 1.0.0") | center,
+
+        text("A modern, terminal-based sprite and pixel art editor.") | center,
+        text("Built entirely with C++ and FTXUI.") | dim | center,
+
         separatorEmpty(),
+
+        vbox({
+            text("Key Features:") | bold | color(Color::White),
+            text(" • Full mouse and keyboard (hjkl) navigation") | dim,
+            text(" • Shape drawing, paint fill, and box selection") | dim,
+            text(" • Floating selection & clipboard manipulation") | dim,
+            text(" • Dynamic canvas scaling and grid overlays") | dim,
+            text(" • Image (png/jpg) imports and exports") | dim,
+        }) | center,
+
+        separatorEmpty(),
+        separator(),
+
         text("Author: Javier Cladellas") | center,
+        text("Thank you for using Termisprite!") | dim | center,
     });
 }
 
