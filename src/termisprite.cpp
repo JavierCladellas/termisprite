@@ -81,11 +81,12 @@ Termisprite::OnRender()
 bool
 Termisprite::OnEvent( ftxui::Event event )
 {
+    if ( ftxui::ComponentBase::OnEvent( event ) )
+        return true;
+
     if ( M_shortcutManager.handleEvent( event ) )
         return true;
 
-    if ( ftxui::ComponentBase::OnEvent( event ) )
-        return true;
 
     return false;
 
