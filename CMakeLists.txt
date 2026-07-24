@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21.0)
+cmake_minimum_required(VERSION 3.28)
 
 project( termisprite VERSION 0.0.0 )
 
@@ -27,6 +27,18 @@ FetchContent_MakeAvailable(json)
 
 add_subdirectory( src )
 
+set(CPACK_PACKAGE_NAME "termisprite")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A terminal sprite editor")
+
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A terminal pixel art sprite editor")
+set(CPACK_PACKAGE_CONTACT "Javier Cladellas <javiercladellas@gmail.com>")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Javier Cladellas <javiercladellas@gmail.com>")
+
+set(CPACK_GENERATOR "DEB")
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+
 set(CPACK_PACKAGE_FILE_NAME "termisprite-${PROJECT_VERSION}-Linux")
+
 include(CPack)
 
