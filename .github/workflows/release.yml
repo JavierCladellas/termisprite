@@ -58,9 +58,9 @@ jobs:
         run: cmake --build --preset default --config Release -j $(sysctl -n hw.logicalcpu)
 
       - name: Rename macOS Binary
-        run: mv build/termisprite build/termisprite-macos
+        run: mv build/default/termisprite build/default/termisprite-macos
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          files: build/termisprite-macos
+          files: build/default/termisprite-macos
