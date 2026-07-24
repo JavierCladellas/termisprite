@@ -1,41 +1,37 @@
 #pragma once
 
 #include "editor.hpp"
+#include "shortcuts.hpp"
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <map>
 
 
 namespace Termisprite
 {
 
-struct Shortcut
-{
-    std::string keys;
-    std::string action;
-    std::function<bool(const EditorState&)> condition;
-};
 
 class StatusBarComponent
     : public ftxui::ComponentBase
 {
 public:
-    StatusBarComponent( EditorState & editorState );
+    StatusBarComponent( EditorState & editorState, ShortcutManager * shortcutManager );
 
     ftxui::Element OnRender() override;
 
 private:
     std::string toolTypeToString( ToolType type ) const;
-    void initializeShortcuts();
 
 private:
     EditorState & M_editorState;
+    ShortcutManager * M_shortcutManager;
 
-    std::vector<Shortcut> M_shortcuts;
+    std::map<std::pair<std::string,std::string>, std::function<bool(EditorState &)>> M_displayedShortcuts;
 
 };
 
 
-std::shared_ptr<StatusBarComponent> StatusBar( EditorState & editorState );
+std::shared_ptr<StatusBarComponent> StatusBar( EditorState & editorState, ShortcutManager * shortcutManager );
 
 
 }

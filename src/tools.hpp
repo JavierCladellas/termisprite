@@ -5,6 +5,7 @@
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include "editor.hpp"
+#include "shortcuts.hpp"
 
 
 namespace Termisprite
@@ -16,24 +17,25 @@ class ToolsComponent
 {
 
 public:
-    ToolsComponent( EditorState & editorState );
+    ToolsComponent( EditorState & editorState, ShortcutManager * shortcutManager );
 
     ftxui::Element OnRender() override;
     bool OnEvent( ftxui::Event event ) override;
 
     void selectTool( ToolType type );
 private:
-    ftxui::Component makeToolButton(std::string icon, std::string name, char shortcut, ToolType type);
+    ftxui::Component makeToolButton(std::string icon, Shortcut const& shortcut, ToolType type);
 
 private:
 
     ftxui::Component M_container;
     EditorState & M_editorState;
+    ShortcutManager * M_shortcutManager;
 
 };
 
 
-std::shared_ptr<ToolsComponent> ToolsSection( EditorState & editorState );
+std::shared_ptr<ToolsComponent> ToolsSection( EditorState & editorState, ShortcutManager * shortcutManager );
 
 
 }

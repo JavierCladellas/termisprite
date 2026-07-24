@@ -5,7 +5,8 @@ add_library( termisprite_lib termisprite.cpp
                              menu.cpp
                              sprite.cpp
                              statusbar.cpp
-                             sprite_io.cpp 
+                             sprite_io.cpp
+                             shortcuts.cpp
                              modals.cpp )
 
 target_link_libraries(termisprite_lib PRIVATE nlohmann_json::nlohmann_json)

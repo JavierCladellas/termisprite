@@ -33,7 +33,6 @@ EditorCanvasComponent::OnRender()
 
             bool isOutOfBounds = (worldX < 0 || worldX >= M_width || worldY < 0 || worldY >= M_height);
 
-            // Only grab from M_sprite if it actually exists in the array
             if ( !isOutOfBounds )
             {
                 Pixel const& cellContent = M_sprite.at(worldX, worldY);
@@ -60,7 +59,6 @@ EditorCanvasComponent::OnRender()
                     bool isLeft = (worldX == M_currentState.selection.minX());
                     bool isRight = (worldX == M_currentState.selection.maxX());
 
-                    // Adjusting borders for 2x1 aspect ratio
                     if (isTop && isLeft && isBottom && isRight) { renderBrushL = "⡏"; renderBrushR = "⢹"; } 
                     else if (isTop && isLeft) { renderBrushL = "⡏"; renderBrushR = "⠉"; }
                     else if (isTop && isRight) { renderBrushL = "⠉"; renderBrushR = "⢹"; }
@@ -530,9 +528,6 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
     if ( M_currentState.toolType != ToolType::BOX_SELECT )
         return false;
 
-    // -------------------------
-    // 1. MOUSE INPUT HANDLING
-    // -------------------------
     if ( event.is_mouse() )
     {
         auto mouse = event.mouse();
@@ -627,11 +622,7 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
         return false;
     }
 
-    // -------------------------
-    // 2. KEYBOARD INPUT HANDLING
-    // -------------------------
 
-    // Cancel an ongoing box drawing with Escape
     if ( M_isDrawing && event == ftxui::Event::Escape )
     {
         M_isDrawing = false;
@@ -639,7 +630,6 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
         return true;
     }
 
-    // If we have an active selection but aren't drawing, Escape or Return drops/stamps it
     if ( !M_isDrawing && M_currentState.selection.isActive && 
          (event == ftxui::Event::Escape || event == ftxui::Event::Return) )
     {
@@ -649,7 +639,6 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
         return true;
     }
 
-    // Start / Finish drawing the selection box with Space or Return
     if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
     {
         M_showCursor = true;
@@ -659,7 +648,7 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
         {
             M_isDrawing = true;
             M_currentState.selection.isActive = true;
-            
+
             M_currentState.selection.startX = M_cursorX;
             M_currentState.selection.startY = M_cursorY;
             M_currentState.selection.endX = M_cursorX;
@@ -673,17 +662,13 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
         return true;
     }
 
-    // Live preview update during movement
     if ( M_isDrawing )
     {
-        // Trick: processCursorMovement normally translates the selection if isActive == true.
-        // Since we are actively resizing the box, we temporarily set isActive = false so 
-        // the method only moves the M_cursorX/Y coordinates, then we restore it.
         bool wasActive = M_currentState.selection.isActive;
         M_currentState.selection.isActive = false;
-        
+
         bool moved = processCursorMovement(event);
-        
+
         M_currentState.selection.isActive = wasActive;
 
         if ( moved )

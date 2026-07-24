@@ -1,5 +1,6 @@
 #pragma once
 
+#include "shortcuts.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
@@ -13,8 +14,7 @@ namespace Termisprite
 struct MenuCategory
 {
     std::string name;
-    std::vector<std::string> options;
-    std::function<void(int)> onSelect;
+    std::vector<Shortcut> options;
 };
 
 class MenuComponent
@@ -41,6 +41,6 @@ private:
     int M_activeDropdown = -1;
 };
 
-std::shared_ptr<MenuComponent> Menu( std::vector<MenuCategory> categories );
+std::shared_ptr<MenuComponent> Menu( ShortcutManager * shortcutManager );
 
 }

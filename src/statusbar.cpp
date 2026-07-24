@@ -1,31 +1,31 @@
 #include "statusbar.hpp"
+#include "shortcuts.hpp"
 
 
 
 namespace Termisprite
 {
 
-StatusBarComponent::StatusBarComponent( EditorState & editorState )
-    : M_editorState( editorState )
+StatusBarComponent::StatusBarComponent( EditorState & editorState, ShortcutManager * shortcutManager )
+    : M_editorState( editorState ), M_shortcutManager( shortcutManager )
 {
-    initializeShortcuts();
-}
+    M_displayedShortcuts = {
+        {{ M_shortcutManager->getName(ShortcutType::UNDO), M_shortcutManager->getHotkeyText(ShortcutType::UNDO)}, {} },
+        {{ M_shortcutManager->getName(ShortcutType::REDO), M_shortcutManager->getHotkeyText(ShortcutType::REDO)}, {} },
+        {{ M_shortcutManager->getName(ShortcutType::CLEAR), M_shortcutManager->getHotkeyText(ShortcutType::CLEAR)}, {} },
+        {{ M_shortcutManager->getName(ShortcutType::TOGGLE_GRID), M_shortcutManager->getHotkeyText(ShortcutType::TOGGLE_GRID)}, {} },
 
-void
-StatusBarComponent::initializeShortcuts()
-{
-    M_shortcuts = {
-        { "g", "Toggle Grid", [](const EditorState&) { return true; } },
-        { "Ctrl+Z/u", "Undo", [](const EditorState&) { return true; } },
-        { "Ctrl+Y/Ctrl+r", "Redo", [](const EditorState&) { return true; } },
-        { "Arrows/hjkl", "Move", [](const EditorState& s) { return !s.selection.isActive; } },
-        { "Ctrl+C/y", "Copy", [](const EditorState& s) { return s.selection.isActive; } },
-        { "Ctrl+X/x", "Cut", [](const EditorState& s) { return s.selection.isActive; } },
-        { "Esc/Enter", "Drop", [](const EditorState& s) { return s.selection.isActive; } },
-        { "Ctrl+V/p", "Paste", [](const EditorState& s) { return s.clipboard.hasData && !s.selection.isActive; } }
+        {{ "Move Cursor", "[Arrows / hjkl]" }, [](EditorState & s) { return !s.selection.isActive; } },
+
+        {{ "Move Selection", "[Arrows / hjkl]" }, [](EditorState & s) { return s.selection.isActive; } },
+        {{ "Drop", "[Enter / Esc]" }, [](EditorState & s) { return s.selection.isActive; } },
+        {{ M_shortcutManager->getName(ShortcutType::CLIPBOARD_COPY), M_shortcutManager->getHotkeyText(ShortcutType::CLIPBOARD_COPY)}, [](EditorState & s) { return s.selection.isActive; } },
+        {{ M_shortcutManager->getName(ShortcutType::CLIPBOARD_CUT), M_shortcutManager->getHotkeyText(ShortcutType::CLIPBOARD_CUT)}, [](EditorState & s) { return s.selection.isActive; } },
+
+        {{ M_shortcutManager->getName(ShortcutType::CLIPBOARD_PASTE), M_shortcutManager->getHotkeyText(ShortcutType::CLIPBOARD_PASTE)}, [](EditorState & s) { return s.clipboard.hasData && !s.selection.isActive; } }
     };
-}
 
+}
 
 std::string
 StatusBarComponent::toolTypeToString( ToolType type ) const
@@ -44,8 +44,6 @@ StatusBarComponent::toolTypeToString( ToolType type ) const
         default:                    return "Unknown";
     }
 }
-
-
 
 ftxui::Element
 StatusBarComponent::OnRender()
@@ -69,18 +67,15 @@ StatusBarComponent::OnRender()
     Elements shortcutElements;
     bool isFirst = true;
 
-    for ( const auto& shortcut : M_shortcuts )
+    for ( auto const& [shortcutText, condition] : M_displayedShortcuts )
     {
-        if ( shortcut.condition( M_editorState ) )
+        if ( !condition || condition( M_editorState ) )
         {
             if ( !isFirst )
-            {
                 shortcutElements.push_back( text( " | " ) | dim );
-            }
 
-            // Bold the keys, dim the action description for visual hierarchy
-            shortcutElements.push_back( text( shortcut.keys ) | bold );
-            shortcutElements.push_back( text( ": " + shortcut.action ) | dim );
+            shortcutElements.push_back( text( shortcutText.first ) | bold );
+            shortcutElements.push_back( text( " " + shortcutText.second ) | dim );
 
             isFirst = false;
         }
@@ -98,9 +93,9 @@ StatusBarComponent::OnRender()
 }
 
 
-std::shared_ptr<StatusBarComponent> StatusBar( EditorState & editorState )
+std::shared_ptr<StatusBarComponent> StatusBar( EditorState & editorState, ShortcutManager * shortcutManager )
 {
-    return std::make_shared<StatusBarComponent>( editorState );
+    return std::make_shared<StatusBarComponent>( editorState, shortcutManager );
 }
 
 }

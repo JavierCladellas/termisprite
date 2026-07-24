@@ -4,24 +4,24 @@
 namespace Termisprite
 {
 
-ToolsComponent::ToolsComponent( EditorState & editorState )
-    : M_editorState( editorState )
+ToolsComponent::ToolsComponent( EditorState & editorState, ShortcutManager * shortcutManager )
+    : M_editorState( editorState ), M_shortcutManager( shortcutManager )
 {
     auto drawGroup = ftxui::Container::Vertical({
-        makeToolButton("✎", "Draw", 'B', ToolType::DRAW),
-        makeToolButton("✖", "Eraser", 'E', ToolType::ERASER)
+        makeToolButton("✎", shortcutManager->getShortcut(ShortcutType::SELECT_BRUSH_TOOL), ToolType::DRAW),
+        makeToolButton("✖", shortcutManager->getShortcut(ShortcutType::SELECT_ERASER_TOOL), ToolType::ERASER)
     });
 
     auto shapeGroup = ftxui::Container::Vertical({
-        makeToolButton("▭", "Rectangle", 'R', ToolType::SQUARE),
-        makeToolButton("◯", "Ellipse", 'C', ToolType::CIRCLE),
-        makeToolButton("╱", "Line", 'L', ToolType::LINE)
+        makeToolButton("▭", shortcutManager->getShortcut(ShortcutType::SELECT_RECTANGLE_TOOL), ToolType::SQUARE),
+        makeToolButton("◯", shortcutManager->getShortcut(ShortcutType::SELECT_ELLIPSE_TOOL), ToolType::CIRCLE),
+        makeToolButton("╱", shortcutManager->getShortcut(ShortcutType::SELECT_LINE_TOOL), ToolType::LINE)
     });
 
     auto utilGroup = ftxui::Container::Vertical({
-        makeToolButton("◧", "Picker", 'I', ToolType::EYE_DROPPER),
-        makeToolButton("▼", "Fill", 'F', ToolType::PAINT_FILL),
-        makeToolButton("⬚", "Select", 'S', ToolType::BOX_SELECT)
+        makeToolButton("◧", shortcutManager->getShortcut(ShortcutType::SELECT_EYE_DROPPER_TOOL), ToolType::EYE_DROPPER),
+        makeToolButton("▼", shortcutManager->getShortcut(ShortcutType::SELECT_PAINT_FILL_TOOL), ToolType::PAINT_FILL),
+        makeToolButton("⬚", shortcutManager->getShortcut(ShortcutType::SELECT_BOX_SELECT_TOOL), ToolType::BOX_SELECT)
     });
 
     M_container = ftxui::Container::Vertical({ drawGroup, shapeGroup, utilGroup });
@@ -30,11 +30,14 @@ ToolsComponent::ToolsComponent( EditorState & editorState )
 }
 
 ftxui::Component
-ToolsComponent::makeToolButton( std::string icon, std::string name, char shortcut, ToolType type )
+ToolsComponent::makeToolButton( std::string icon, Shortcut const& shortcut, ToolType type )
 {
     ftxui::ButtonOption option;
 
-    option.transform = [this, icon, name, shortcut, type](const ftxui::EntryState& s)
+    std::string displayName = shortcut.displayName;
+    std::string hotkeyText = shortcut.hotkeyText;
+
+    option.transform = [this, icon, displayName, hotkeyText, type](const ftxui::EntryState& s)
     {
         bool isActive = (M_editorState.toolType == type);
 
@@ -42,8 +45,8 @@ ToolsComponent::makeToolButton( std::string icon, std::string name, char shortcu
 
         auto content = ftxui::hbox({
             prefix,
-            ftxui::text(icon + " " + name) | ftxui::flex,
-            ftxui::text(std::string(1, shortcut)) | ftxui::dim
+            ftxui::text(icon + " " + displayName) | ftxui::flex,
+            ftxui::text( hotkeyText) | ftxui::dim
         });
 
         if (isActive)
@@ -112,9 +115,9 @@ ToolsComponent::OnRender()
     ) | ftxui::color( borderColor );
 }
 
-std::shared_ptr<ToolsComponent> ToolsSection( EditorState & editorState )
+std::shared_ptr<ToolsComponent> ToolsSection( EditorState & editorState, ShortcutManager * shortcutManager )
 {
-    return std::make_shared<ToolsComponent>( editorState );
+    return std::make_shared<ToolsComponent>( editorState, shortcutManager );
 }
 
 }

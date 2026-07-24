@@ -1,5 +1,6 @@
 #include <ftxui/dom/elements.hpp>
 #include "menu.hpp"
+#include "shortcuts.hpp"
 
 namespace Termisprite
 {
@@ -18,7 +19,10 @@ MenuComponent::MenuComponent( std::vector<MenuCategory> categories )
             else M_activeDropdown = static_cast<int>(i);
         }, ftxui::ButtonOption::Ascii() ) );
 
-        M_dropdownMenus.push_back( ftxui::Menu( &M_categories[i].options, &M_selectedIndices[i] ) );
+        std::vector<std::string> optionNames;
+        for ( const auto & option : M_categories[i].options )
+            optionNames.push_back( option.displayName + " " + option.hotkeyText );
+        M_dropdownMenus.push_back( ftxui::Menu( std::move(optionNames), &M_selectedIndices[i] ) );
     }
 
     M_buttonsContainer = ftxui::Container::Horizontal( std::move(buttons) );
@@ -113,12 +117,12 @@ bool MenuComponent::OnEvent( ftxui::Event event )
         if ( handled && ( isEnter || isClick ) )
         {
             int selected = M_selectedIndices[M_activeDropdown];
-            auto callback = M_categories[M_activeDropdown].onSelect;
+            auto callback = M_categories[M_activeDropdown].options[selected].action;
 
             M_activeDropdown = -1;
 
             if ( callback )
-                callback( selected );
+                callback( );
             return true;
         }
 
@@ -128,8 +132,49 @@ bool MenuComponent::OnEvent( ftxui::Event event )
     return M_buttonsContainer->OnEvent( event );
 }
 
-std::shared_ptr<MenuComponent> Menu( std::vector<MenuCategory> categories )
+std::shared_ptr<MenuComponent> Menu( ShortcutManager * shortcutManager )
 {
+    std::vector<MenuCategory> categories = {
+        { "File", { shortcutManager->getShortcut( ShortcutType::NEW_PROJECT ),
+                  shortcutManager->getShortcut( ShortcutType::OPEN_PROJECT ),
+                  shortcutManager->getShortcut( ShortcutType::SAVE_PROJECT ),
+                  shortcutManager->getShortcut( ShortcutType::IMPORT_PROJECT ),
+                  shortcutManager->getShortcut( ShortcutType::EXPORT_PROJECT ),
+                  shortcutManager->getShortcut( ShortcutType::QUIT ) },
+        },
+
+        { "Edit", { shortcutManager->getShortcut( ShortcutType::UNDO ),
+                  shortcutManager->getShortcut( ShortcutType::REDO ),
+                  shortcutManager->getShortcut( ShortcutType::CLEAR ) },
+        },
+
+        { "Canvas", { shortcutManager->getShortcut( ShortcutType::RESIZE_CANVAS ),
+                  shortcutManager->getShortcut( ShortcutType::FLIP_VERTICAL ),
+                  shortcutManager->getShortcut( ShortcutType::FLIP_HORIZONTAL ),
+                  shortcutManager->getShortcut( ShortcutType::BACKGROUND_COLOR ) },
+        },
+
+        { "View", { shortcutManager->getShortcut( ShortcutType::ZOOM_IN ),
+                  shortcutManager->getShortcut( ShortcutType::ZOOM_OUT ),
+                  shortcutManager->getShortcut( ShortcutType::TOGGLE_GRID ),
+                  shortcutManager->getShortcut( ShortcutType::TOGGLE_CHECKERBOARD_GRID ),
+                  shortcutManager->getShortcut( ShortcutType::TOGGLE_PAN ) },
+        },
+
+        { "Tool", { shortcutManager->getShortcut( ShortcutType::SELECT_BRUSH_TOOL ),
+                  shortcutManager->getShortcut( ShortcutType::SELECT_ERASER_TOOL ),
+                  shortcutManager->getShortcut( ShortcutType::SELECT_RECTANGLE_TOOL ),
+                  shortcutManager->getShortcut( ShortcutType::SELECT_ELLIPSE_TOOL ),
+                  shortcutManager->getShortcut( ShortcutType::SELECT_LINE_TOOL ),
+                  shortcutManager->getShortcut( ShortcutType::SELECT_EYE_DROPPER_TOOL ),
+                  shortcutManager->getShortcut( ShortcutType::SELECT_PAINT_FILL_TOOL ),
+                  shortcutManager->getShortcut( ShortcutType::SELECT_BOX_SELECT_TOOL ) },
+        },
+
+        { "Help", { shortcutManager->getShortcut( ShortcutType::HELP_ABOUT ),
+                  shortcutManager->getShortcut( ShortcutType::HELP_SHORTCUTS ) }
+        }
+    };
     return std::make_shared<MenuComponent>( std::move(categories) );
 }
 

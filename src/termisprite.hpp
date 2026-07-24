@@ -3,6 +3,7 @@
 #include "colorpicker.hpp"
 #include "editor.hpp"
 #include "menu.hpp"
+#include "shortcuts.hpp"
 #include "statusbar.hpp"
 #include "tools.hpp"
 #include "modals.hpp"
@@ -24,16 +25,21 @@ public:
     Termisprite();
 
     ftxui::Element OnRender() override;
-
     bool OnEvent( ftxui::Event event ) override;
 
-private:
 
-    bool processHistoryEvents( ftxui::Event event );
-    bool processClipboardEvents( ftxui::Event event );
-    bool processToggleGrid( ftxui::Event event );
-    bool processClearSelection( ftxui::Event event );
-    bool processToolSelection( ftxui::Event event );
+    void showNewProjectModal() { M_showNewProjectModal = true; }
+    void showSaveModal() { M_showSaveModal = true; }
+    void showExportModal() { M_showExportModal = true; }
+    void showResizeModal() { M_showResizeModal = true; }
+    void showAboutModal() { M_showAboutModal = true; }
+    void showShortcutsModal() { M_showShortcutsModal = true; }
+    void showBackgroundColorModal() { M_showBackgroundColorModal = true; }
+    void showImportModal() { M_showImportModal = true; }
+    void showOpenProjectModal() { M_showOpenProjectModal = true; }
+
+    EditorCanvasComponent * editor() { return M_editorCanvas.get(); }
+    void selectTool(ToolType type) { M_tools->selectTool(type); }
 
 
 private:
@@ -74,6 +80,8 @@ private:
     bool M_showOpenProjectModal = false;
     std::shared_ptr<OpenProjectModal> M_openProjectModal;
 
+
+    ShortcutManager M_shortcutManager;
 };
 
 
