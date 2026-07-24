@@ -30,13 +30,13 @@ jobs:
 
       - name: Build Debian Package (.deb)
         run: |
-          cd build
+          cd build/default/
           cpack -G DEB
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            build/termisprite
-            build/*.deb
+            build/default/termisprite
+            build/default/*.deb
             generate_release_notes: true
