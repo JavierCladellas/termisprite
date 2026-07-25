@@ -1,6 +1,6 @@
   # Termisprite
 
-Termisprite is a terminal-based pixel art sprite editor written in C++. It allows you to create, edit, and manipulate pixel art directly from your command-line interface.
+Termisprite is a terminal-based pixel art sprite editor written in C++. It allows you to create, edit, and manipulate pixel art directly from your terminal.
 
 <p align="center">
   <img src="assets/HollowKnight_screenshot.png" width="49%" alt="Hollow knight Termisprite example" />
