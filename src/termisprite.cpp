@@ -17,10 +17,17 @@ Termisprite::Termisprite()
     M_editorCanvas = EditorCanvas( 32, 32 );
 
     M_menu = Menu( &M_shortcutManager );
-    M_brushSettings = BrushSettings( M_editorCanvas->currentState(), &M_shortcutManager );
     M_tools = ToolsSection( M_editorCanvas->currentState(), &M_shortcutManager );
     M_colorSection = ColorSection( M_editorCanvas->currentState() );
     M_statusBar = StatusBar( M_editorCanvas->currentState(), &M_shortcutManager );
+
+    M_brushSettings = BrushSettings( M_editorCanvas->currentState(), &M_shortcutManager );
+    M_eraserSettings = EraserSettings( M_editorCanvas->currentState(), &M_shortcutManager );
+    M_rectangleSettings = RectangleSettings( M_editorCanvas->currentState(), &M_shortcutManager );
+    M_ellipseSettings = EllipseSettings( M_editorCanvas->currentState(), &M_shortcutManager );
+    M_lineSettings = LineSettings( M_editorCanvas->currentState(), &M_shortcutManager );
+    M_paintFillSettings = PaintFillSettings( M_editorCanvas->currentState(), &M_shortcutManager );
+    M_boxSelectSettings = BoxSelectSettings( M_editorCanvas->currentState(), &M_shortcutManager );
 
     M_newProjectModal = std::make_shared<NewProjectModal>( *M_editorCanvas, [this]{ M_showNewProjectModal = false; });
     M_openProjectModal = std::make_shared<OpenProjectModal>( *M_editorCanvas, [this]{ M_showOpenProjectModal = false; });
@@ -37,7 +44,14 @@ Termisprite::Termisprite()
 
 
     M_settingsContainer = ftxui::Container::Vertical({
-        ftxui::Maybe( M_brushSettings, [this] { return M_editorCanvas->currentState().toolType == ToolType::DRAW; })
+        ftxui::Maybe( M_brushSettings, [this] { return M_editorCanvas->currentState().toolType == ToolType::DRAW; }),
+        ftxui::Maybe( M_eraserSettings, [this] { return M_editorCanvas->currentState().toolType == ToolType::ERASER; }),
+        ftxui::Maybe( M_rectangleSettings, [this] { return M_editorCanvas->currentState().toolType == ToolType::SQUARE; }),
+        ftxui::Maybe( M_ellipseSettings, [this] { return M_editorCanvas->currentState().toolType == ToolType::CIRCLE; }),
+        ftxui::Maybe( M_lineSettings, [this] { return M_editorCanvas->currentState().toolType == ToolType::LINE; }),
+        ftxui::Maybe( M_paintFillSettings, [this] { return M_editorCanvas->currentState().toolType == ToolType::PAINT_FILL; }),
+        ftxui::Maybe( M_boxSelectSettings, [this] { return M_editorCanvas->currentState().toolType == ToolType::BOX_SELECT; })
+
     });
 
     ftxui::Component baseContainer = ftxui::Container::Vertical({
