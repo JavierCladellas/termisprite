@@ -203,7 +203,7 @@ private:
     ftxui::Box M_rightClickModalBox;
     bool M_showRightClickModal = false;
     int M_rightClickModalIndex = 0;
-    std::vector<std::string> M_rightClickModalOptions = { "Background", "Grid [g]", "Undo [u]", "Redo [Ctrl+r]", "Clear [Ctrl+d]", "Cancel [Esc]" };
+    std::vector<std::string> M_rightClickModalOptions = { "Background", "Toggle Grid [g]", "Change Grid [Shift+g]", "Undo [u]", "Redo [Ctrl+r]", "Clear [Ctrl+d]", "Cancel [Esc]" };
     ftxui::Component M_rightClickModal = ftxui::Menu(&M_rightClickModalOptions, &M_rightClickModalIndex);
 
 };

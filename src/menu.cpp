@@ -157,6 +157,7 @@ std::shared_ptr<MenuComponent> Menu( ShortcutManager * shortcutManager )
         { "View", { shortcutManager->getShortcut( ShortcutType::ZOOM_IN ),
                   shortcutManager->getShortcut( ShortcutType::ZOOM_OUT ),
                   shortcutManager->getShortcut( ShortcutType::TOGGLE_GRID ),
+                  shortcutManager->getShortcut( ShortcutType::CHANGE_GRID_TYPE ),
                   shortcutManager->getShortcut( ShortcutType::TOGGLE_PAN ) },
         },
 
