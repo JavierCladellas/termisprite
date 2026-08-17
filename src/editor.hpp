@@ -106,13 +106,10 @@ public:
         M_width = width;
         M_height = height;
     }
-    void toggleGrid() {
-        M_showPointGrid = !M_showPointGrid;
-        if (M_showPointGrid) M_showCheckerboardGrid = false;
-    }
-    void toggleCheckerboardGrid() {
-        M_showCheckerboardGrid = !M_showCheckerboardGrid;
-        if (M_showCheckerboardGrid) M_showPointGrid = false;
+    void toggleGrid() { M_isGridOn = !M_isGridOn; }
+    void changeGridType()
+    {
+        M_gridType = (GridType)(((int)M_gridType + 1) % 3);
     }
 
     void copyToClipboard();
@@ -190,8 +187,14 @@ private:
     int M_shapeStartX = 0;
     int M_shapeStartY = 0;
 
-    bool M_showPointGrid = true;
-    bool M_showCheckerboardGrid = false;
+    enum class GridType
+    {
+        POINTS,
+        LINES,
+        CHECKERBOARD
+    };
+    GridType M_gridType = GridType::POINTS;
+    bool M_isGridOn = true;
 
 
     //TODO: REFACTOR
@@ -200,7 +203,7 @@ private:
     ftxui::Box M_rightClickModalBox;
     bool M_showRightClickModal = false;
     int M_rightClickModalIndex = 0;
-    std::vector<std::string> M_rightClickModalOptions = { "Background", "Grid [g]", "Checkerboard [G]", "Undo [u]", "Redo [Ctrl+r]", "Clear [Ctrl+d]", "Cancel [Esc]" };
+    std::vector<std::string> M_rightClickModalOptions = { "Background", "Grid [g]", "Undo [u]", "Redo [Ctrl+r]", "Clear [Ctrl+d]", "Cancel [Esc]" };
     ftxui::Component M_rightClickModal = ftxui::Menu(&M_rightClickModalOptions, &M_rightClickModalIndex);
 
 };
