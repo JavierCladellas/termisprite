@@ -128,24 +128,43 @@ ColorPickerComponent::OnRender()
 }
 
 bool
-ColorPickerComponent::OnEvent( ftxui::Event event )
+ColorPickerComponent::OnEvent(ftxui::Event event)
 {
-    if ( M_saturationSlider->Focused() )
-        if ( event == ftxui::Event::Tab || event == ftxui::Event::ArrowDown )
-            return false;
-
-    if ( M_gridComponent->Focused() )
+    if (M_gridComponent->Focused())
     {
+        if ( event == ftxui::Event::Tab )
+        {
+            M_saturationSlider->TakeFocus();
+            return true;
+        }
+
         if ( event == ftxui::Event::TabReverse )
+        {
             return false;
+        }
 
         if ( event == ftxui::Event::ArrowUp )
         {
-            if ( M_gridComponent->OnEvent(event) )
+            if ( M_gridComponent->OnEvent(event ))
                 return true;
 
             return false;
         }
+    }
+
+    if ( M_saturationSlider->Focused() )
+    {
+        if ( event == ftxui::Event::Tab )
+            return false;
+
+        if ( event == ftxui::Event::TabReverse )
+        {
+            M_gridComponent->TakeFocus();
+            return true;
+        }
+
+        if ( event == ftxui::Event::ArrowDown )
+            return false;
     }
 
     return ComponentBase::OnEvent(event);
@@ -159,32 +178,53 @@ ColorPicker( ftxui::Color & targetColor )
 }
 
 int
-TerminalPaletteComponent::gridWidth() const  { return M_maxColors <= 16 ? 8 : 36; }
+TerminalPaletteComponent::gridWidth() const
+{
+    return M_maxColors <= 16 ? 8 : 36;
+}
 
 int
-TerminalPaletteComponent::gridHeight() const { return M_maxColors <= 16 ? 2 : 8;  }
+TerminalPaletteComponent::gridHeight() const
+{
+    return M_maxColors <= 16 ? 2 : 8;
+}
 
-// Standard ANSI 256-color map layout
 int
 TerminalPaletteComponent::getIndex(int x, int y) const
 {
-    if (M_maxColors <= 16) {
-        if (x < 0 || x >= 8 || y < 0 || y >= 2) return -1;
+    if (M_maxColors <= 16)
+    {
+        if (x < 0 || x >= 8 || y < 0 || y >= 2)
+            return -1;
+
         return y * 8 + x;
-    } else {
-        if (x < 0 || x >= 36 || y < 0 || y >= 8) return -1;
-        if (y == 0) {
-            return (x < 16) ? x : -1;
-        } else if (y >= 1 && y <= 6) {
-            int r = x / 6;
-            int g = y - 1;
-            int b = x % 6;
-            return 16 + (r * 36) + (g * 6) + b;
-        } else if (y == 7) {
-            return (x < 24) ? 232 + x : -1;
-        }
     }
-    return -1;
+
+    // ANSI 256 color layout:
+    //
+    // 0..15                : standard colors
+    // 16..231              : 6x6x6 RGB cube
+    // 232..255             : grayscale
+
+    if (x < 0 || x >= 36 || y < 0 || y >= 8)
+        return -1;
+
+    if (y == 0)
+    {
+        return (x < 16) ? x : -1;
+    }
+
+    if (y >= 1 && y <= 6)
+    {
+        const int r = x / 6;
+        const int g = y - 1;
+        const int b = x % 6;
+
+        return 16 + (r * 36) + (g * 6) + b;
+    }
+
+    // y == 7
+    return (x < 24) ? 232 + x : -1;
 }
 
 void
@@ -211,9 +251,13 @@ ftxui::Element TerminalPaletteComponent::OnRender()
             }
 
             bool isCursor = Focused() && (x == M_cursorX) && (y == M_cursorY);
-            ftxui::Element cell = ftxui::text(isCursor ? "X" : "█") | ftxui::color(ftxui::Color::Palette256(index));
+            std::string textContent = isCursor ? "X" : "█";
 
-            if (isCursor) cell = cell | ftxui::inverted;
+            ftxui::Element cell = ftxui::text(textContent) | ftxui::color(ftxui::Color::Palette256(index));
+
+            if (isCursor)
+                cell = cell | ftxui::inverted;
+
             line.push_back(cell);
         }
         gridRows.push_back(ftxui::hbox(std::move(line)));
@@ -221,23 +265,24 @@ ftxui::Element TerminalPaletteComponent::OnRender()
     return ftxui::vbox(std::move(gridRows)) | ftxui::reflect(M_box);
 }
 
-bool TerminalPaletteComponent::OnEvent(ftxui::Event event)
+bool
+TerminalPaletteComponent::OnEvent(ftxui::Event event)
 {
-    int rows = (M_maxColors + M_columns - 1) / M_columns;
-
     if (event.is_mouse())
     {
         auto mouse = event.mouse();
-        if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Pressed )
-        {
-            if (M_box.Contain(mouse.x, mouse.y))
-            {
-                M_cursorX = mouse.x - M_box.x_min;
-                M_cursorY = mouse.y - M_box.y_min;
 
-                int index = (M_cursorY * M_columns) + M_cursorX;
-                if ( index >= M_maxColors )
-                    M_cursorX = (M_maxColors - 1) % M_columns;
+        if (mouse.button == ftxui::Mouse::Button::Left &&
+            mouse.motion == ftxui::Mouse::Pressed &&
+            M_box.Contain(mouse.x, mouse.y))
+        {
+            const int x = mouse.x - M_box.x_min;
+            const int y = mouse.y - M_box.y_min;
+
+            if (getIndex(x, y) != -1)
+            {
+                M_cursorX = x;
+                M_cursorY = y;
 
                 TakeFocus();
                 updateColorFromCursor();
@@ -246,24 +291,70 @@ bool TerminalPaletteComponent::OnEvent(ftxui::Event event)
         }
     }
 
-    if ( Focused() ) {
-        if (event == ftxui::Event::ArrowLeft && M_cursorX > 0)
-            M_cursorX--; updateColorFromCursor(); return true;
+    if (!Focused())
+        return false;
 
-        if (event == ftxui::Event::ArrowRight && M_cursorX < M_columns - 1)
-            if (((M_cursorY * M_columns) + M_cursorX + 1) < M_maxColors)
-                M_cursorX++; updateColorFromCursor(); return true;
+    if (event == ftxui::Event::ArrowLeft)
+    {
+        if (getIndex(M_cursorX - 1, M_cursorY) != -1)
+        {
+            --M_cursorX;
+            updateColorFromCursor();
+            return true;
+        }
 
-        if (event == ftxui::Event::ArrowUp && M_cursorY > 0)
-            M_cursorY--; updateColorFromCursor(); return true;
-
-        if (event == ftxui::Event::ArrowDown && M_cursorY < rows - 1)
-            if ((((M_cursorY + 1) * M_columns) + M_cursorX) < M_maxColors)
-                M_cursorY++; updateColorFromCursor(); return true;
-
-        if (event == ftxui::Event::Character(' ') || event == ftxui::Event::Return)
-            updateColorFromCursor(); return true;
+        return false;
     }
+
+    if (event == ftxui::Event::ArrowRight)
+    {
+        if (getIndex(M_cursorX + 1, M_cursorY) != -1)
+        {
+            ++M_cursorX;
+            updateColorFromCursor();
+            return true;
+        }
+
+        return false;
+    }
+
+    if (event == ftxui::Event::ArrowUp)
+    {
+        if (getIndex(M_cursorX, M_cursorY - 1) != -1)
+        {
+            --M_cursorY;
+            updateColorFromCursor();
+            return true;
+        }
+
+        return false;
+    }
+
+    if (event == ftxui::Event::ArrowDown)
+    {
+        if (getIndex(M_cursorX, M_cursorY + 1) != -1)
+        {
+            ++M_cursorY;
+            updateColorFromCursor();
+            return true;
+        }
+
+        return false;
+    }
+
+    if (event == ftxui::Event::Character(' ') ||
+        event == ftxui::Event::Return)
+    {
+        updateColorFromCursor();
+        return true;
+    }
+
+    if (event == ftxui::Event::Tab ||
+        event == ftxui::Event::TabReverse)
+    {
+        return false;
+    }
+
     return false;
 }
 
@@ -335,28 +426,59 @@ ColorPaletteComponent::OnRender()
 
 
 bool
-ColorSectionComponent::OnEvent( ftxui::Event event )
+ColorSectionComponent::OnEvent(ftxui::Event event)
 {
-    if ( M_colorPalette->Focused() )
+    if (event == ftxui::Event::Tab)
     {
-        if ( event == ftxui::Event::Tab )
-            return false;
-        if ( event == ftxui::Event::TabReverse )
+        if (M_tabToggle->Focused())
         {
             M_tabContainer->TakeFocus();
             return true;
         }
-    }
 
-    if ( M_tabContainer->Focused() )
-    {
-        if ( event == ftxui::Event::TabReverse )
+        if (M_tabContainer->Focused())
         {
-            if ( M_tabContainer->OnEvent(event) )
-                return true;
+            if (M_trueColorPicker && M_trueColorPicker->Focused())
+            {
+                if (M_trueColorPicker->OnEvent(event))
+                    return true;
+            }
 
+            if ( !M_editorState.palette.empty() )
+            {
+                M_colorPalette->TakeFocus();
+                return true;
+            }
             return false;
         }
+
+        if (M_colorPalette->Focused())
+            return false;
+    }
+
+    if (event == ftxui::Event::TabReverse)
+    {
+        if (M_colorPalette->Focused())
+        {
+            M_tabContainer->TakeFocus();
+            return true;
+        }
+
+        if (M_tabContainer->Focused())
+        {
+
+            if (M_trueColorPicker && M_trueColorPicker->Focused())
+            {
+                if ( M_trueColorPicker->OnEvent(event) )
+                    return true;
+            }
+
+            M_tabToggle->TakeFocus();
+            return true;
+        }
+
+        if (M_tabToggle->Focused())
+            return false;
     }
 
     return ComponentBase::OnEvent(event);
@@ -388,13 +510,13 @@ ColorSectionComponent::ColorSectionComponent( EditorState & editorState )
 
     if ( has256 )
     {
-        M_palette256 = std::make_shared<TerminalPaletteComponent>(editorState.color, 256, 16); // 16x16 grid
+        M_palette256 = std::make_shared<TerminalPaletteComponent>(editorState.color, 256, 36);
         M_tabNames.push_back("256");
         tabComponents.push_back(M_palette256);
     }
     if ( has16 )
     {
-        M_palette16 = std::make_shared<TerminalPaletteComponent>(editorState.color, 16, 8);    // 8x2 grid
+        M_palette16 = std::make_shared<TerminalPaletteComponent>(editorState.color, 16, 8);
         M_tabNames.push_back("16");
         tabComponents.push_back(M_palette16);
     }
