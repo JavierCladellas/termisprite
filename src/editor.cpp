@@ -96,7 +96,11 @@ EditorCanvasComponent::OnRender()
                 cellR |= ftxui::bgcolor( M_currentState.backgroundColor );
             }
 
-            if ( !isOutOfBounds && M_showCursor && worldX == M_cursorX && worldY == M_cursorY )
+            if ( !isOutOfBounds && M_showCursor &&
+                M_cursorX + M_currentState.brushSize > worldX &&
+                M_cursorX <= worldX &&
+                M_cursorY + M_currentState.brushSize > worldY &&
+                M_cursorY <= worldY )
             {
                 cellL = ftxui::text( M_currentState.brush ) | ftxui::color( M_currentState.color ) | ftxui::bgcolor( ftxui::Color::Red ) | ftxui::blink;
                 cellR = ftxui::text( M_currentState.brush ) | ftxui::color( M_currentState.color ) | ftxui::bgcolor( ftxui::Color::Red ) | ftxui::blink;
@@ -296,9 +300,8 @@ void
 EditorCanvasComponent::applyBrushAt( int targetX, int targetY, bool isEraser )
 {
     int bsize = M_currentState.brushSize;
-    int startX = targetX - (bsize / 2);
-    int startY = targetY - (bsize / 2);
-
+    int startX = targetX;
+    int startY = targetY;
     for ( int by = 0; by < bsize; ++by )
     {
         for ( int bx = 0; bx < bsize; ++bx )
