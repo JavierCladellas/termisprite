@@ -1,5 +1,6 @@
 #pragma once
 
+#include "brush_settings.hpp"
 #include "colorpicker.hpp"
 #include "editor.hpp"
 #include "menu.hpp"
@@ -47,6 +48,8 @@ private:
 
     std::shared_ptr<EditorCanvasComponent> M_editorCanvas;
     std::shared_ptr<MenuComponent> M_menu;
+    ftxui::Component M_settingsContainer;
+    std::shared_ptr<BrushSettingsComponent> M_brushSettings;
     std::shared_ptr<ToolsComponent> M_tools;
     std::shared_ptr<ColorSectionComponent> M_colorSection;
     std::shared_ptr<StatusBarComponent> M_statusBar;

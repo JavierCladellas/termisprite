@@ -51,7 +51,7 @@ struct Clipboard
 struct EditorState
 {
     std::string brush = "█";
-    std::pair<int,int> brushSize = { 1, 1 };
+    int brushSize = 1;
     ftxui::Color color = ftxui::Color::RGB(255, 255, 255);
     ftxui::Color backgroundColor = ftxui::Color();
     ToolType toolType = ToolType::DRAW;

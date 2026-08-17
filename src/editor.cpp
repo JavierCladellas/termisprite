@@ -295,14 +295,13 @@ EditorCanvasComponent::pasteClipboard()
 void
 EditorCanvasComponent::applyBrushAt( int targetX, int targetY, bool isEraser )
 {
-    int bw = M_currentState.brushSize.first;
-    int bh = M_currentState.brushSize.second;
-    int startX = targetX - (bw / 2);
-    int startY = targetY - (bh / 2);
+    int bsize = M_currentState.brushSize;
+    int startX = targetX - (bsize / 2);
+    int startY = targetY - (bsize / 2);
 
-    for ( int by = 0; by < bh; ++by )
+    for ( int by = 0; by < bsize; ++by )
     {
-        for ( int bx = 0; bx < bw; ++bx )
+        for ( int bx = 0; bx < bsize; ++bx )
         {
             int px = startX + bx;
             int py = startY + by;

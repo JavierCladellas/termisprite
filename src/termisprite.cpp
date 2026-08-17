@@ -3,6 +3,7 @@
 #include <ftxui/dom/elements.hpp>
 
 #include "termisprite.hpp"
+
 #include "editor.hpp"
 
 
@@ -16,6 +17,7 @@ Termisprite::Termisprite()
     M_editorCanvas = EditorCanvas( 32, 32 );
 
     M_menu = Menu( &M_shortcutManager );
+    M_brushSettings = BrushSettings( M_editorCanvas->currentState(), &M_shortcutManager );
     M_tools = ToolsSection( M_editorCanvas->currentState(), &M_shortcutManager );
     M_colorSection = ColorSection( M_editorCanvas->currentState() );
     M_statusBar = StatusBar( M_editorCanvas->currentState(), &M_shortcutManager );
@@ -33,8 +35,15 @@ Termisprite::Termisprite()
 
     M_importModal = std::make_shared<ImportModal>( *M_editorCanvas, [this]{ M_showImportModal = false; });
 
+
+    M_settingsContainer = ftxui::Container::Vertical({
+        ftxui::Maybe( M_brushSettings, [this] { return M_editorCanvas->currentState().toolType == ToolType::DRAW; })
+    });
+
     ftxui::Component baseContainer = ftxui::Container::Vertical({
-        ftxui::Container::Horizontal({ M_menu, M_editorCanvas,  M_tools, M_colorSection }),
+        ftxui::Container::Horizontal({
+            M_menu, M_editorCanvas, M_settingsContainer, M_tools, M_colorSection
+        }),
         M_statusBar
     });
 
@@ -46,6 +55,7 @@ Termisprite::Termisprite()
                 ftxui::hbox({
                     M_editorCanvas->Render() | ftxui::flex,
                     ftxui::vbox({
+                        M_settingsContainer->Render(),
                         M_tools->Render(),
                         M_colorSection->Render()
                     })
