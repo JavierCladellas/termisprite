@@ -10,31 +10,32 @@ namespace Termisprite
 BrushSettingsComponent::BrushSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager )
     : M_editorState( editorState ), M_shortcutManager( shortcutManager )
 {
-    M_brushCharInput = ftxui::Input(&M_editorState.brush, "Symbol", {
+    M_brushCharInput = ftxui::Input(&M_editorState.selectedBrush, "Symbol", {
         .transform = []( ftxui::InputState const& state) {
-            auto elt = state.element;
-            elt |= ftxui::center | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 2);
             if ( state.focused )
-                return elt | ftxui::inverted | ftxui::bold;
-            return elt | ftxui::color(ftxui::Color::White);
+                return state.element | ftxui::inverted | ftxui::bold | ftxui::center | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 2);
+            return state.element | ftxui::color(ftxui::Color::White) | ftxui::center | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 2);
 
         },
         .multiline = false,
+        .insert = false,
         .on_change = [this] {
-            std::wstring wbrush = ftxui::to_wstring(M_editorState.brush);
+            std::wstring wbrush = ftxui::to_wstring(M_editorState.selectedBrush);
             if ( wbrush.empty() )
-                M_editorState.brush = "█";
+                M_editorState.selectedBrush = "█";
             else
             {
                 wbrush = wbrush.substr(wbrush.length() - 1, 1);
-                M_editorState.brush = ftxui::to_string(wbrush);
+                M_editorState.selectedBrush = ftxui::to_string(wbrush);
             }
-            M_cursorPos = M_editorState.brush.size();
+            M_editorState.brush = M_editorState.selectedBrush;
+            M_cursorPos = M_editorState.selectedBrush.size();
         },
         .on_enter = [this] {
-            if ( M_editorState.brush.empty() )
-                M_editorState.brush = "█";
-            M_cursorPos = M_editorState.brush.size();
+            if ( M_editorState.selectedBrush.empty() )
+                M_editorState.selectedBrush = "█";
+            M_editorState.brush = M_editorState.selectedBrush;
+            M_cursorPos = M_editorState.selectedBrush.size();
         },
         .cursor_position = &M_cursorPos,
     } );
@@ -65,9 +66,9 @@ BrushSettingsComponent::OnRender()
     return window( text(" Brush Settings ") | bold | center,
         vbox({
             vbox({
-                text("Character ") | dim | ftxui::color( ftxui::Color::White ),
-                M_brushCharInput->Render() | ftxui::border,
-                text("Size ") | dim | ftxui::color( ftxui::Color::White ),
+                text("Character ") | dim | color( ftxui::Color::White ),
+                M_brushCharInput->Render() | border | size( WIDTH, EQUAL, 2),
+                text("Size ") | dim | color( Color::White ),
                 hbox({
                     text("   "),
                     text(std::to_string(M_editorState.brushSize) + " px") | ftxui::color(ftxui::Color::White) | center,
