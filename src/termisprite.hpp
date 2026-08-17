@@ -1,6 +1,6 @@
 #pragma once
 
-#include "brush_settings.hpp"
+#include "tool_settings.hpp"
 #include "colorpicker.hpp"
 #include "editor.hpp"
 #include "menu.hpp"

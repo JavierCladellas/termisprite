@@ -1,5 +1,5 @@
 
-#include "brush_settings.hpp"
+#include "tool_settings.hpp"
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/dom/elements.hpp>
 
@@ -66,7 +66,7 @@ BrushSettingsComponent::OnRender()
     return window( text(" Brush Settings ") | bold | center,
         vbox({
             vbox({
-                text("Character ") | dim | color( ftxui::Color::White ),
+                text("Brush ") | dim | color( ftxui::Color::White ),
                 M_brushCharInput->Render() | border | size( WIDTH, EQUAL, 2),
                 text("Size ") | dim | color( Color::White ),
                 hbox({
