@@ -20,6 +20,7 @@ public:
     bool OnEvent( ftxui::Event event ) override;
 
 private:
+    int M_cursorPos = 0;
     ftxui::Component M_brushCharInput;
 
     ftxui::Component M_btnSizeInc;
