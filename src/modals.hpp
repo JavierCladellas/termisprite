@@ -264,4 +264,28 @@ private:
 };
 
 
+
+class NewPaletteModal
+    : public Modal
+{
+public:
+    NewPaletteModal( std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes, std::function<void()> onClose)
+        : Modal( onClose, "New Palette"), M_palettes( palettes )
+    {
+        Modal::initTree();
+        M_paletteNameInputComponent->TakeFocus();
+    }
+
+private:
+    void onConfirm() override;
+    ftxui::Component buildContentComponent() const override;
+    ftxui::Element renderModalContent() override;
+
+private:
+    std::unordered_map<std::string, std::vector<ftxui::Color>> & M_palettes;
+    std::string M_paletteNameInput = "";
+    ftxui::Component M_paletteNameInputComponent = ftxui::Input(&M_paletteNameInput, "Palette Name");
+};
+
+
 }

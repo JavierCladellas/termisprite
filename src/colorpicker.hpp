@@ -2,6 +2,7 @@
 #pragma once
 
 #include "editor.hpp"
+#include "colorpalettes.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
@@ -96,27 +97,6 @@ private:
     int M_cursorY = 0;
     ftxui::Box M_box;
 };
-
-class ColorPaletteComponent
-    : public ftxui::ComponentBase
-{
-public:
-    ColorPaletteComponent( EditorState & editorState );
-
-    ftxui::Element OnRender() override;
-
-private:
-    void rebuildPalette();
-
-private:
-    std::vector<ftxui::Color> M_lastPalette;
-    EditorState & M_editorState;
-
-    ftxui::Component M_container = ftxui::Container::Vertical({});
-};
-
-
-std::shared_ptr<ColorPaletteComponent> ColorPalette( EditorState & editorState );
 
 
 

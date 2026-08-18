@@ -414,4 +414,32 @@ ShortcutsModal::renderModalContent()
 
 
 
+
+void
+NewPaletteModal::onConfirm()
+{
+    if ( M_paletteNameInput.empty( ))
+        M_paletteNameInput = "1";
+    M_palettes[M_paletteNameInput] = {};
+}
+
+ftxui::Component
+NewPaletteModal::buildContentComponent() const
+{
+    return M_paletteNameInputComponent;
+}
+
+ftxui::Element
+NewPaletteModal::renderModalContent()
+{
+    using namespace ftxui;
+
+    return hbox({
+        text(" Palette Name: ") | dim | vcenter,
+        M_paletteNameInputComponent->Render() | border | size(WIDTH, EQUAL, 20)
+    }) | center;
+}
+
+
+
 }
