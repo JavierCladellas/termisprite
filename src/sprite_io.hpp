@@ -34,12 +34,7 @@ public:
                    Sprite const& targetSprite,
                    EditorState const& editorState );
 
-    enum class ExportFormat
-    {
-        PNG,
-        JPG,
-        ASCII
-    };
+    enum class ExportFormat { PNG, JPG, ASCII, BMP };
     static bool
     exportImage( std::string const& filepath, Sprite const& targetSprite, std::string const& format = "png" );
 

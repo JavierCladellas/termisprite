@@ -172,7 +172,7 @@ private:
     ftxui::Component M_filepathInputComponent = ftxui::Input(&M_filepathInput, "path/to/export.png");
 
     int M_selectedFormatIndex = 0;
-    std::vector<std::string> M_formatOptions = { "png" };
+    std::vector<std::string> M_formatOptions = { "png", "jpg", "bmp", "ascii" };
     ftxui::Component M_formatDropdown = ftxui::Dropdown( M_formatOptions, &M_selectedFormatIndex);
 };
 
