@@ -17,7 +17,7 @@ class Modal
 public:
     Modal( std::function<void()> onClose, std::string const& title = "" );
 
-    ftxui::Element OnRender() override;
+    virtual ftxui::Element OnRender() override;
     bool OnEvent( ftxui::Event event ) override;
 
 protected:
@@ -29,10 +29,8 @@ protected:
 
 protected:
     std::function<void()> M_closeCallback;
-
-private:
-    ftxui::Component M_cancelButton; 
-    ftxui::Component M_okButton; 
+    ftxui::Component M_cancelButton;
+    ftxui::Component M_okButton;
 
     ftxui::Box M_box;
     std::string M_title;
@@ -276,6 +274,8 @@ public:
         M_paletteNameInputComponent->TakeFocus();
     }
 
+    ftxui::Element OnRender() override;
+
 private:
     void onConfirm() override;
     ftxui::Component buildContentComponent() const override;
@@ -299,6 +299,8 @@ public:
         Modal::initTree();
         M_paletteNameInputComponent->TakeFocus();
     }
+
+    ftxui::Element OnRender() override;
 
 private:
     void onConfirm() override;

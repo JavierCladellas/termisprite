@@ -1,6 +1,7 @@
 #include "modals.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_options.hpp>
+#include <ftxui/dom/elements.hpp>
 
 
 namespace Termisprite
@@ -97,9 +98,9 @@ void
 NewProjectModal::onConfirm()
 {
     if ( M_widthInput.empty() )
-        M_widthInput = "32";
+        M_widthInput = "48";
     if ( M_heightInput.empty() )
-        M_heightInput = "32";
+        M_heightInput = "48";
     M_editorCanvas.clear();
     M_editorCanvas.resize(std::stoi(M_widthInput), std::stoi(M_heightInput));
     M_projectNameInput = "";
@@ -413,6 +414,28 @@ ShortcutsModal::renderModalContent()
 }
 
 
+ftxui::Element
+NewPaletteModal::OnRender()
+{
+    using namespace ftxui;
+
+    return vbox({
+        hbox({
+            text( M_title ) | bold | center ,
+            filler(),
+            M_cancelButton->Render()
+        }),
+        this->renderModalContent(),
+        hbox({
+            filler(),
+            M_okButton->Render()
+        })
+    }) | reflect( M_box )
+       | size(WIDTH, GREATER_THAN, 45)
+       | borderDouble
+       | clear_under;
+
+}
 
 
 void
@@ -437,9 +460,31 @@ NewPaletteModal::renderModalContent()
     return hbox({
         text(" Palette Name: ") | dim | vcenter,
         M_paletteNameInputComponent->Render() | border | size(WIDTH, EQUAL, 20)
-    }) | center;
+    });
 }
 
+
+ftxui::Element
+ImportPaletteModal::OnRender()
+{
+    using namespace ftxui;
+
+    return vbox({
+        hbox({
+            text( M_title ) | bold | center ,
+            filler(),
+            M_cancelButton->Render()
+        }),
+        this->renderModalContent(),
+        hbox({
+            filler(),
+            M_okButton->Render()
+        })
+    }) | reflect( M_box )
+       | size(WIDTH, GREATER_THAN, 45)
+       | borderDouble
+       | clear_under;
+}
 
 void
 ImportPaletteModal::onConfirm()
@@ -475,8 +520,8 @@ ImportPaletteModal::renderModalContent()
         hbox({
             text(" Filepath: ") | dim | vcenter,
             M_paletteFilepathInputComponent->Render(),
+            M_formatDropdown->Render()
         }),
-        M_formatDropdown->Render()
     }) | center;
 }
 
