@@ -318,7 +318,7 @@ private:
     //TODO : Formats
     std::vector<std::string> M_formatOptions = { "gpl" };
     int M_selectedFormatIndex = 0;
-    ftxui::Component M_formatDropdown = ftxui::Dropdown( M_formatOptions, &M_selectedFormatIndex, ftxui::DropdownOption::Ascii() );
+    ftxui::Component M_formatDropdown = ftxui::Dropdown( M_formatOptions, &M_selectedFormatIndex);
 
 };
 
