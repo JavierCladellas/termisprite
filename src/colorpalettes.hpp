@@ -10,6 +10,7 @@ namespace Termisprite
 
 
 class NewPaletteModal;
+class ImportPaletteModal;
 
 class ColorPaletteComponent
     : public ftxui::ComponentBase
@@ -38,6 +39,9 @@ private:
 
     bool M_showNewPaletteModal = false;
     std::shared_ptr<NewPaletteModal> M_newPaletteModal;
+
+    bool M_showImportPaletteModal = false;
+    std::shared_ptr<ImportPaletteModal> M_importPaletteModal;
 
     ftxui::Component M_paletteTabToggle;
     ftxui::Component M_paletteTabContainer;

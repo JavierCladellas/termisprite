@@ -8,12 +8,6 @@
 namespace Termisprite
 {
 
-
-
-
-
-
-
 ColorPaletteComponent::ColorPaletteComponent( EditorState & editorState )
     : M_editorState( editorState )
 {
@@ -21,8 +15,13 @@ ColorPaletteComponent::ColorPaletteComponent( EditorState & editorState )
         M_showNewPaletteModal = false;
         rebuildPaletteTabs();
     } );
+    M_importPaletteModal = std::make_shared<ImportPaletteModal>( M_palettes, [this] {
+        M_showImportPaletteModal = false;
+        rebuildPaletteTabs();
+    } );
 
     M_createPaletteButton = ftxui::Button( "[+ Create]", [this] { M_showNewPaletteModal = true; }, ftxui::ButtonOption::Ascii() );
+    M_importPaletteButton = ftxui::Button( "[+ Import]", [this] { M_showImportPaletteModal = true; }, ftxui::ButtonOption::Ascii() );
 
     M_colorsInCanvasContainer = ftxui::Container::Vertical({});
 
@@ -31,7 +30,7 @@ ColorPaletteComponent::ColorPaletteComponent( EditorState & editorState )
     M_paletteTabContainer = ftxui::Container::Tab( {}, &M_paletteTabIndex );
 
     auto baseContainer = ftxui::Container::Vertical({
-        M_createPaletteButton,
+        ftxui::Container::Horizontal({ M_createPaletteButton, M_importPaletteButton }),
         M_paletteTabToggle,
         M_paletteTabContainer,
         M_colorsInCanvasContainer
@@ -40,16 +39,20 @@ ColorPaletteComponent::ColorPaletteComponent( EditorState & editorState )
     M_container = ftxui::Renderer(baseContainer, [this] {
         return ftxui::vbox({
             ftxui::text( " Palettes " ) | ftxui::color( ftxui::Color::White ),
-            M_createPaletteButton->Render() | ftxui::color( ftxui::Color::White ) | ftxui::dim,
+            ftxui::hbox({
+                M_createPaletteButton->Render() | ftxui::color( ftxui::Color::White ) | ftxui::dim,
+                M_importPaletteButton->Render() | ftxui::color( ftxui::Color::White ) | ftxui::dim
+            }),
 
             M_paletteNames.empty() ? ftxui::text("") : M_paletteTabToggle->Render() | ftxui::color( ftxui::Color::White ),
             M_paletteNames.empty() ? ftxui::text("") : M_paletteTabContainer->Render() | ftxui::color( ftxui::Color::White ),
 
-            ftxui::text( " In Canvas" ) | ftxui::color( ftxui::Color::White ) | ftxui::dim,
+            M_colorsInCanvasContainer->ChildCount() > 0 ? ftxui::text( " In Canvas" ) : ftxui::text("") | ftxui::color( ftxui::Color::White ) | ftxui::dim,
             M_colorsInCanvasContainer->ChildCount() > 0 ? M_colorsInCanvasContainer->Render() : ftxui::text("")
         }) | ftxui::size( ftxui::HEIGHT, ftxui::LESS_THAN, 6  );
     });
     M_container |= ftxui::Modal( M_newPaletteModal, &M_showNewPaletteModal );
+    M_container |= ftxui::Modal( M_importPaletteModal, &M_showImportPaletteModal );
 
     ftxui::ComponentBase::Add( M_container );
 }

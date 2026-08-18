@@ -419,7 +419,7 @@ void
 NewPaletteModal::onConfirm()
 {
     if ( M_paletteNameInput.empty( ))
-        M_paletteNameInput = "1";
+        M_paletteNameInput = "New Palette";
     M_palettes[M_paletteNameInput] = {};
 }
 
@@ -440,6 +440,46 @@ NewPaletteModal::renderModalContent()
     }) | center;
 }
 
+
+void
+ImportPaletteModal::onConfirm()
+{
+    if ( M_paletteNameInput.empty( ))
+        M_paletteNameInput = "New Palette";
+
+    if ( !M_paletteFilepathInput.empty() )
+        // M_palettes[M_paletteNameInput] =  importPalette(M_paletteFilepathInput);
+        ;
+}
+
+ftxui::Component
+ImportPaletteModal::buildContentComponent() const
+{
+    return ftxui::Container::Vertical({
+        M_paletteNameInputComponent,
+        M_paletteFilepathInputComponent,
+        M_formatDropdown
+    });
+}
+
+ftxui::Element
+ImportPaletteModal::renderModalContent()
+{
+    using namespace ftxui;
+
+    return vbox({
+        hbox({
+            text(" Palette Name: ") | dim | vcenter,
+            M_paletteNameInputComponent->Render() | border | size(WIDTH, EQUAL, 20)
+        }),
+        separatorEmpty(),
+        text(" Filepath: ") | dim | vcenter,
+        hbox({
+            M_paletteFilepathInputComponent->Render(),
+            M_formatDropdown->Render() | border
+        }),
+    }) | center;
+}
 
 
 }

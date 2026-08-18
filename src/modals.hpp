@@ -288,4 +288,39 @@ private:
 };
 
 
+
+class ImportPaletteModal
+    : public Modal
+{
+public:
+    ImportPaletteModal( std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes, std::function<void()> onClose )
+        : Modal( onClose, "Import Palette"), M_palettes( palettes )
+    {
+        Modal::initTree();
+        M_paletteNameInputComponent->TakeFocus();
+    }
+
+private:
+    void onConfirm() override;
+    ftxui::Component buildContentComponent() const override;
+    ftxui::Element renderModalContent() override;
+
+private:
+    //TODO: Maybe use sort of back inserter here instead of map
+    std::unordered_map<std::string, std::vector<ftxui::Color>> & M_palettes;
+
+    std::string M_paletteNameInput = "";
+    ftxui::Component M_paletteNameInputComponent = ftxui::Input(&M_paletteNameInput, "Palette Name");
+
+    std::string M_paletteFilepathInput = "";
+    ftxui::Component M_paletteFilepathInputComponent = ftxui::Input(&M_paletteFilepathInput, "path/to/palette.gpl");
+
+    //TODO : Formats
+    std::vector<std::string> M_formatOptions = { "gpl" };
+    int M_selectedFormatIndex = 0;
+    ftxui::Component M_formatDropdown = ftxui::Dropdown( M_formatOptions, &M_selectedFormatIndex, ftxui::DropdownOption::Ascii() );
+
+};
+
+
 }
