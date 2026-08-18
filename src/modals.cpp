@@ -289,7 +289,7 @@ ExportModal::renderModalContent()
         separatorEmpty(),
         hbox({
             text(" Format: ") | dim | vcenter,
-            M_formatDropdown->Render() | border
+            M_formatDropdown->Render()
         }) | center
     });
 }
@@ -470,14 +470,13 @@ ImportPaletteModal::renderModalContent()
     return vbox({
         hbox({
             text(" Palette Name: ") | dim | vcenter,
-            M_paletteNameInputComponent->Render() | border | size(WIDTH, EQUAL, 20)
+            M_paletteNameInputComponent->Render()
         }),
-        separatorEmpty(),
-        text(" Filepath: ") | dim | vcenter,
         hbox({
+            text(" Filepath: ") | dim | vcenter,
             M_paletteFilepathInputComponent->Render(),
-            M_formatDropdown->Render() | border
         }),
+        M_formatDropdown->Render()
     }) | center;
 }
 
