@@ -317,7 +317,7 @@ private:
     ftxui::Component M_paletteFilepathInputComponent = ftxui::Input(&M_paletteFilepathInput, "path/to/palette.gpl");
 
     //TODO : Formats
-    std::vector<std::string> M_formatOptions = { "gpl" };
+    std::vector<std::string> M_formatOptions = { "gpl", "png" };
     int M_selectedFormatIndex = 0;
     ftxui::Component M_formatDropdown = ftxui::Dropdown( M_formatOptions, &M_selectedFormatIndex);
 

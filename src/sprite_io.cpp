@@ -140,6 +140,89 @@ bool SpriteImporter::importImage( std::string const& filepath, Sprite& targetSpr
     return true;
 }
 
+
+bool
+SpriteImporter::importPalette( std::string const& filepath, std::string const& paletteName, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes, std::string const& format  )
+{
+    std::map<std::string, ImportPaletteFormat> formatMap = {
+        {"png", ImportPaletteFormat::PNG},
+        {"gpl", ImportPaletteFormat::GPL}
+    };
+
+    if ( !formatMap.contains(format) )
+        return false;
+
+    ImportPaletteFormat paletteFormat = formatMap[format];
+
+    std::string parsedFilepath = filepath;
+
+    std::vector<ftxui::Color> extractedColors;
+    switch( paletteFormat )
+    {
+        case ImportPaletteFormat::PNG:
+        {
+            if ( !filepath.ends_with(".png") )
+                parsedFilepath += ".png";
+
+            int imgWidth, imgHeight, channels;
+            unsigned char* imgData = stbi_load(parsedFilepath.c_str(), &imgWidth, &imgHeight, &channels, 4);
+
+            if (!imgData)
+                return false;
+
+            for (int y = 0; y < imgHeight; ++y)
+            {
+                for (int x = 0; x < imgWidth; ++x)
+                {
+                    int index = (y * imgWidth + x) * 4;
+                    unsigned char r = imgData[index];
+                    unsigned char g = imgData[index + 1];
+                    unsigned char b = imgData[index + 2];
+                    unsigned char a = imgData[index + 3];
+
+                    if (a >= 128)
+                        extractedColors.push_back(ftxui::Color::RGB(r, g, b));
+                }
+            }
+
+            stbi_image_free(imgData);
+            break;
+        }
+        case ImportPaletteFormat::GPL:
+        {
+            if ( !filepath.ends_with(".gpl") )
+                parsedFilepath += ".gpl";
+
+            std::ifstream inFile(parsedFilepath);
+            if (!inFile.is_open())
+                return false;
+
+            std::string line;
+            while (std::getline(inFile, line))
+            {
+                if (line.empty() || line[0] == '#')
+                    continue;
+
+                int r, g, b;
+                if (sscanf(line.c_str(), "%d %d %d", &r, &g, &b) == 3)
+                    extractedColors.push_back(ftxui::Color::RGB(r, g, b));
+            }
+            inFile.close();
+            break;
+        }
+        default:
+            return false;
+    }
+
+    palettes[paletteName] = extractedColors;
+    return true;
+
+}
+
+
+
+
+
 bool
 SpriteExporter::exportProject( std::string const& filepath,
                                std::string const& projectName,

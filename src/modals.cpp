@@ -1,4 +1,5 @@
 #include "modals.hpp"
+#include "sprite_io.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -447,8 +448,7 @@ ImportPaletteModal::onConfirm()
         M_paletteNameInput = "New Palette";
 
     if ( !M_paletteFilepathInput.empty() )
-        // M_palettes[M_paletteNameInput] =  importPalette(M_paletteFilepathInput);
-        ;
+        SpriteImporter::importPalette(M_paletteFilepathInput, M_paletteNameInput, M_palettes, M_formatOptions[M_selectedFormatIndex]);
 }
 
 ftxui::Component

@@ -19,6 +19,14 @@ public:
 
     static bool importProject( std::string const& filepath, Sprite & targetSprite, EditorState & editorState, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes );
 
+
+    enum class ImportPaletteFormat
+    {
+        PNG,
+        GPL
+    };
+    static bool importPalette( std::string const& filepath, std::string const& paletteName, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes, std::string const& format = "gpl" );
+
 private:
 
 };
