@@ -21,13 +21,15 @@ public:
 
     ftxui::Element OnRender() override;
 
+    ftxui::Component applyModals(ftxui::Component main);
 
-ftxui::Component applyModals(ftxui::Component main);
+    std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes() { return M_palettes; }
+
+    void rebuildPaletteTabs();
 
 private:
     void rebuildColorsInCanvas();
-    void rebuildPaletteTabs();
-    ftxui::Component buildColorButton( ftxui::Color color );
+    ftxui::Component buildColorButton( ftxui::Color color, std::function<void()> onDelete = {} );
 
 private:
     std::vector<ftxui::Color> M_lastColorsInCanvas;
@@ -37,6 +39,7 @@ private:
     ftxui::Component M_colorsInCanvasContainer;
     ftxui::Component M_createPaletteButton;
     ftxui::Component M_importPaletteButton;
+    ftxui::Component M_deletePaletteButton;
 
     std::vector<std::string> M_paletteNames; //TODO: redundant, use single data struct
     std::unordered_map<std::string, std::vector<ftxui::Color>> M_palettes;

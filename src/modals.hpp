@@ -6,6 +6,7 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/screen/box.hpp>
+#include <unordered_map>
 
 namespace Termisprite
 {
@@ -99,8 +100,8 @@ class SaveModal
     : public Modal
 {
 public:
-    SaveModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
-        : Modal( onClose, "Save"), M_editorCanvas( editorCanvas )
+    SaveModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose, std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes = {})
+        : Modal( onClose, "Save"), M_editorCanvas( editorCanvas ), M_palettes( palettes )
     {
         Modal::initTree();
     }
@@ -113,6 +114,7 @@ private:
 
 private:
     EditorCanvasComponent & M_editorCanvas;
+    std::unordered_map<std::string, std::vector<ftxui::Color>> const& M_palettes;
 
     std::string M_filepathInput = "";
     ftxui::Component M_filepathInputComponent = ftxui::Input(&M_filepathInput, "path/to/save.json");
@@ -125,8 +127,8 @@ class OpenProjectModal
     : public Modal
 {
 public:
-    OpenProjectModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
-        : Modal( onClose, "Open"), M_editorCanvas( editorCanvas )
+    OpenProjectModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes )
+        : Modal( onClose, "Open"), M_editorCanvas( editorCanvas ), M_palettes( palettes )
     {
         Modal::initTree();
     }
@@ -139,6 +141,7 @@ private:
 
 private:
     EditorCanvasComponent & M_editorCanvas;
+    std::unordered_map<std::string, std::vector<ftxui::Color>> & M_palettes;
 
     std::string M_filepathInput = "";
     ftxui::Component M_filepathInputComponent = ftxui::Input(&M_filepathInput, "path/to/project.json");

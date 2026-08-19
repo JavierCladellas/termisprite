@@ -8,6 +8,7 @@
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <unordered_map>
 
 
 namespace Termisprite
@@ -108,6 +109,9 @@ public:
 
     ftxui::Element OnRender() override;
     bool OnEvent( ftxui::Event event ) override;
+
+    std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes() { return M_colorPalette->palettes(); }
+    void reloadPalettes() { M_colorPalette->rebuildPaletteTabs(); }
 
 private:
     std::vector<std::string> M_tabNames;

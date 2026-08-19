@@ -1,5 +1,7 @@
 #include "modals.hpp"
 #include <ftxui/component/component.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <memory>
 
 #include "colorpalettes.hpp"
 
@@ -22,6 +24,14 @@ ColorPaletteComponent::ColorPaletteComponent( EditorState & editorState )
 
     M_createPaletteButton = ftxui::Button( "[+ Create]", [this] { M_showNewPaletteModal = true; }, ftxui::ButtonOption::Ascii() );
     M_importPaletteButton = ftxui::Button( "[+ Import]", [this] { M_showImportPaletteModal = true; }, ftxui::ButtonOption::Ascii() );
+    M_deletePaletteButton = ftxui::Button( "[Delete]", [this] {
+        if ( !M_paletteNames.empty() )
+        {
+            std::string paletteToDelete = M_paletteNames[M_paletteTabIndex];
+            M_palettes.erase( paletteToDelete );
+            rebuildPaletteTabs();
+        }
+    }, ftxui::ButtonOption::Ascii() );
 
     M_colorsInCanvasContainer = ftxui::Container::Vertical({});
 
@@ -29,27 +39,12 @@ ColorPaletteComponent::ColorPaletteComponent( EditorState & editorState )
 
     M_paletteTabContainer = ftxui::Container::Tab( {}, &M_paletteTabIndex );
 
-    auto baseContainer = ftxui::Container::Vertical({
+    M_container = ftxui::Container::Vertical({
+        M_colorsInCanvasContainer,
         ftxui::Container::Horizontal({ M_createPaletteButton, M_importPaletteButton }),
         M_paletteTabToggle,
         M_paletteTabContainer,
-        M_colorsInCanvasContainer
-    });
-
-    M_container = ftxui::Renderer(baseContainer, [this] {
-        return ftxui::vbox({
-            ftxui::text( " Palettes " ) | ftxui::color( ftxui::Color::White ),
-            ftxui::hbox({
-                M_createPaletteButton->Render() | ftxui::color( ftxui::Color::White ) | ftxui::dim,
-                M_importPaletteButton->Render() | ftxui::color( ftxui::Color::White ) | ftxui::dim
-            }),
-
-            M_paletteNames.empty() ? ftxui::text("") : M_paletteTabToggle->Render() | ftxui::color( ftxui::Color::White ),
-            M_paletteNames.empty() ? ftxui::text("") : M_paletteTabContainer->Render() | ftxui::color( ftxui::Color::White ),
-
-            M_colorsInCanvasContainer->ChildCount() > 0 ? ftxui::text( " In Canvas" ) : ftxui::text("") | ftxui::color( ftxui::Color::White ) | ftxui::dim,
-            M_colorsInCanvasContainer->ChildCount() > 0 ? M_colorsInCanvasContainer->Render() : ftxui::text("")
-        }) | ftxui::size( ftxui::HEIGHT, ftxui::LESS_THAN, 6  );
+        M_deletePaletteButton
     });
 
     ftxui::ComponentBase::Add( M_container );
@@ -80,7 +75,14 @@ ColorPaletteComponent::rebuildPaletteTabs()
 
         for ( size_t i = 0; i < colors.size(); ++i )
         {
-            auto btn = buildColorButton( colors[i] );
+            auto btn = buildColorButton( colors[i],[this, paletteName, i] {
+                auto & palette = M_palettes[paletteName];
+                if ( i < palette.size() )
+                {
+                    palette.erase( palette.begin() + i );
+                    rebuildPaletteTabs();
+                }
+            });
             currentRow->Add( btn );
 
             if ( (i + 1) % columns == 0 )
@@ -106,8 +108,9 @@ ColorPaletteComponent::rebuildPaletteTabs()
 }
 
 ftxui::Component
-ColorPaletteComponent::buildColorButton( ftxui::Color color )
+ColorPaletteComponent::buildColorButton( ftxui::Color color, std::function<void()> onDelete )
 {
+    auto box = std::make_shared<ftxui::Box>();
     ftxui::ButtonOption option;
     option.transform = [color]( const ftxui::EntryState& s ) {
         auto block = ftxui::text( "██" ) | ftxui::color( color );
@@ -118,7 +121,27 @@ ColorPaletteComponent::buildColorButton( ftxui::Color color )
         return ftxui::hbox({ ftxui::text(" "), block, ftxui::text(" ") });
     };
 
-    return ftxui::Button("", [this, color] { M_editorState.color = color; }, option);
+    auto btn = ftxui::Button("", [this, color] { M_editorState.color = color; }, option);
+
+    btn |= ftxui::reflect( *box );
+
+    btn |= ftxui::CatchEvent([btn, onDelete, box]( ftxui::Event event ) {
+        bool isRightClick = event.is_mouse() &&
+                           event.mouse().button == ftxui::Mouse::Button::Right &&
+                           event.mouse().motion == ftxui::Mouse::Pressed &&
+                           box->Contain(event.mouse().x, event.mouse().y);
+
+        bool isDeleteKey = (event == ftxui::Event::Backspace || event == ftxui::Event::Delete);
+
+        if ( isRightClick || isDeleteKey )
+        {
+            if ( onDelete )
+                onDelete();
+            return true;
+        }
+        return false;
+    });
+    return btn;
 }
 
 void
@@ -158,7 +181,23 @@ ColorPaletteComponent::OnRender()
     if ( M_editorState.palette != M_lastColorsInCanvas )
         this->rebuildColorsInCanvas();
 
-    return M_container->Render();
+    return ftxui::vbox({
+        ftxui::text( " Palettes " ) | ftxui::color( ftxui::Color::White ),
+
+        M_colorsInCanvasContainer->ChildCount() > 0 ? ftxui::text( " In Canvas" ) : ftxui::emptyElement() | ftxui::color( ftxui::Color::White ) | ftxui::dim,
+        M_colorsInCanvasContainer->ChildCount() > 0 ? M_colorsInCanvasContainer->Render() : ftxui::emptyElement(),
+
+        ftxui::hbox({
+            M_createPaletteButton->Render() | ftxui::color( ftxui::Color::White ) | ftxui::dim,
+            M_importPaletteButton->Render() | ftxui::color( ftxui::Color::White ) | ftxui::dim
+        }),
+
+        M_paletteNames.empty() ? ftxui::emptyElement() : M_paletteTabToggle->Render() | ftxui::color( ftxui::Color::White ),
+        M_paletteNames.empty() ? ftxui::emptyElement() : M_paletteTabContainer->Render() | ftxui::color( ftxui::Color::White ),
+
+
+        M_paletteNames.empty() ? ftxui::emptyElement() : M_deletePaletteButton->Render() | ftxui::color( ftxui::Color::White ) | ftxui::dim | ftxui::align_right
+    });
 }
 
 

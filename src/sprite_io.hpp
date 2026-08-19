@@ -17,7 +17,7 @@ public:
 
     static bool importImage( std::string const& filepath, Sprite & targetSprite, int targetWidth, int targetHeight);
 
-    static bool importProject( std::string const& filepath, Sprite & targetSprite, EditorState & editorState );
+    static bool importProject( std::string const& filepath, Sprite & targetSprite, EditorState & editorState, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes );
 
 private:
 
@@ -32,7 +32,8 @@ public:
     exportProject( std::string const& filepath,
                    std::string const& projectName,
                    Sprite const& targetSprite,
-                   EditorState const& editorState );
+                   EditorState const& editorState,
+                   std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes );
 
     enum class ExportFormat
     {

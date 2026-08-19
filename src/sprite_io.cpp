@@ -1,5 +1,6 @@
 #include "sprite_io.hpp"
 #include <fstream>
+#include <unordered_map>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -14,7 +15,7 @@ namespace Termisprite
 {
 
 
-bool SpriteImporter::importProject( std::string const& filepath, Sprite & targetSprite, EditorState & editorState )
+bool SpriteImporter::importProject( std::string const& filepath, Sprite & targetSprite, EditorState & editorState, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes )
 {
     std::ifstream inFile( filepath );
     if ( !inFile.is_open() )
@@ -39,6 +40,26 @@ bool SpriteImporter::importProject( std::string const& filepath, Sprite & target
         targetSprite.resize( w, h );
         targetSprite.clear();
     }
+
+    if ( importJson.contains( "palettes" ) && importJson["palettes"].is_object() )
+    {
+        palettes.clear();
+        for ( auto const& [paletteName, colorArray] : importJson["palettes"].items() )
+        {
+            if ( colorArray.is_array() )
+            {
+                std::vector<ftxui::Color> colors;
+                for ( auto const& colorCode : colorArray )
+                {
+                    unsigned int r = 255, g = 255, b = 255;
+                    if ( sscanf( colorCode.get<std::string>().c_str(), "38;2;%u;%u;%u", &r, &g, &b ) == 3 )
+                        colors.push_back(ftxui::Color::RGB(r, g, b));
+                }
+                palettes[paletteName] = colors;
+            }
+        }
+    }
+
 
     if ( importJson.contains("background_color") )
     {
@@ -123,7 +144,8 @@ bool
 SpriteExporter::exportProject( std::string const& filepath,
                                std::string const& projectName,
                                Sprite const& targetSprite,
-                               EditorState const& editorState )
+                               EditorState const& editorState,
+                               std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes )
 {
     nlohmann::json exportJson;
 
@@ -136,6 +158,15 @@ SpriteExporter::exportProject( std::string const& filepath,
 
     std::string backgroundColor;
     exportJson["background_color"] = editorState.backgroundColor.Print(true);
+
+    exportJson["palettes"] = nlohmann::json::object();
+    for ( auto const& [paletteName, colors] : palettes )
+    {
+        exportJson["palettes"][paletteName] = nlohmann::json::array();
+        for ( auto const& color : colors )
+            exportJson["palettes"][paletteName].push_back(color.Print(false));
+    }
+
     exportJson["sprite"] = nlohmann::json::array();
 
     for ( int y = 0; y < h; ++y )

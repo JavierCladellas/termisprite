@@ -208,7 +208,7 @@ void
 SaveModal::onConfirm()
 {
     if (!M_filepathInput.empty())
-        M_editorCanvas.exportProject(M_filepathInput);
+        M_editorCanvas.exportProject(M_filepathInput, "Untitled", M_palettes);
     M_filepathInput = "";
 }
 
@@ -237,7 +237,7 @@ void
 OpenProjectModal::onConfirm()
 {
     if (!M_filepathInput.empty())
-        M_editorCanvas.importProject(M_filepathInput);
+        M_editorCanvas.importProject(M_filepathInput, M_palettes);
     M_filepathInput = "";
 }
 
