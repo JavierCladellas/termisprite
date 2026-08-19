@@ -21,6 +21,7 @@ ColorPaletteComponent::ColorPaletteComponent( EditorState & editorState )
         M_showImportPaletteModal = false;
         rebuildPaletteTabs();
     } );
+    M_exportPaletteModal = std::make_shared<ExportPaletteModal>( [this] { M_showExportPaletteModal = false; } );
 
     M_createPaletteButton = ftxui::Button( "[+ Create]", [this] { M_showNewPaletteModal = true; }, ftxui::ButtonOption::Ascii() );
     M_importPaletteButton = ftxui::Button( "[+ Import]", [this] { M_showImportPaletteModal = true; }, ftxui::ButtonOption::Ascii() );
@@ -30,6 +31,14 @@ ColorPaletteComponent::ColorPaletteComponent( EditorState & editorState )
             std::string paletteToDelete = M_paletteNames[M_paletteTabIndex];
             M_palettes.erase( paletteToDelete );
             rebuildPaletteTabs();
+        }
+    }, ftxui::ButtonOption::Ascii() );
+    M_exportPaletteButton = ftxui::Button( "[Export]", [this] {
+        if ( !M_paletteNames.empty() )
+        {
+            std::string const& paletteName = M_paletteNames[M_paletteTabIndex];
+            M_exportPaletteModal->setPalette( M_palettes[paletteName], paletteName );
+            M_showExportPaletteModal = true;
         }
     }, ftxui::ButtonOption::Ascii() );
 
@@ -44,7 +53,7 @@ ColorPaletteComponent::ColorPaletteComponent( EditorState & editorState )
         ftxui::Container::Horizontal({ M_createPaletteButton, M_importPaletteButton }),
         M_paletteTabToggle,
         M_paletteTabContainer,
-        M_deletePaletteButton
+        ftxui::Container::Horizontal({ M_exportPaletteButton, M_deletePaletteButton })
     });
 
     ftxui::ComponentBase::Add( M_container );
@@ -55,7 +64,8 @@ ftxui::Component
 ColorPaletteComponent::applyModals(ftxui::Component main) {
     return main
         | ftxui::Modal(M_newPaletteModal, &M_showNewPaletteModal)
-        | ftxui::Modal(M_importPaletteModal, &M_showImportPaletteModal);
+        | ftxui::Modal(M_importPaletteModal, &M_showImportPaletteModal)
+        | ftxui::Modal(M_exportPaletteModal, &M_showExportPaletteModal);
 }
 
 void
@@ -195,8 +205,10 @@ ColorPaletteComponent::OnRender()
         M_paletteNames.empty() ? ftxui::emptyElement() : M_paletteTabToggle->Render() | ftxui::color( ftxui::Color::White ),
         M_paletteNames.empty() ? ftxui::emptyElement() : M_paletteTabContainer->Render() | ftxui::color( ftxui::Color::White ),
 
-
-        M_paletteNames.empty() ? ftxui::emptyElement() : M_deletePaletteButton->Render() | ftxui::color( ftxui::Color::White ) | ftxui::dim | ftxui::align_right
+        ftxui::hbox({
+            M_paletteNames.empty() ? ftxui::emptyElement() : M_exportPaletteButton->Render(),
+            M_paletteNames.empty() ? ftxui::emptyElement() : M_deletePaletteButton->Render()
+        }) | ftxui::color( ftxui::Color::White ) | ftxui::dim | ftxui::align_right
     });
 }
 

@@ -80,12 +80,6 @@ private:
     bool M_showOpenProjectModal = false;
     std::shared_ptr<OpenProjectModal> M_openProjectModal;
 
-    bool M_showNewPaletteModal = false;
-    std::shared_ptr<NewPaletteModal> M_newPaletteModal;
-
-    bool M_showImportPaletteModal = false;
-    std::shared_ptr<ImportPaletteModal> M_importPaletteModal;
-
     ShortcutManager M_shortcutManager;
 };
 

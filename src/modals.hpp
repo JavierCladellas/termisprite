@@ -316,7 +316,44 @@ private:
     std::string M_paletteFilepathInput = "";
     ftxui::Component M_paletteFilepathInputComponent = ftxui::Input(&M_paletteFilepathInput, "path/to/palette.gpl");
 
-    //TODO : Formats
+    std::vector<std::string> M_formatOptions = { "gpl", "png" };
+    int M_selectedFormatIndex = 0;
+    ftxui::Component M_formatDropdown = ftxui::Dropdown( M_formatOptions, &M_selectedFormatIndex);
+
+};
+
+
+
+class ExportPaletteModal
+    : public Modal
+{
+public:
+    ExportPaletteModal( std::function<void()> onClose )
+        : Modal( onClose, "Export Palette")
+    {
+        Modal::initTree();
+        M_paletteFilepathInputComponent->TakeFocus();
+    }
+
+    void setPalette( std::vector<ftxui::Color> const& palette, std::string const& paletteName )
+    {
+        M_palette = palette;
+        M_paletteName = paletteName;
+    }
+
+private:
+    void onConfirm() override;
+    ftxui::Component buildContentComponent() const override;
+    ftxui::Element renderModalContent() override;
+
+private:
+    std::vector<ftxui::Color> M_palette;
+
+    std::string M_paletteName;
+
+    std::string M_paletteFilepathInput = "";
+    ftxui::Component M_paletteFilepathInputComponent = ftxui::Input(&M_paletteFilepathInput, "path/to/palette");
+
     std::vector<std::string> M_formatOptions = { "gpl", "png" };
     int M_selectedFormatIndex = 0;
     ftxui::Component M_formatDropdown = ftxui::Dropdown( M_formatOptions, &M_selectedFormatIndex);

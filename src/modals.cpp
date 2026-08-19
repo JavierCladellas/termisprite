@@ -480,4 +480,38 @@ ImportPaletteModal::renderModalContent()
 }
 
 
+void
+ExportPaletteModal::onConfirm()
+{
+    if ( M_palette.empty() )
+        return;
+
+    if ( !M_paletteFilepathInput.empty() )
+        SpriteExporter::exportPalette(M_paletteFilepathInput, M_palette, M_formatOptions[M_selectedFormatIndex], M_paletteName);
+}
+
+ftxui::Component
+ExportPaletteModal::buildContentComponent() const
+{
+    return ftxui::Container::Vertical({
+        M_paletteFilepathInputComponent,
+        M_formatDropdown
+    });
+}
+
+ftxui::Element
+ExportPaletteModal::renderModalContent()
+{
+    using namespace ftxui;
+
+    return vbox({
+        hbox({
+            text(" Filepath: ") | dim | vcenter,
+            M_paletteFilepathInputComponent->Render() | border | size(WIDTH, EQUAL, 30)
+        }),
+        M_formatDropdown->Render()
+    }) | center;
+}
+
+
 }

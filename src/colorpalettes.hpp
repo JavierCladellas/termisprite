@@ -12,6 +12,7 @@ namespace Termisprite
 
 class NewPaletteModal;
 class ImportPaletteModal;
+class ExportPaletteModal;
 
 class ColorPaletteComponent
     : public ftxui::ComponentBase
@@ -40,6 +41,7 @@ private:
     ftxui::Component M_createPaletteButton;
     ftxui::Component M_importPaletteButton;
     ftxui::Component M_deletePaletteButton;
+    ftxui::Component M_exportPaletteButton;
 
     std::vector<std::string> M_paletteNames; //TODO: redundant, use single data struct
     std::unordered_map<std::string, std::vector<ftxui::Color>> M_palettes;
@@ -49,6 +51,9 @@ private:
 
     bool M_showImportPaletteModal = false;
     std::shared_ptr<ImportPaletteModal> M_importPaletteModal;
+
+    bool M_showExportPaletteModal = false;
+    std::shared_ptr<ExportPaletteModal> M_exportPaletteModal;
 
     ftxui::Component M_paletteTabToggle;
     ftxui::Component M_paletteTabContainer;

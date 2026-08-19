@@ -144,22 +144,22 @@ bool SpriteImporter::importImage( std::string const& filepath, Sprite& targetSpr
 bool
 SpriteImporter::importPalette( std::string const& filepath, std::string const& paletteName, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes, std::string const& format  )
 {
-    std::map<std::string, ImportPaletteFormat> formatMap = {
-        {"png", ImportPaletteFormat::PNG},
-        {"gpl", ImportPaletteFormat::GPL}
+    std::map<std::string, PaletteFormat> formatMap = {
+        {"png", PaletteFormat::PNG},
+        {"gpl", PaletteFormat::GPL}
     };
 
     if ( !formatMap.contains(format) )
         return false;
 
-    ImportPaletteFormat paletteFormat = formatMap[format];
+    PaletteFormat paletteFormat = formatMap[format];
 
     std::string parsedFilepath = filepath;
 
     std::vector<ftxui::Color> extractedColors;
     switch( paletteFormat )
     {
-        case ImportPaletteFormat::PNG:
+        case PaletteFormat::PNG:
         {
             if ( !filepath.ends_with(".png") )
                 parsedFilepath += ".png";
@@ -188,7 +188,7 @@ SpriteImporter::importPalette( std::string const& filepath, std::string const& p
             stbi_image_free(imgData);
             break;
         }
-        case ImportPaletteFormat::GPL:
+        case PaletteFormat::GPL:
         {
             if ( !filepath.ends_with(".gpl") )
                 parsedFilepath += ".gpl";
@@ -348,6 +348,88 @@ SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSp
     return result != 0;
 }
 
+
+bool
+SpriteExporter::exportPalette( std::string const& filepath, std::vector<ftxui::Color> const& palettes, std::string const& format, std::string const& paletteName )
+{
+    std::map<std::string, PaletteFormat> formatMap = {
+        {"png", PaletteFormat::PNG},
+        {"gpl", PaletteFormat::GPL}
+    };
+
+    if ( !formatMap.contains(format) )
+        return false;
+
+    PaletteFormat paletteFormat = formatMap[format];
+
+    std::string parsedFilepath = filepath;
+    int result = 0;
+
+    switch( paletteFormat )
+    {
+        case PaletteFormat::PNG:
+        {
+            if ( !filepath.ends_with(".png") )
+                parsedFilepath += ".png";
+
+            int width = palettes.size();
+            int height = 1;
+
+            std::vector<unsigned char> exportData(width * height * 4, 0);
+
+            for (int x = 0; x < width; ++x)
+            {
+                Pixel cell;
+                cell.brush = "█";
+                cell.color = palettes[x];
+
+                unsigned int r = 255, g = 255, b = 255;
+                std::string colorCode = cell.color.Print(false);
+                sscanf(colorCode.c_str(), "38;2;%u;%u;%u", &r, &g, &b);
+
+                int index = (0 * width + x) * 4;
+                exportData[index + 0] = static_cast<unsigned char>(r);
+                exportData[index + 1] = static_cast<unsigned char>(g);
+                exportData[index + 2] = static_cast<unsigned char>(b);
+                exportData[index + 3] = 255;
+            }
+
+            result = stbi_write_png(parsedFilepath.c_str(), width, height, 4, exportData.data(), width * 4);
+        }
+        case PaletteFormat::GPL:
+        {
+            if ( !filepath.ends_with(".gpl") )
+                parsedFilepath += ".gpl";
+
+            std::ofstream outFile(parsedFilepath);
+            if (!outFile.is_open())
+                return false;
+
+            outFile << "GIMP Palette\n";
+            outFile << "#\n";
+            outFile << "Name: " << paletteName << "\n";
+            outFile << "Columns: " << palettes.size() << "\n";
+            outFile << "#\n";
+
+            for (const auto& color : palettes)
+            {
+                unsigned int r = 255, g = 255, b = 255;
+                std::string colorCode = color.Print(false);
+                sscanf(colorCode.c_str(), "38;2;%u;%u;%u", &r, &g, &b);
+
+                outFile << r << " " << g << " " << b << "\n";
+            }
+
+            outFile.close();
+            result = 1;
+        }
+        default:
+            return false;
+    }
+
+    return result != 0;
+
+}
 
 
 }
