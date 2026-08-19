@@ -334,7 +334,7 @@ SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSp
         }
         case ImageFormat::ASCII:
         {
-            if (!parsedFilepath.ends_with(".txt"))
+            if (!parsedFilepath.ends_with(".txt") && !parsedFilepath.ends_with(".ascii"))
                 parsedFilepath += ".txt";
             std::ofstream outFile( parsedFilepath );
             if ( !outFile.is_open() )
