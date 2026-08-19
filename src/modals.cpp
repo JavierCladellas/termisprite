@@ -419,7 +419,7 @@ void
 NewPaletteModal::onConfirm()
 {
     if ( M_paletteNameInput.empty( ))
-        M_paletteNameInput = "New Palette";
+        M_paletteNameInput = "Palette " + std::to_string(M_palettes.size() + 1);
     M_palettes[M_paletteNameInput] = {};
 }
 
@@ -445,7 +445,7 @@ void
 ImportPaletteModal::onConfirm()
 {
     if ( M_paletteNameInput.empty( ))
-        M_paletteNameInput = "New Palette";
+        M_paletteNameInput = "Palette " + std::to_string(M_palettes.size() + 1);
 
     if ( !M_paletteFilepathInput.empty() )
         SpriteImporter::importPalette(M_paletteFilepathInput, M_paletteNameInput, M_palettes, M_formatOptions[M_selectedFormatIndex]);
