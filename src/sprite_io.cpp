@@ -55,7 +55,7 @@ bool SpriteImporter::importProject( std::string const& filepath, Sprite & target
         auto [w, h] = targetSprite.size();
 
         for ( auto const& item : importJson["sprite"] )
-        {
+    {
             int x = item.value("x", -1);
             int y = item.value("y", -1);
             std::string brush = item.value("brush", " ");
@@ -76,8 +76,79 @@ bool SpriteImporter::importProject( std::string const& filepath, Sprite & target
 }
 
 
-bool SpriteImporter::importImage( std::string const& filepath, Sprite& targetSprite, int targetWidth, int targetHeight)
+bool SpriteImporter::importImage( std::string const& filepath, Sprite& targetSprite, int targetWidth, int targetHeight, std::string const& format )
 {
+
+    std::map<std::string, ImageFormat> formatMap = {
+        {"png", ImageFormat::PNG},
+        {"jpg", ImageFormat::JPG},
+        {"jpeg", ImageFormat::JPG},
+        {"bmp", ImageFormat::BMP},
+        {"ascii", ImageFormat::ASCII},
+        {"txt", ImageFormat::ASCII}
+    };
+
+    if (!formatMap.contains(format))
+        return false;
+
+    ImageFormat imageFormat = formatMap[format];
+
+    if ( imageFormat == ImageFormat::ASCII )
+    {
+        std::ifstream inFile(filepath);
+        if (!inFile.is_open())
+            return false;
+
+        std::vector<std::string> lines;
+        std::string line;
+        while (std::getline(inFile, line))
+        {
+            //Windows
+            if (!line.empty() && line.back() == '\r')
+                line.pop_back();
+            lines.push_back(line);
+        }
+        inFile.close();
+
+        for (int y = 0; y < targetHeight; ++y)
+        {
+            std::string const& currentLine = (y < lines.size()) ? lines[y] : "";
+            size_t charIndex = 0;
+
+            for (int x = 0; x < targetWidth; ++x)
+            {
+                Pixel & cell = targetSprite.at(x, y);
+                cell.color = ftxui::Color::White;
+                if (charIndex < currentLine.length())
+                {
+                    //Multi-byte character handling (UTF-8)
+                    unsigned char c = currentLine[charIndex];
+                    int cplen = 1;
+                    if ((c & 0xF8) == 0xF0)
+                        cplen = 4;
+                    else if ((c & 0xF0) == 0xE0)
+                        cplen = 3;
+                    else if ((c & 0xE0) == 0xC0)
+                        cplen = 2;
+
+                    if (charIndex + cplen > currentLine.length())
+                        cplen = currentLine.length() - charIndex;
+
+                    cell.brush = currentLine.substr(charIndex, cplen);
+                    charIndex += cplen;
+                }
+                else
+                    cell.brush = " ";
+            }
+        }
+
+        return true;
+
+    }
+
+
+
+
     int imgWidth, imgHeight, channels;
     unsigned char* imgData = stbi_load(filepath.c_str(), &imgWidth, &imgHeight, &channels, 4);
 
@@ -175,12 +246,12 @@ SpriteExporter::exportProject( std::string const& filepath,
 bool
 SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSprite, std::string const& format )
 {
-    std::map<std::string, ExportFormat> formatMap = {
-        {"png", ExportFormat::PNG},
-        {"jpg", ExportFormat::JPG},
-        {"jpeg", ExportFormat::JPG},
-        {"bmp", ExportFormat::BMP},
-        {"ascii", ExportFormat::ASCII}
+    std::map<std::string, ImageFormat> formatMap = {
+        {"png", ImageFormat::PNG},
+        {"jpg", ImageFormat::JPG},
+        {"jpeg", ImageFormat::JPG},
+        {"bmp", ImageFormat::BMP},
+        {"ascii", ImageFormat::ASCII}
     };
 
     auto [w, h] = targetSprite.size();
@@ -190,20 +261,20 @@ SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSp
     if ( !formatMap.contains(format) )
         return false;
 
-    ExportFormat exportFormat = formatMap[format];
+    ImageFormat exportFormat = formatMap[format];
     int channels;
 
     switch ( exportFormat )
     {
-        case ExportFormat::PNG:
-        case ExportFormat::BMP: channels = 4; break;
-        case ExportFormat::JPG: channels = 3; break;
-        case ExportFormat::ASCII: channels = 1; break;
+        case ImageFormat::PNG:
+        case ImageFormat::BMP: channels = 4; break;
+        case ImageFormat::JPG: channels = 3; break;
+        case ImageFormat::ASCII: channels = 1; break;
     }
 
     std::vector<unsigned char> exportData(w * h * channels, 0);
 
-    if ( exportFormat != ExportFormat::ASCII )
+    if ( exportFormat != ImageFormat::ASCII )
     {
         for (int y = 0; y < h; ++y)
         {
@@ -236,7 +307,7 @@ SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSp
     std::string parsedFilepath = filepath;
     switch ( exportFormat )
     {
-        case ExportFormat::PNG:
+        case ImageFormat::PNG:
         {
             if (!parsedFilepath.ends_with(".png"))
                 parsedFilepath += ".png";
@@ -244,7 +315,7 @@ SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSp
             result = stbi_write_png(parsedFilepath.c_str(), w, h, channels, exportData.data(), w * channels);
             break;
         }
-        case ExportFormat::JPG:
+        case ImageFormat::JPG:
         {
             if (!parsedFilepath.ends_with(".jpg") && !parsedFilepath.ends_with(".jpeg")  )
                 parsedFilepath += ".jpg";
@@ -253,7 +324,7 @@ SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSp
             result = stbi_write_jpg(parsedFilepath.c_str(), w, h, channels, exportData.data(), quality);
             break;
         }
-        case ExportFormat::BMP:
+        case ImageFormat::BMP:
         {
             if (!parsedFilepath.ends_with(".bmp"))
                 parsedFilepath += ".bmp";
@@ -261,7 +332,7 @@ SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSp
             result = stbi_write_bmp(parsedFilepath.c_str(), w, h, channels, exportData.data());
             break;
         }
-        case ExportFormat::ASCII:
+        case ImageFormat::ASCII:
         {
             if (!parsedFilepath.ends_with(".txt"))
                 parsedFilepath += ".txt";

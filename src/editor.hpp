@@ -123,7 +123,7 @@ public:
 
     std::function<void()> onBackgroundChangeRequested;
 
-    void importImage( std::string const& filepath, int targetWidth = -1 , int targetHeight = -1 );
+    void importImage( std::string const& filepath, int targetWidth = -1 , int targetHeight = -1, std::string const& format = "png" );
     void importProject( std::string const& filepath );
     void exportProject( std::string const& filepath, std::string const& projectName = "Untitled" );
     void exportImage( std::string const& filepath, std::string const& format = "png" );

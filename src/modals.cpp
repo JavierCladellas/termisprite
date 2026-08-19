@@ -303,7 +303,7 @@ ImportModal::onConfirm()
     if ( M_targetHeightInput.empty() )
         M_targetHeightInput = "64";
     if (!M_filepathInput.empty())
-        M_editorCanvas.importImage(M_filepathInput,std::stoi(M_targetWidthInput), std::stoi(M_targetHeightInput));
+        M_editorCanvas.importImage(M_filepathInput,std::stoi(M_targetWidthInput), std::stoi(M_targetHeightInput), M_formatOptions[M_selectedFormatIndex] );
     M_filepathInput = "";
     M_targetWidthInput = "";
     M_targetHeightInput = "";
@@ -316,6 +316,7 @@ ImportModal::buildContentComponent() const
     return ftxui::Container::Vertical({
         M_filepathInputComponent,
         ftxui::Container::Horizontal({ M_targetWidthInputComponent, M_targetHeightInputComponent }),
+        M_formatDropdown
     });
 }
 
@@ -337,6 +338,10 @@ ImportModal::renderModalContent()
             M_targetHeightInputComponent->Render() | border | size(WIDTH, EQUAL, 10),
             text(" px") | dim | vcenter
         }) | center,
+        hbox({
+            text(" Format: ") | dim | vcenter,
+            M_formatDropdown->Render() | border
+        }) | center
     });
 }
 

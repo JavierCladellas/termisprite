@@ -10,12 +10,14 @@
 namespace Termisprite
 {
 
+enum class ImageFormat { PNG, JPG, ASCII, BMP };
+
 class SpriteImporter
 {
 public:
     SpriteImporter() = default;
 
-    static bool importImage( std::string const& filepath, Sprite & targetSprite, int targetWidth, int targetHeight);
+    static bool importImage( std::string const& filepath, Sprite & targetSprite, int targetWidth, int targetHeight, std::string const& format = "png" );
 
     static bool importProject( std::string const& filepath, Sprite & targetSprite, EditorState & editorState );
 
@@ -34,7 +36,6 @@ public:
                    Sprite const& targetSprite,
                    EditorState const& editorState );
 
-    enum class ExportFormat { PNG, JPG, ASCII, BMP };
     static bool
     exportImage( std::string const& filepath, Sprite const& targetSprite, std::string const& format = "png" );
 

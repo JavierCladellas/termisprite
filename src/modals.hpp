@@ -203,6 +203,10 @@ private:
     ftxui::Component M_targetWidthInputComponent = ftxui::Input(&M_targetWidthInput, "64");
     ftxui::Component M_targetHeightInputComponent = ftxui::Input(&M_targetHeightInput, "64");
     ftxui::Component M_filepathInputComponent = ftxui::Input(&M_filepathInput, "path/to/image.png");
+
+    int M_selectedFormatIndex = 0;
+    std::vector<std::string> M_formatOptions = { "png", "jpg", "bmp", "ascii" };
+    ftxui::Component M_formatDropdown = ftxui::Dropdown( M_formatOptions, &M_selectedFormatIndex);
 };
 
 
