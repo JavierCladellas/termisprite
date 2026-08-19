@@ -117,6 +117,7 @@ private:
     std::shared_ptr<ColorPickerComponent> M_trueColorPicker;
     std::shared_ptr<TerminalPaletteComponent> M_palette256;
     std::shared_ptr<TerminalPaletteComponent> M_palette16;
+
     std::shared_ptr<ColorPaletteComponent> M_colorPalette;
 
     // Structural Containers

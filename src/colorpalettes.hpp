@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ftxui/component/component.hpp>
 #include <unordered_map>
 
 #include "editor.hpp"
@@ -19,6 +20,9 @@ public:
     ColorPaletteComponent( EditorState & editorState );
 
     ftxui::Element OnRender() override;
+
+
+ftxui::Component applyModals(ftxui::Component main);
 
 private:
     void rebuildColorsInCanvas();

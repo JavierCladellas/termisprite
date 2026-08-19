@@ -51,13 +51,20 @@ ColorPaletteComponent::ColorPaletteComponent( EditorState & editorState )
             M_colorsInCanvasContainer->ChildCount() > 0 ? M_colorsInCanvasContainer->Render() : ftxui::text("")
         }) | ftxui::size( ftxui::HEIGHT, ftxui::LESS_THAN, 6  );
     });
-    M_container |= ftxui::Modal( M_newPaletteModal, &M_showNewPaletteModal );
-    M_container |= ftxui::Modal( M_importPaletteModal, &M_showImportPaletteModal );
 
     ftxui::ComponentBase::Add( M_container );
 }
 
-void ColorPaletteComponent::rebuildPaletteTabs()
+
+ftxui::Component
+ColorPaletteComponent::applyModals(ftxui::Component main) {
+    return main
+        | ftxui::Modal(M_newPaletteModal, &M_showNewPaletteModal)
+        | ftxui::Modal(M_importPaletteModal, &M_showImportPaletteModal);
+}
+
+void
+ColorPaletteComponent::rebuildPaletteTabs()
 {
     M_paletteNames.clear();
     M_paletteTabContainer->DetachAllChildren();

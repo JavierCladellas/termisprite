@@ -451,40 +451,45 @@ ColorSectionComponent::ColorSectionComponent( EditorState & editorState )
 
     M_tabContainer = ftxui::Container::Tab(tabComponents, &M_tabIndex);
 
-    M_mainContainer = ftxui::Container::Vertical({ M_tabToggle, M_tabContainer, M_colorPalette });
+    auto baseContainer = ftxui::Container::Vertical({ M_tabToggle, M_tabContainer, M_colorPalette });
 
+    M_mainContainer = ftxui::Renderer(baseContainer,[this]{
+        return ftxui::window( ftxui::text(" Color ") | ftxui::bold | ftxui::center,
+            ftxui::vbox({
+                M_tabToggle->Render(),
+                ftxui::separator(),
+                M_tabContainer->Render(),
+                ftxui::separator(),
+                ftxui::hbox({
+                    ftxui::text( " Active Color: " ) | ftxui::color( ftxui::Color::White ),
+                    ftxui::text( " " ) | ftxui::center
+                                       | ftxui::bgcolor( M_editorState.color )
+                                       | ftxui::size( ftxui::HEIGHT, ftxui::EQUAL, 1 )
+                                       | ftxui::xflex
+                }),
+                ftxui::separator(),
+                M_colorPalette->Render()
+            })
+        ) | ftxui::color( Focused() ? ftxui::Color::Cyan : ftxui::Color::White );
+    });
+
+    M_mainContainer = M_colorPalette->applyModals( M_mainContainer );
     Add(M_mainContainer);
 }
 
 ftxui::Element
 ColorSectionComponent::OnRender()
 {
-    ftxui::Color borderColor = Focused() ? ftxui::Color::Cyan : ftxui::Color::White;
-
     if ( M_tabNames.empty() )
     {
+        ftxui::Color borderColor = Focused() ? ftxui::Color::Cyan : ftxui::Color::White;
         return ftxui::window( ftxui::text(" Color ") | ftxui::bold | ftxui::center,
            ftxui::text("No color support")
         ) | ftxui::color( borderColor );
     }
 
-    return ftxui::window( ftxui::text(" Color ") | ftxui::bold | ftxui::center,
-        ftxui::vbox({
-            M_tabToggle->Render(),
-            ftxui::separator(),
-            M_tabContainer->Render(),
-            ftxui::separator(),
-            ftxui::hbox({
-                ftxui::text( " Active Color: " ) | ftxui::color( ftxui::Color::White ),
-                ftxui::text( " " ) | ftxui::center
-                                   | ftxui::bgcolor( M_editorState.color )
-                                   | ftxui::size( ftxui::HEIGHT, ftxui::EQUAL, 1 )
-                                   | ftxui::xflex
-            }),
-            ftxui::separator(),
-            M_colorPalette->Render()
-        })
-    ) | ftxui::color( borderColor );
+    return M_mainContainer->Render();
+
 }
 
 

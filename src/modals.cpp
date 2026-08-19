@@ -414,30 +414,6 @@ ShortcutsModal::renderModalContent()
 }
 
 
-ftxui::Element
-NewPaletteModal::OnRender()
-{
-    using namespace ftxui;
-
-    return vbox({
-        hbox({
-            text( M_title ) | bold | center ,
-            filler(),
-            M_cancelButton->Render()
-        }),
-        this->renderModalContent(),
-        hbox({
-            filler(),
-            M_okButton->Render()
-        })
-    }) | reflect( M_box )
-       | size(WIDTH, GREATER_THAN, 45)
-       | borderDouble
-       | clear_under;
-
-}
-
-
 void
 NewPaletteModal::onConfirm()
 {
@@ -463,28 +439,6 @@ NewPaletteModal::renderModalContent()
     });
 }
 
-
-ftxui::Element
-ImportPaletteModal::OnRender()
-{
-    using namespace ftxui;
-
-    return vbox({
-        hbox({
-            text( M_title ) | bold | center ,
-            filler(),
-            M_cancelButton->Render()
-        }),
-        this->renderModalContent(),
-        hbox({
-            filler(),
-            M_okButton->Render()
-        })
-    }) | reflect( M_box )
-       | size(WIDTH, GREATER_THAN, 45)
-       | borderDouble
-       | clear_under;
-}
 
 void
 ImportPaletteModal::onConfirm()
@@ -515,13 +469,13 @@ ImportPaletteModal::renderModalContent()
     return vbox({
         hbox({
             text(" Palette Name: ") | dim | vcenter,
-            M_paletteNameInputComponent->Render()
+            M_paletteNameInputComponent->Render() | border | size(WIDTH, EQUAL, 20)
         }),
         hbox({
             text(" Filepath: ") | dim | vcenter,
-            M_paletteFilepathInputComponent->Render(),
-            M_formatDropdown->Render()
+            M_paletteFilepathInputComponent->Render() | border | size(WIDTH, EQUAL, 30)
         }),
+        M_formatDropdown->Render()
     }) | center;
 }
 

@@ -274,8 +274,6 @@ public:
         M_paletteNameInputComponent->TakeFocus();
     }
 
-    ftxui::Element OnRender() override;
-
 private:
     void onConfirm() override;
     ftxui::Component buildContentComponent() const override;
@@ -299,8 +297,6 @@ public:
         Modal::initTree();
         M_paletteNameInputComponent->TakeFocus();
     }
-
-    ftxui::Element OnRender() override;
 
 private:
     void onConfirm() override;
