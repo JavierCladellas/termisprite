@@ -40,13 +40,35 @@ EditorCanvasComponent::OnRender()
                 renderBrushR = cellContent.brush;
                 renderColor = cellContent.color;
 
-                if ( renderBrushL == " " && M_showPointGrid)
+                if ( M_isGridOn )
                 {
-                    if ( worldX % 2 == 0 && worldY % 1 == 0 )
+                    if ( renderBrushL == " " && M_gridType == GridType::POINTS )
                     {
-                        renderBrushL = "·";
-                        renderBrushR = " ";
-                        renderColor = ftxui::Color::GrayDark;
+                        if ( worldX % 2 == 0 && worldY % 1 == 0 )
+                        {
+                            renderBrushL = "·";
+                            renderBrushR = " ";
+                            renderColor = ftxui::Color::GrayDark;
+                        }
+                    }
+                    else if ( renderBrushL == " " && M_gridType == GridType::LINES )
+                    {
+                        if ( worldY != 0 && worldY % 8 == 0 )
+                        {
+                            renderBrushL = "─";
+                            renderBrushR = "─";
+                            renderColor = ftxui::Color::GrayDark;
+                        }
+                        if ( worldX != 0 && worldX % 8 == 0 )
+                        {
+                            renderBrushL = "│";
+                            if ( worldY != 0 && worldY % 8 == 0 )
+                            {
+                                renderBrushL = "┼";
+                                renderBrushR = "─";
+                            }
+                            renderColor = ftxui::Color::GrayDark;
+                        }
                     }
                 }
 
@@ -77,7 +99,7 @@ EditorCanvasComponent::OnRender()
             ftxui::Element cellL = ftxui::text( renderBrushL ) | ftxui::color( renderColor );
             ftxui::Element cellR = ftxui::text( renderBrushR ) | ftxui::color( renderColor );
 
-            if ( renderBrushL == " " && M_showCheckerboardGrid )
+            if ( renderBrushL == " " && M_gridType == GridType::CHECKERBOARD && M_isGridOn )
             {
                 if ( (worldX + worldY) % 2 == 0 )
                 {
@@ -776,11 +798,10 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
     if ( M_isDrawing && event == ftxui::Event::Escape )
     {
         M_isDrawing = false;
-        M_sprite = M_spriteSnapshot; 
+        M_sprite = M_spriteSnapshot;
         return true;
     }
 
-    // Start / Finish drawing with Space or Return
     if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
     {
         M_showCursor = true;
@@ -790,8 +811,7 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
             M_shapeStartX = M_cursorX;
             M_shapeStartY = M_cursorY;
             M_spriteSnapshot = M_sprite;
-            
-            // Draw initial 1x1 point
+
             M_sprite = M_spriteSnapshot;
             if ( M_currentState.toolType == ToolType::SQUARE )
                 drawSquare( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
@@ -802,7 +822,6 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
         }
         else
         {
-            // Finish the shape
             M_isDrawing = false;
             saveState();
         }
@@ -812,7 +831,7 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
     if ( M_isDrawing )
     {
         bool moved = false;
-        
+
         if ( event == ftxui::Event::ArrowUp || event == ftxui::Event::Character('k') )
         {
             M_cursorY = std::max(0, M_cursorY - 1);
@@ -839,7 +858,6 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
             M_showCursor = true;
             M_sprite = M_spriteSnapshot;
 
-            // Draw the temporary shape mapping from the start point to the new cursor position
             if ( M_currentState.toolType == ToolType::SQUARE )
                 drawSquare( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
             else if ( M_currentState.toolType == ToolType::CIRCLE )
@@ -991,7 +1009,7 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
                 //TODO: Use enums
                 case 0: if ( onBackgroundChangeRequested ) onBackgroundChangeRequested(); break;
                 case 1: toggleGrid(); break;
-                case 2: toggleCheckerboardGrid(); break;
+                case 2: changeGridType(); break;
                 case 3: this->undo(); break;
                 case 4: this->redo(); break;
                 case 5: this->clear(); break;

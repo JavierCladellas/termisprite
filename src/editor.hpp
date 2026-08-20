@@ -109,13 +109,10 @@ public:
         M_width = width;
         M_height = height;
     }
-    void toggleGrid() {
-        M_showPointGrid = !M_showPointGrid;
-        if (M_showPointGrid) M_showCheckerboardGrid = false;
-    }
-    void toggleCheckerboardGrid() {
-        M_showCheckerboardGrid = !M_showCheckerboardGrid;
-        if (M_showCheckerboardGrid) M_showPointGrid = false;
+    void toggleGrid() { M_isGridOn = !M_isGridOn; }
+    void changeGridType()
+    {
+        M_gridType = (GridType)(((int)M_gridType + 1) % 3);
     }
     void toggleSquarePixel() {
         M_squarePixel = !M_squarePixel;
@@ -198,8 +195,14 @@ private:
     int M_shapeStartX = 0;
     int M_shapeStartY = 0;
 
-    bool M_showPointGrid = true;
-    bool M_showCheckerboardGrid = false;
+    enum class GridType
+    {
+        POINTS,
+        LINES,
+        CHECKERBOARD
+    };
+    GridType M_gridType = GridType::POINTS;
+    bool M_isGridOn = true;
 
     bool M_squarePixel = true;
 

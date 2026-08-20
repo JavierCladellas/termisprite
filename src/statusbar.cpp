@@ -14,6 +14,7 @@ StatusBarComponent::StatusBarComponent( EditorState & editorState, ShortcutManag
         {{ M_shortcutManager->getName(ShortcutType::REDO), M_shortcutManager->getHotkeyText(ShortcutType::REDO)}, {} },
         {{ M_shortcutManager->getName(ShortcutType::CLEAR), M_shortcutManager->getHotkeyText(ShortcutType::CLEAR)}, {} },
         {{ M_shortcutManager->getName(ShortcutType::TOGGLE_GRID), M_shortcutManager->getHotkeyText(ShortcutType::TOGGLE_GRID)}, {} },
+        {{ M_shortcutManager->getName(ShortcutType::CHANGE_GRID_TYPE), M_shortcutManager->getHotkeyText(ShortcutType::CHANGE_GRID_TYPE)}, {} },
 
         {{ "Move Cursor", "[Arrows / hjkl]" }, [](EditorState & s) { return !s.selection.isActive; } },
 

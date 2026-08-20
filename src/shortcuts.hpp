@@ -38,7 +38,7 @@ enum class ShortcutType
     ZOOM_IN,
     ZOOM_OUT,
     TOGGLE_GRID,
-    TOGGLE_CHECKERBOARD_GRID,
+    CHANGE_GRID_TYPE,
     TOGGLE_PAN,
 
     SELECT_BRUSH_TOOL,
