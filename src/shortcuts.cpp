@@ -28,10 +28,11 @@ getDefaultKeymap()
         { ShortcutType::FLIP_HORIZONTAL,   {"Flip Horizontal",  "[Shift+V]",     {ftxui::Event::Character('V')}} },
         { ShortcutType::BACKGROUND_COLOR,  {"Background",       "[Ctrl+B]",      {ftxui::Event::CtrlB}} },
 
+        { ShortcutType::SQUARE_PIXEL,       {"Square Pixel",     "[Shift+S]",{ftxui::Event::S}} },
         { ShortcutType::ZOOM_IN,           {"Zoom In",          "",              {}} },
         { ShortcutType::ZOOM_OUT,          {"Zoom Out",         "",              {}} },
         { ShortcutType::TOGGLE_GRID,       {"Toggle Grid",      "[G]",                  {ftxui::Event::Character('g')}} },
-        { ShortcutType::TOGGLE_CHECKERBOARD_GRID, {"Toggle Checkerboard", "[Shift+G]",  {ftxui::Event::Character('G')}} },
+        { ShortcutType::CHANGE_GRID_TYPE, {"Change Grid Type", "[Shift+G]",  {ftxui::Event::Character('G')}} },
         { ShortcutType::TOGGLE_PAN,        {"Toggle Pan",       "[M]",           {ftxui::Event::Character('m'), ftxui::Event::Character('M')}} },
 
         { ShortcutType::SELECT_BRUSH_TOOL, {"Brush",       "[B]",           {ftxui::Event::Character('b'), ftxui::Event::Character('B')}} },
@@ -71,8 +72,9 @@ ShortcutManager::bindAllActions( Termisprite * app )
     this->bindAction(ShortcutType::FLIP_HORIZONTAL, [app]() { app->editor()->flipHorizontal(); });
     this->bindAction(ShortcutType::BACKGROUND_COLOR, [app]() { app->showBackgroundColorModal(); });
 
+    this->bindAction(ShortcutType::SQUARE_PIXEL, [app]() { app->editor()->toggleSquarePixel(); });
     this->bindAction(ShortcutType::TOGGLE_GRID, [app]() { app->editor()->toggleGrid(); });
-        this->bindAction(ShortcutType::TOGGLE_CHECKERBOARD_GRID, [app]() { app->editor()->toggleCheckerboardGrid(); });
+    this->bindAction(ShortcutType::CHANGE_GRID_TYPE, [app]() { app->editor()->changeGridType(); });
     this->bindAction(ShortcutType::TOGGLE_PAN, [app]() {
         if ( app->editor()->currentState().toolType == ToolType::PAN )
             app->selectTool(ToolType::DRAW);

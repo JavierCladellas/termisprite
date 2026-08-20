@@ -1,6 +1,8 @@
 #include "modals.hpp"
+#include "sprite_io.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_options.hpp>
+#include <ftxui/dom/elements.hpp>
 
 
 namespace Termisprite
@@ -97,9 +99,9 @@ void
 NewProjectModal::onConfirm()
 {
     if ( M_widthInput.empty() )
-        M_widthInput = "32";
+        M_widthInput = "48";
     if ( M_heightInput.empty() )
-        M_heightInput = "32";
+        M_heightInput = "48";
     M_editorCanvas.clear();
     M_editorCanvas.resize(std::stoi(M_widthInput), std::stoi(M_heightInput));
     M_projectNameInput = "";
@@ -207,7 +209,7 @@ void
 SaveModal::onConfirm()
 {
     if (!M_filepathInput.empty())
-        M_editorCanvas.exportProject(M_filepathInput);
+        M_editorCanvas.exportProject(M_filepathInput, "Untitled", M_palettes);
     M_filepathInput = "";
 }
 
@@ -236,7 +238,7 @@ void
 OpenProjectModal::onConfirm()
 {
     if (!M_filepathInput.empty())
-        M_editorCanvas.importProject(M_filepathInput);
+        M_editorCanvas.importProject(M_filepathInput, M_palettes);
     M_filepathInput = "";
 }
 
@@ -289,7 +291,7 @@ ExportModal::renderModalContent()
         separatorEmpty(),
         hbox({
             text(" Format: ") | dim | vcenter,
-            M_formatDropdown->Render() | border
+            M_formatDropdown->Render()
         }) | center
     });
 }
@@ -417,6 +419,104 @@ ShortcutsModal::renderModalContent()
     return vbox(std::move(shortcutElements));
 }
 
+
+void
+NewPaletteModal::onConfirm()
+{
+    if ( M_paletteNameInput.empty( ))
+        M_paletteNameInput = "Palette " + std::to_string(M_palettes.size() + 1);
+    M_palettes[M_paletteNameInput] = {};
+}
+
+ftxui::Component
+NewPaletteModal::buildContentComponent() const
+{
+    return M_paletteNameInputComponent;
+}
+
+ftxui::Element
+NewPaletteModal::renderModalContent()
+{
+    using namespace ftxui;
+
+    return hbox({
+        text(" Palette Name: ") | dim | vcenter,
+        M_paletteNameInputComponent->Render() | border | size(WIDTH, EQUAL, 20)
+    });
+}
+
+
+void
+ImportPaletteModal::onConfirm()
+{
+    if ( M_paletteNameInput.empty( ))
+        M_paletteNameInput = "Palette " + std::to_string(M_palettes.size() + 1);
+
+    if ( !M_paletteFilepathInput.empty() )
+        SpriteImporter::importPalette(M_paletteFilepathInput, M_paletteNameInput, M_palettes, M_formatOptions[M_selectedFormatIndex]);
+}
+
+ftxui::Component
+ImportPaletteModal::buildContentComponent() const
+{
+    return ftxui::Container::Vertical({
+        M_paletteNameInputComponent,
+        M_paletteFilepathInputComponent,
+        M_formatDropdown
+    });
+}
+
+ftxui::Element
+ImportPaletteModal::renderModalContent()
+{
+    using namespace ftxui;
+
+    return vbox({
+        hbox({
+            text(" Palette Name: ") | dim | vcenter,
+            M_paletteNameInputComponent->Render() | border | size(WIDTH, EQUAL, 20)
+        }),
+        hbox({
+            text(" Filepath: ") | dim | vcenter,
+            M_paletteFilepathInputComponent->Render() | border | size(WIDTH, EQUAL, 30)
+        }),
+        M_formatDropdown->Render()
+    }) | center;
+}
+
+
+void
+ExportPaletteModal::onConfirm()
+{
+    if ( M_palette.empty() )
+        return;
+
+    if ( !M_paletteFilepathInput.empty() )
+        SpriteExporter::exportPalette(M_paletteFilepathInput, M_palette, M_formatOptions[M_selectedFormatIndex], M_paletteName);
+}
+
+ftxui::Component
+ExportPaletteModal::buildContentComponent() const
+{
+    return ftxui::Container::Vertical({
+        M_paletteFilepathInputComponent,
+        M_formatDropdown
+    });
+}
+
+ftxui::Element
+ExportPaletteModal::renderModalContent()
+{
+    using namespace ftxui;
+
+    return vbox({
+        hbox({
+            text(" Filepath: ") | dim | vcenter,
+            M_paletteFilepathInputComponent->Render() | border | size(WIDTH, EQUAL, 30)
+        }),
+        M_formatDropdown->Render()
+    }) | center;
+}
 
 
 }

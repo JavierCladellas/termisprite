@@ -12,7 +12,7 @@ namespace Termisprite
 ftxui::Element
 EditorCanvasComponent::OnRender()
 {
-    int visibleW = std::max(1, (M_box.x_max - M_box.x_min) / 2);
+    int visibleW = std::max(1, (M_box.x_max - M_box.x_min) / (M_squarePixel ? 2 : 1));
     int visibleH = std::max(1, (M_box.y_max - M_box.y_min));
     M_cameraX = std::clamp(M_cameraX, 0, std::max(0, M_width - visibleW));
     M_cameraY = std::clamp(M_cameraY, 0, std::max(0, M_height - visibleH));
@@ -40,13 +40,35 @@ EditorCanvasComponent::OnRender()
                 renderBrushR = cellContent.brush;
                 renderColor = cellContent.color;
 
-                if ( renderBrushL == " " && M_showPointGrid)
+                if ( M_isGridOn )
                 {
-                    if ( worldX % 2 == 0 && worldY % 1 == 0 )
+                    if ( renderBrushL == " " && M_gridType == GridType::POINTS )
                     {
-                        renderBrushL = "·";
-                        renderBrushR = " ";
-                        renderColor = ftxui::Color::GrayDark;
+                        if ( worldX % 2 == 0 && worldY % 1 == 0 )
+                        {
+                            renderBrushL = "·";
+                            renderBrushR = " ";
+                            renderColor = ftxui::Color::GrayDark;
+                        }
+                    }
+                    else if ( renderBrushL == " " && M_gridType == GridType::LINES )
+                    {
+                        if ( worldY != 0 && worldY % 8 == 0 )
+                        {
+                            renderBrushL = "─";
+                            renderBrushR = "─";
+                            renderColor = ftxui::Color::GrayDark;
+                        }
+                        if ( worldX != 0 && worldX % 8 == 0 )
+                        {
+                            renderBrushL = "│";
+                            if ( worldY != 0 && worldY % 8 == 0 )
+                            {
+                                renderBrushL = "┼";
+                                renderBrushR = "─";
+                            }
+                            renderColor = ftxui::Color::GrayDark;
+                        }
                     }
                 }
 
@@ -77,7 +99,7 @@ EditorCanvasComponent::OnRender()
             ftxui::Element cellL = ftxui::text( renderBrushL ) | ftxui::color( renderColor );
             ftxui::Element cellR = ftxui::text( renderBrushR ) | ftxui::color( renderColor );
 
-            if ( renderBrushL == " " && M_showCheckerboardGrid )
+            if ( renderBrushL == " " && M_gridType == GridType::CHECKERBOARD && M_isGridOn )
             {
                 if ( (worldX + worldY) % 2 == 0 )
                 {
@@ -96,14 +118,19 @@ EditorCanvasComponent::OnRender()
                 cellR |= ftxui::bgcolor( M_currentState.backgroundColor );
             }
 
-            if ( !isOutOfBounds && M_showCursor && worldX == M_cursorX && worldY == M_cursorY )
+            if ( !isOutOfBounds && M_showCursor &&
+                M_cursorX + M_currentState.brushSize > worldX &&
+                M_cursorX <= worldX &&
+                M_cursorY + M_currentState.brushSize > worldY &&
+                M_cursorY <= worldY )
             {
                 cellL = ftxui::text( M_currentState.brush ) | ftxui::color( M_currentState.color ) | ftxui::bgcolor( ftxui::Color::Red ) | ftxui::blink;
                 cellR = ftxui::text( M_currentState.brush ) | ftxui::color( M_currentState.color ) | ftxui::bgcolor( ftxui::Color::Red ) | ftxui::blink;
             }
 
             row.push_back( cellL );
-            row.push_back( cellR );
+            if ( M_squarePixel )
+                row.push_back( cellR );
         }
         rows.push_back( ftxui::hbox( row ) );
     }
@@ -113,13 +140,13 @@ EditorCanvasComponent::OnRender()
     ftxui::Element canvas = ftxui::vbox( std::move( rows ) )
                               | ftxui::reflect( M_box )
                               | ftxui::borderStyled( borderColor )
-                              | ftxui::size( ftxui::WIDTH, ftxui::EQUAL, (M_width * 2) + 1 )
+                              | ftxui::size( ftxui::WIDTH, ftxui::EQUAL, (M_width * (M_squarePixel ? 2 : 1) ) + 1 )
                               | ftxui::size( ftxui::HEIGHT, ftxui::EQUAL, M_height + 2 );
 
     //------------Build axis---------
     ftxui::Elements xAxis = {ftxui::text("─")};
 
-    for ( int i = 0; i < (M_width * 2) + 1; ++i )
+    for ( int i = 0; i < (M_width * (M_squarePixel ? 2 : 1) ) + 1; ++i )
         xAxis.push_back(ftxui::text("─"));
 
     xAxis.push_back(ftxui::text("►"));
@@ -172,9 +199,9 @@ EditorCanvasComponent::importImage( std::string const& filepath, int targetWidth
 }
 
 void
-EditorCanvasComponent::importProject( std::string const& filepath )
+EditorCanvasComponent::importProject( std::string const& filepath, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes )
 {
-    if ( SpriteImporter::importProject( filepath, M_sprite, M_currentState ) )
+    if ( SpriteImporter::importProject( filepath, M_sprite, M_currentState, palettes ) )
     {
         auto [width, height] = M_sprite.size();
         M_width = width;
@@ -184,9 +211,9 @@ EditorCanvasComponent::importProject( std::string const& filepath )
 }
 
 void
-EditorCanvasComponent::exportProject( std::string const& filepath, std::string const& projectName )
+EditorCanvasComponent::exportProject( std::string const& filepath, std::string const& projectName, std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes )
 {
-    SpriteExporter::exportProject( filepath, projectName, M_sprite, M_currentState );
+    SpriteExporter::exportProject( filepath, projectName, M_sprite, M_currentState, palettes );
 }
 
 void
@@ -215,18 +242,14 @@ EditorCanvasComponent::processKeyboardDrawing( ftxui::Event event )
 
     if ( event == ftxui::Event::Character( ' ' ) || event == ftxui::Event::Return )
     {
-        Pixel & cell = M_sprite.at(M_cursorX,M_cursorY);
-        cell.brush = M_currentState.brush;
-        cell.color = M_currentState.color;
+        applyBrushAt( M_cursorX, M_cursorY );
         M_showCursor = true;
         saveState();
         return true;
     }
     if ( event == ftxui::Event::Backspace || event == ftxui::Event::Delete )
     {
-        Pixel & cell = M_sprite.at(M_cursorX,M_cursorY);
-        cell.brush = " ";
-        cell.color = ftxui::Color::White;
+        applyBrushAt( M_cursorX, M_cursorY );
         M_showCursor = true;
         saveState();
         return true;
@@ -293,6 +316,37 @@ EditorCanvasComponent::pasteClipboard()
     }
 
     saveState();
+}
+
+void
+EditorCanvasComponent::applyBrushAt( int targetX, int targetY, bool isEraser )
+{
+    int bsize = M_currentState.brushSize;
+    int startX = targetX;
+    int startY = targetY;
+    for ( int by = 0; by < bsize; ++by )
+    {
+        for ( int bx = 0; bx < bsize; ++bx )
+        {
+            int px = startX + bx;
+            int py = startY + by;
+
+            if ( px >= 0 && px < M_width && py >= 0 && py < M_height )
+            {
+                Pixel & cell = M_sprite.at(px, py);
+                if ( isEraser )
+                {
+                    cell.brush = " ";
+                    cell.color = ftxui::Color::White;
+                }
+                else
+                {
+                    cell.brush = M_currentState.brush;
+                    cell.color = M_currentState.color;
+                }
+            }
+        }
+    }
 }
 
 bool
@@ -364,9 +418,8 @@ EditorCanvasComponent::processMouseDrawing( ftxui::Event event )
             M_isDrawing = true;
             M_lastDrawX = worldX;
             M_lastDrawY = worldY;
-            Pixel & cell = M_sprite.at(worldX, worldY);
-            cell.brush = M_currentState.brush;
-            cell.color = M_currentState.color;
+
+            applyBrushAt(worldX,worldY);
             return true;
         }
         else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
@@ -413,12 +466,12 @@ EditorCanvasComponent::processPanning( ftxui::Event event )
 
         if ( mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed )
         {
-            int dx = (mouse.x - M_lastPanMouseX) / 2;
+            int dx = (mouse.x - M_lastPanMouseX) / (M_squarePixel ? 2 : 1);
             int dy = mouse.y - M_lastPanMouseY;
 
             if ( dx != 0 || dy != 0 )
             {
-                int visibleW = std::max(1, (M_box.x_max - M_box.x_min + 1) / 2);
+                int visibleW = std::max(1, (M_box.x_max - M_box.x_min + 1) / (M_squarePixel ? 2 : 1));
                 int visibleH = std::max(1, (M_box.y_max - M_box.y_min + 1));
 
                 int maxCameraX = std::max(0, M_width - visibleW);
@@ -427,7 +480,7 @@ EditorCanvasComponent::processPanning( ftxui::Event event )
                 M_cameraX = std::clamp(M_cameraX - dx, 0, maxCameraX);
                 M_cameraY = std::clamp(M_cameraY - dy, 0, maxCameraY);
 
-                M_lastPanMouseX += (dx * 2);
+                M_lastPanMouseX += (dx * (M_squarePixel ? 2 : 1));
                 M_lastPanMouseY += dy;
             }
             return true;
@@ -712,7 +765,7 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
         {
             M_showCursor = false;
 
-            int localX = std::clamp((mouse.x - M_box.x_min)/2, 0, M_width - 1);
+            int localX = std::clamp((mouse.x - M_box.x_min)/(M_squarePixel ? 2 : 1), 0, M_width - 1);
             int localY = std::clamp(mouse.y - M_box.y_min, 0, M_height - 1);
 
             if ( mouse.motion == ftxui::Mouse::Pressed )
@@ -745,11 +798,10 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
     if ( M_isDrawing && event == ftxui::Event::Escape )
     {
         M_isDrawing = false;
-        M_sprite = M_spriteSnapshot; 
+        M_sprite = M_spriteSnapshot;
         return true;
     }
 
-    // Start / Finish drawing with Space or Return
     if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
     {
         M_showCursor = true;
@@ -759,8 +811,7 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
             M_shapeStartX = M_cursorX;
             M_shapeStartY = M_cursorY;
             M_spriteSnapshot = M_sprite;
-            
-            // Draw initial 1x1 point
+
             M_sprite = M_spriteSnapshot;
             if ( M_currentState.toolType == ToolType::SQUARE )
                 drawSquare( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
@@ -771,7 +822,6 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
         }
         else
         {
-            // Finish the shape
             M_isDrawing = false;
             saveState();
         }
@@ -781,7 +831,7 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
     if ( M_isDrawing )
     {
         bool moved = false;
-        
+
         if ( event == ftxui::Event::ArrowUp || event == ftxui::Event::Character('k') )
         {
             M_cursorY = std::max(0, M_cursorY - 1);
@@ -808,7 +858,6 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
             M_showCursor = true;
             M_sprite = M_spriteSnapshot;
 
-            // Draw the temporary shape mapping from the start point to the new cursor position
             if ( M_currentState.toolType == ToolType::SQUARE )
                 drawSquare( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
             else if ( M_currentState.toolType == ToolType::CIRCLE )
@@ -833,14 +882,14 @@ EditorCanvasComponent::drawSquare( int x0, int y0, int x1, int y1 )
 
     for ( int x = minX; x <= maxX; ++x )
     {
-        M_sprite.at(x, minY) = Pixel{M_currentState.brush, M_currentState.color};
-        M_sprite.at(x, maxY) = Pixel{M_currentState.brush, M_currentState.color};
+        applyBrushAt(x, minY);
+        applyBrushAt(x, maxY);
     }
 
     for ( int y = minY; y <= maxY; ++y )
     {
-        M_sprite.at(minX, y) = Pixel{M_currentState.brush, M_currentState.color};
-        M_sprite.at(maxX, y) = Pixel{M_currentState.brush, M_currentState.color};
+        applyBrushAt(minX, y);
+        applyBrushAt(maxX, y);
     }
 }
 
@@ -867,7 +916,7 @@ EditorCanvasComponent::drawCircle( int x0, int y0, int x1, int y1 )
         int y = std::round(yc + b * std::sin(theta));
 
         if ( x >= 0 && x < M_width && y >= 0 && y < M_height )
-            M_sprite.at(x, y) = Pixel{M_currentState.brush, M_currentState.color};
+            applyBrushAt(x,y);
     }
 }
 
@@ -886,7 +935,7 @@ EditorCanvasComponent::processRightClickModal( ftxui::Event event )
         {
             M_showRightClickModal = true;
 
-            M_modalX = std::clamp(mouse.x - M_box.x_min, 0, M_width * 2);
+            M_modalX = std::clamp(mouse.x - M_box.x_min, 0, M_width * (M_squarePixel ? 2 : 1) );
             M_modalY = std::clamp(mouse.y - M_box.y_min, 0, M_height);
 
             return true;
@@ -960,7 +1009,7 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
                 //TODO: Use enums
                 case 0: if ( onBackgroundChangeRequested ) onBackgroundChangeRequested(); break;
                 case 1: toggleGrid(); break;
-                case 2: toggleCheckerboardGrid(); break;
+                case 2: changeGridType(); break;
                 case 3: this->undo(); break;
                 case 4: this->redo(); break;
                 case 5: this->clear(); break;
@@ -1044,7 +1093,7 @@ EditorCanvasComponent::saveState()
 std::pair<int,int>
 EditorCanvasComponent::screenToWorld(int screenX, int screenY) const
 {
-    int worldX = ((screenX - M_box.x_min) / 2) + M_cameraX;
+    int worldX = ((screenX - M_box.x_min) / (M_squarePixel ? 2 : 1)) + M_cameraX;
     int worldY = (screenY - M_box.y_min) + M_cameraY;
     return {worldX, worldY};
 }
@@ -1052,7 +1101,7 @@ EditorCanvasComponent::screenToWorld(int screenX, int screenY) const
 std::pair<int,int>
  EditorCanvasComponent::worldToScreen(int worldX, int worldY) const
 {
-    int screenX = ((worldX - M_cameraX) * 2) + M_box.x_min;
+    int screenX = ((worldX - M_cameraX) * (M_squarePixel ? 2 : 1) ) + M_box.x_min;
     int screenY = (worldY - M_cameraY) + M_box.y_min;
     return {screenX, screenY};
 }
@@ -1068,9 +1117,7 @@ EditorCanvasComponent::drawLine( int x0, int y0, int x1, int y1 )
 
     while (true)
     {
-        Pixel & cell = M_sprite.at(x0, y0);
-        cell.brush = M_currentState.brush;
-        cell.color = M_currentState.color;
+        applyBrushAt(x0, y0);
 
         if (x0 == x1 && y0 == y1) break;
 

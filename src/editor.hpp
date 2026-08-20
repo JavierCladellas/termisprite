@@ -6,6 +6,7 @@
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <string>
+#include <unordered_map>
 
 #include "sprite.hpp"
 
@@ -51,6 +52,8 @@ struct Clipboard
 struct EditorState
 {
     std::string brush = "█";
+    std::string selectedBrush = "█";
+    int brushSize = 1;
     ftxui::Color color = ftxui::Color::RGB(255, 255, 255);
     ftxui::Color backgroundColor = ftxui::Color();
     ToolType toolType = ToolType::DRAW;
@@ -106,13 +109,13 @@ public:
         M_width = width;
         M_height = height;
     }
-    void toggleGrid() {
-        M_showPointGrid = !M_showPointGrid;
-        if (M_showPointGrid) M_showCheckerboardGrid = false;
+    void toggleGrid() { M_isGridOn = !M_isGridOn; }
+    void changeGridType()
+    {
+        M_gridType = (GridType)(((int)M_gridType + 1) % 3);
     }
-    void toggleCheckerboardGrid() {
-        M_showCheckerboardGrid = !M_showCheckerboardGrid;
-        if (M_showCheckerboardGrid) M_showPointGrid = false;
+    void toggleSquarePixel() {
+        M_squarePixel = !M_squarePixel;
     }
 
     void copyToClipboard();
@@ -123,9 +126,9 @@ public:
 
     std::function<void()> onBackgroundChangeRequested;
 
-    void importImage( std::string const& filepath, int targetWidth = -1 , int targetHeight = -1, std::string const& format = "png" );
-    void importProject( std::string const& filepath );
-    void exportProject( std::string const& filepath, std::string const& projectName = "Untitled" );
+    void importImage( std::string const& filepath, int targetWidth = -1 , int targetHeight = -1 );
+    void importProject( std::string const& filepath, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes );
+    void exportProject( std::string const& filepath, std::string const& projectName = "Untitled", std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes = {} );
     void exportImage( std::string const& filepath, std::string const& format = "png" );
 
 private:
@@ -144,6 +147,8 @@ private:
 
     void floodFillPaint( int x, int y );
 
+
+    void applyBrushAt( int targetX, int targetY, bool isEraser = false );
 
     void beginTranslation();
     void endTranslation();
@@ -190,9 +195,16 @@ private:
     int M_shapeStartX = 0;
     int M_shapeStartY = 0;
 
-    bool M_showPointGrid = true;
-    bool M_showCheckerboardGrid = false;
+    enum class GridType
+    {
+        POINTS,
+        LINES,
+        CHECKERBOARD
+    };
+    GridType M_gridType = GridType::POINTS;
+    bool M_isGridOn = true;
 
+    bool M_squarePixel = true;
 
     //TODO: REFACTOR
     int M_modalX = 0;
@@ -200,7 +212,7 @@ private:
     ftxui::Box M_rightClickModalBox;
     bool M_showRightClickModal = false;
     int M_rightClickModalIndex = 0;
-    std::vector<std::string> M_rightClickModalOptions = { "Background", "Grid [g]", "Checkerboard [G]", "Undo [u]", "Redo [Ctrl+r]", "Clear [Ctrl+d]", "Cancel [Esc]" };
+    std::vector<std::string> M_rightClickModalOptions = { "Background", "Toggle Grid [g]", "Switch Grid [G]", "Undo [u]", "Redo [Ctrl+r]", "Clear [Ctrl+d]", "Cancel [Esc]" };
     ftxui::Component M_rightClickModal = ftxui::Menu(&M_rightClickModalOptions, &M_rightClickModalIndex);
 
 };

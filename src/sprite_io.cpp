@@ -1,5 +1,6 @@
 #include "sprite_io.hpp"
 #include <fstream>
+#include <unordered_map>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -14,7 +15,7 @@ namespace Termisprite
 {
 
 
-bool SpriteImporter::importProject( std::string const& filepath, Sprite & targetSprite, EditorState & editorState )
+bool SpriteImporter::importProject( std::string const& filepath, Sprite & targetSprite, EditorState & editorState, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes )
 {
     std::ifstream inFile( filepath );
     if ( !inFile.is_open() )
@@ -39,6 +40,26 @@ bool SpriteImporter::importProject( std::string const& filepath, Sprite & target
         targetSprite.resize( w, h );
         targetSprite.clear();
     }
+
+    if ( importJson.contains( "palettes" ) && importJson["palettes"].is_object() )
+    {
+        palettes.clear();
+        for ( auto const& [paletteName, colorArray] : importJson["palettes"].items() )
+        {
+            if ( colorArray.is_array() )
+            {
+                std::vector<ftxui::Color> colors;
+                for ( auto const& colorCode : colorArray )
+                {
+                    unsigned int r = 255, g = 255, b = 255;
+                    if ( sscanf( colorCode.get<std::string>().c_str(), "38;2;%u;%u;%u", &r, &g, &b ) == 3 )
+                        colors.push_back(ftxui::Color::RGB(r, g, b));
+                }
+                palettes[paletteName] = colors;
+            }
+        }
+    }
+
 
     if ( importJson.contains("background_color") )
     {
@@ -190,11 +211,95 @@ bool SpriteImporter::importImage( std::string const& filepath, Sprite& targetSpr
     return true;
 }
 
+
+bool
+SpriteImporter::importPalette( std::string const& filepath, std::string const& paletteName, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes, std::string const& format  )
+{
+    std::map<std::string, PaletteFormat> formatMap = {
+        {"png", PaletteFormat::PNG},
+        {"gpl", PaletteFormat::GPL}
+    };
+
+    if ( !formatMap.contains(format) )
+        return false;
+
+    PaletteFormat paletteFormat = formatMap[format];
+
+    std::string parsedFilepath = filepath;
+
+    std::vector<ftxui::Color> extractedColors;
+    switch( paletteFormat )
+    {
+        case PaletteFormat::PNG:
+        {
+            if ( !filepath.ends_with(".png") )
+                parsedFilepath += ".png";
+
+            int imgWidth, imgHeight, channels;
+            unsigned char* imgData = stbi_load(parsedFilepath.c_str(), &imgWidth, &imgHeight, &channels, 4);
+
+            if (!imgData)
+                return false;
+
+            for (int y = 0; y < imgHeight; ++y)
+            {
+                for (int x = 0; x < imgWidth; ++x)
+                {
+                    int index = (y * imgWidth + x) * 4;
+                    unsigned char r = imgData[index];
+                    unsigned char g = imgData[index + 1];
+                    unsigned char b = imgData[index + 2];
+                    unsigned char a = imgData[index + 3];
+
+                    if (a >= 128)
+                        extractedColors.push_back(ftxui::Color::RGB(r, g, b));
+                }
+            }
+
+            stbi_image_free(imgData);
+            break;
+        }
+        case PaletteFormat::GPL:
+        {
+            if ( !filepath.ends_with(".gpl") )
+                parsedFilepath += ".gpl";
+
+            std::ifstream inFile(parsedFilepath);
+            if (!inFile.is_open())
+                return false;
+
+            std::string line;
+            while (std::getline(inFile, line))
+            {
+                if (line.empty() || line[0] == '#')
+                    continue;
+
+                int r, g, b;
+                if (sscanf(line.c_str(), "%d %d %d", &r, &g, &b) == 3)
+                    extractedColors.push_back(ftxui::Color::RGB(r, g, b));
+            }
+            inFile.close();
+            break;
+        }
+        default:
+            return false;
+    }
+
+    palettes[paletteName] = extractedColors;
+    return true;
+
+}
+
+
+
+
+
 bool
 SpriteExporter::exportProject( std::string const& filepath,
                                std::string const& projectName,
                                Sprite const& targetSprite,
-                               EditorState const& editorState )
+                               EditorState const& editorState,
+                               std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes )
 {
     nlohmann::json exportJson;
 
@@ -207,6 +312,15 @@ SpriteExporter::exportProject( std::string const& filepath,
 
     std::string backgroundColor;
     exportJson["background_color"] = editorState.backgroundColor.Print(true);
+
+    exportJson["palettes"] = nlohmann::json::object();
+    for ( auto const& [paletteName, colors] : palettes )
+    {
+        exportJson["palettes"][paletteName] = nlohmann::json::array();
+        for ( auto const& color : colors )
+            exportJson["palettes"][paletteName].push_back(color.Print(false));
+    }
+
     exportJson["sprite"] = nlohmann::json::array();
 
     for ( int y = 0; y < h; ++y )
@@ -359,6 +473,88 @@ SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSp
     return result != 0;
 }
 
+
+bool
+SpriteExporter::exportPalette( std::string const& filepath, std::vector<ftxui::Color> const& palettes, std::string const& format, std::string const& paletteName )
+{
+    std::map<std::string, PaletteFormat> formatMap = {
+        {"png", PaletteFormat::PNG},
+        {"gpl", PaletteFormat::GPL}
+    };
+
+    if ( !formatMap.contains(format) )
+        return false;
+
+    PaletteFormat paletteFormat = formatMap[format];
+
+    std::string parsedFilepath = filepath;
+    int result = 0;
+
+    switch( paletteFormat )
+    {
+        case PaletteFormat::PNG:
+        {
+            if ( !filepath.ends_with(".png") )
+                parsedFilepath += ".png";
+
+            int width = palettes.size();
+            int height = 1;
+
+            std::vector<unsigned char> exportData(width * height * 4, 0);
+
+            for (int x = 0; x < width; ++x)
+            {
+                Pixel cell;
+                cell.brush = "█";
+                cell.color = palettes[x];
+
+                unsigned int r = 255, g = 255, b = 255;
+                std::string colorCode = cell.color.Print(false);
+                sscanf(colorCode.c_str(), "38;2;%u;%u;%u", &r, &g, &b);
+
+                int index = (0 * width + x) * 4;
+                exportData[index + 0] = static_cast<unsigned char>(r);
+                exportData[index + 1] = static_cast<unsigned char>(g);
+                exportData[index + 2] = static_cast<unsigned char>(b);
+                exportData[index + 3] = 255;
+            }
+
+            result = stbi_write_png(parsedFilepath.c_str(), width, height, 4, exportData.data(), width * 4);
+        }
+        case PaletteFormat::GPL:
+        {
+            if ( !filepath.ends_with(".gpl") )
+                parsedFilepath += ".gpl";
+
+            std::ofstream outFile(parsedFilepath);
+            if (!outFile.is_open())
+                return false;
+
+            outFile << "GIMP Palette\n";
+            outFile << "#\n";
+            outFile << "Name: " << paletteName << "\n";
+            outFile << "Columns: " << palettes.size() << "\n";
+            outFile << "#\n";
+
+            for (const auto& color : palettes)
+            {
+                unsigned int r = 255, g = 255, b = 255;
+                std::string colorCode = color.Print(false);
+                sscanf(colorCode.c_str(), "38;2;%u;%u;%u", &r, &g, &b);
+
+                outFile << r << " " << g << " " << b << "\n";
+            }
+
+            outFile.close();
+            result = 1;
+        }
+        default:
+            return false;
+    }
+
+    return result != 0;
+
+}
 
 
 }

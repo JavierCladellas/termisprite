@@ -85,7 +85,7 @@ ToolsComponent::selectTool( ToolType type )
     if ( M_editorState.toolType == ToolType::ERASER )
         M_editorState.brush = " ";
     else
-        M_editorState.brush = "█";
+        M_editorState.brush = M_editorState.selectedBrush;
 }
 
 
