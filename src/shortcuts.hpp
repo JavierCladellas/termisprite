@@ -34,6 +34,7 @@ enum class ShortcutType
     FLIP_HORIZONTAL,
     BACKGROUND_COLOR,
 
+    SQUARE_PIXEL,
     ZOOM_IN,
     ZOOM_OUT,
     TOGGLE_GRID,
