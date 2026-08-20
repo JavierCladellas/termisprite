@@ -76,7 +76,7 @@ bool SpriteImporter::importProject( std::string const& filepath, Sprite & target
         auto [w, h] = targetSprite.size();
 
         for ( auto const& item : importJson["sprite"] )
-        {
+    {
             int x = item.value("x", -1);
             int y = item.value("y", -1);
             std::string brush = item.value("brush", " ");
@@ -97,8 +97,79 @@ bool SpriteImporter::importProject( std::string const& filepath, Sprite & target
 }
 
 
-bool SpriteImporter::importImage( std::string const& filepath, Sprite& targetSprite, int targetWidth, int targetHeight)
+bool SpriteImporter::importImage( std::string const& filepath, Sprite& targetSprite, int targetWidth, int targetHeight, std::string const& format )
 {
+
+    std::map<std::string, ImageFormat> formatMap = {
+        {"png", ImageFormat::PNG},
+        {"jpg", ImageFormat::JPG},
+        {"jpeg", ImageFormat::JPG},
+        {"bmp", ImageFormat::BMP},
+        {"ascii", ImageFormat::ASCII},
+        {"txt", ImageFormat::ASCII}
+    };
+
+    if (!formatMap.contains(format))
+        return false;
+
+    ImageFormat imageFormat = formatMap[format];
+
+    if ( imageFormat == ImageFormat::ASCII )
+    {
+        std::ifstream inFile(filepath);
+        if (!inFile.is_open())
+            return false;
+
+        std::vector<std::string> lines;
+        std::string line;
+        while (std::getline(inFile, line))
+        {
+            //Windows
+            if (!line.empty() && line.back() == '\r')
+                line.pop_back();
+            lines.push_back(line);
+        }
+        inFile.close();
+
+        for (int y = 0; y < targetHeight; ++y)
+        {
+            std::string const& currentLine = (y < lines.size()) ? lines[y] : "";
+            size_t charIndex = 0;
+
+            for (int x = 0; x < targetWidth; ++x)
+            {
+                Pixel & cell = targetSprite.at(x, y);
+                cell.color = ftxui::Color::White;
+                if (charIndex < currentLine.length())
+                {
+                    //Multi-byte character handling (UTF-8)
+                    unsigned char c = currentLine[charIndex];
+                    int cplen = 1;
+                    if ((c & 0xF8) == 0xF0)
+                        cplen = 4;
+                    else if ((c & 0xF0) == 0xE0)
+                        cplen = 3;
+                    else if ((c & 0xE0) == 0xC0)
+                        cplen = 2;
+
+                    if (charIndex + cplen > currentLine.length())
+                        cplen = currentLine.length() - charIndex;
+
+                    cell.brush = currentLine.substr(charIndex, cplen);
+                    charIndex += cplen;
+                }
+                else
+                    cell.brush = " ";
+            }
+        }
+
+        return true;
+
+    }
+
+
+
+
     int imgWidth, imgHeight, channels;
     unsigned char* imgData = stbi_load(filepath.c_str(), &imgWidth, &imgHeight, &channels, 4);
 
@@ -289,61 +360,115 @@ SpriteExporter::exportProject( std::string const& filepath,
 bool
 SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSprite, std::string const& format )
 {
-    std::map<std::string, ExportFormat> formatMap = {
-        {"png", ExportFormat::PNG},
-        {"jpg", ExportFormat::JPG},
-        {"jpeg", ExportFormat::JPG},
-        {"ascii", ExportFormat::ASCII}
+    std::map<std::string, ImageFormat> formatMap = {
+        {"png", ImageFormat::PNG},
+        {"jpg", ImageFormat::JPG},
+        {"jpeg", ImageFormat::JPG},
+        {"bmp", ImageFormat::BMP},
+        {"ascii", ImageFormat::ASCII}
     };
-
-
 
     auto [w, h] = targetSprite.size();
     if (w <= 0 || h <= 0)
         return false;
 
-    std::vector<unsigned char> exportData(w * h * 4, 0);
+    if ( !formatMap.contains(format) )
+        return false;
 
-    switch ( formatMap[format] )
+    ImageFormat exportFormat = formatMap[format];
+    int channels;
+
+    switch ( exportFormat )
     {
-        case ExportFormat::PNG:
-            for (int y = 0; y < h; ++y)
-            {
-                for (int x = 0; x < w; ++x)
-                {
-                    Pixel const& cell = targetSprite.at(x, y);
-                    int index = (y * w + x) * 4;
-
-                    if (cell.brush == " ")
-                    {
-                        exportData[index + 0] = 0;   // R
-                        exportData[index + 1] = 0;   // G
-                        exportData[index + 2] = 0;   // B
-                        exportData[index + 3] = 0;
-                    }
-                    else
-                    {
-                        unsigned int r = 255, g = 255, b = 255;
-                        std::string colorCode = cell.color.Print(false);
-                        sscanf(colorCode.c_str(), "38;2;%u;%u;%u", &r, &g, &b);
-
-                        exportData[index + 0] = static_cast<unsigned char>(r);
-                        exportData[index + 1] = static_cast<unsigned char>(g);
-                        exportData[index + 2] = static_cast<unsigned char>(b);
-                        exportData[index + 3] = 255;
-                    }
-                }
-            }
-            break;
-        default:
-            break;
+        case ImageFormat::PNG:
+        case ImageFormat::BMP: channels = 4; break;
+        case ImageFormat::JPG: channels = 3; break;
+        case ImageFormat::ASCII: channels = 1; break;
     }
 
-    std::string parsedFilepath = filepath;
-    if (!parsedFilepath.ends_with(".png"))
-        parsedFilepath += ".png";
+    std::vector<unsigned char> exportData(w * h * channels, 0);
 
-    int result = stbi_write_png(parsedFilepath.c_str(), w, h, 4, exportData.data(), w * 4);
+    if ( exportFormat != ImageFormat::ASCII )
+    {
+        for (int y = 0; y < h; ++y)
+        {
+            for (int x = 0; x < w; ++x)
+            {
+                Pixel const& cell = targetSprite.at(x, y);
+                int index = (y * w + x) * channels;
+
+                if (cell.brush == " ")
+                    for ( int i = 0; i < 3; i++ ) //RGB
+                        exportData[index + i] = channels == 3 ? 255 : 0 ;   // R
+                else
+                {
+                    unsigned int r = 255, g = 255, b = 255;
+                    std::string colorCode = cell.color.Print(false);
+                    sscanf(colorCode.c_str(), "38;2;%u;%u;%u", &r, &g, &b);
+
+                    exportData[index + 0] = static_cast<unsigned char>(r);
+                    exportData[index + 1] = static_cast<unsigned char>(g);
+                    exportData[index + 2] = static_cast<unsigned char>(b);
+                }
+
+                if ( channels == 4 )
+                    exportData[index + 3] = cell.brush == " " ? 0 : 255; //Alpha
+            }
+        }
+    }
+
+    int result = 0;
+    std::string parsedFilepath = filepath;
+    switch ( exportFormat )
+    {
+        case ImageFormat::PNG:
+        {
+            if (!parsedFilepath.ends_with(".png"))
+                parsedFilepath += ".png";
+
+            result = stbi_write_png(parsedFilepath.c_str(), w, h, channels, exportData.data(), w * channels);
+            break;
+        }
+        case ImageFormat::JPG:
+        {
+            if (!parsedFilepath.ends_with(".jpg") && !parsedFilepath.ends_with(".jpeg")  )
+                parsedFilepath += ".jpg";
+
+            int quality = 100;
+            result = stbi_write_jpg(parsedFilepath.c_str(), w, h, channels, exportData.data(), quality);
+            break;
+        }
+        case ImageFormat::BMP:
+        {
+            if (!parsedFilepath.ends_with(".bmp"))
+                parsedFilepath += ".bmp";
+
+            result = stbi_write_bmp(parsedFilepath.c_str(), w, h, channels, exportData.data());
+            break;
+        }
+        case ImageFormat::ASCII:
+        {
+            if (!parsedFilepath.ends_with(".txt") && !parsedFilepath.ends_with(".ascii"))
+                parsedFilepath += ".txt";
+            std::ofstream outFile( parsedFilepath );
+            if ( !outFile.is_open() )
+                return false;
+            for ( int y = 0; y < h; ++y )
+            {
+                for ( int x = 0; x < w; ++x )
+                {
+                    Pixel const& cell = targetSprite.at(x, y);
+                    if ( !cell.brush.empty() )
+                        outFile << cell.brush;
+                }
+                outFile << "\n";
+            }
+            outFile.close();
+            result = 1;
+            break;
+        }
+
+    }
 
     return result != 0;
 }

@@ -189,12 +189,12 @@ EditorCanvasComponent::OnRender()
 }
 
 void
-EditorCanvasComponent::importImage( std::string const& filepath, int targetWidth, int targetHeight)
+EditorCanvasComponent::importImage( std::string const& filepath, int targetWidth, int targetHeight, std::string const& format )
 {
     int newWidth = (targetWidth > 0) ? targetWidth : M_width;
     int newHeight = (targetHeight > 0) ? targetHeight : M_height;
     this->resize(newWidth, newHeight);
-    if ( SpriteImporter::importImage( filepath, M_sprite, newWidth, newHeight ) )
+    if ( SpriteImporter::importImage( filepath, M_sprite, newWidth, newHeight, format) )
         saveState();
 }
 

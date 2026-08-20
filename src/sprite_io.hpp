@@ -10,20 +10,16 @@
 namespace Termisprite
 {
 
-enum class PaletteFormat
-{
-    PNG,
-    GPL
-};
+enum class ImageFormat { PNG, JPG, ASCII, BMP };
+enum class PaletteFormat { PNG, GPL };
 
 class SpriteImporter
 {
 public:
     SpriteImporter() = default;
 
-    static bool
-    importImage( std::string const& filepath, Sprite & targetSprite, int targetWidth, int targetHeight);
-
+    static bool importImage( std::string const& filepath, Sprite & targetSprite, int targetWidth, int targetHeight, std::string const& format = "png" );
+  
     static bool
     importProject( std::string const& filepath, Sprite & targetSprite, EditorState & editorState, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes );
 
@@ -47,12 +43,6 @@ public:
                    EditorState const& editorState,
                    std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes );
 
-    enum class ExportFormat
-    {
-        PNG,
-        JPG,
-        ASCII
-    };
     static bool
     exportImage( std::string const& filepath, Sprite const& targetSprite, std::string const& format = "png" );
 
