@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tool_settings.hpp"
 #include "colorpicker.hpp"
 #include "editor.hpp"
 #include "menu.hpp"
@@ -47,9 +48,18 @@ private:
 
     std::shared_ptr<EditorCanvasComponent> M_editorCanvas;
     std::shared_ptr<MenuComponent> M_menu;
+    ftxui::Component M_settingsContainer;
     std::shared_ptr<ToolsComponent> M_tools;
     std::shared_ptr<ColorSectionComponent> M_colorSection;
     std::shared_ptr<StatusBarComponent> M_statusBar;
+
+    std::shared_ptr<BrushSettingsComponent> M_brushSettings;
+    std::shared_ptr<EraserSettingsComponent> M_eraserSettings;
+    std::shared_ptr<RectangleSettingsComponent> M_rectangleSettings;
+    std::shared_ptr<EllipseSettingsComponent> M_ellipseSettings;
+    std::shared_ptr<LineSettingsComponent> M_lineSettings;
+    std::shared_ptr<PaintFillSettingsComponent> M_paintFillSettings;
+    std::shared_ptr<BoxSelectSettingsComponent> M_boxSelectSettings;
 
 
     //TODO Maybe use a struct for this and array

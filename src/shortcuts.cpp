@@ -28,6 +28,7 @@ getDefaultKeymap()
         { ShortcutType::FLIP_HORIZONTAL,   {"Flip Horizontal",  "[Shift+V]",     {ftxui::Event::Character('V')}} },
         { ShortcutType::BACKGROUND_COLOR,  {"Background",       "[Ctrl+B]",      {ftxui::Event::CtrlB}} },
 
+        { ShortcutType::SQUARE_PIXEL,       {"Square Pixel",     "[Shift+S]",{ftxui::Event::S}} },
         { ShortcutType::ZOOM_IN,           {"Zoom In",          "",              {}} },
         { ShortcutType::ZOOM_OUT,          {"Zoom Out",         "",              {}} },
         { ShortcutType::TOGGLE_GRID,       {"Toggle Grid",      "[G]",                  {ftxui::Event::Character('g')}} },
@@ -71,6 +72,7 @@ ShortcutManager::bindAllActions( Termisprite * app )
     this->bindAction(ShortcutType::FLIP_HORIZONTAL, [app]() { app->editor()->flipHorizontal(); });
     this->bindAction(ShortcutType::BACKGROUND_COLOR, [app]() { app->showBackgroundColorModal(); });
 
+    this->bindAction(ShortcutType::SQUARE_PIXEL, [app]() { app->editor()->toggleSquarePixel(); });
     this->bindAction(ShortcutType::TOGGLE_GRID, [app]() { app->editor()->toggleGrid(); });
         this->bindAction(ShortcutType::TOGGLE_CHECKERBOARD_GRID, [app]() { app->editor()->toggleCheckerboardGrid(); });
     this->bindAction(ShortcutType::TOGGLE_PAN, [app]() {
