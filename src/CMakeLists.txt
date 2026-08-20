@@ -8,6 +8,7 @@ add_library( termisprite_lib termisprite.cpp
                              sprite_io.cpp
                              shortcuts.cpp
                              tool_settings.cpp
+                             colorpalettes.cpp
                              modals.cpp )
 
 target_link_libraries(termisprite_lib PRIVATE nlohmann_json::nlohmann_json)

@@ -177,9 +177,9 @@ EditorCanvasComponent::importImage( std::string const& filepath, int targetWidth
 }
 
 void
-EditorCanvasComponent::importProject( std::string const& filepath )
+EditorCanvasComponent::importProject( std::string const& filepath, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes )
 {
-    if ( SpriteImporter::importProject( filepath, M_sprite, M_currentState ) )
+    if ( SpriteImporter::importProject( filepath, M_sprite, M_currentState, palettes ) )
     {
         auto [width, height] = M_sprite.size();
         M_width = width;
@@ -189,9 +189,9 @@ EditorCanvasComponent::importProject( std::string const& filepath )
 }
 
 void
-EditorCanvasComponent::exportProject( std::string const& filepath, std::string const& projectName )
+EditorCanvasComponent::exportProject( std::string const& filepath, std::string const& projectName, std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes )
 {
-    SpriteExporter::exportProject( filepath, projectName, M_sprite, M_currentState );
+    SpriteExporter::exportProject( filepath, projectName, M_sprite, M_currentState, palettes );
 }
 
 void

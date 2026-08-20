@@ -14,7 +14,7 @@ namespace Termisprite
 Termisprite::Termisprite()
     : M_shortcutManager( this )
 {
-    M_editorCanvas = EditorCanvas( 32, 32 );
+    M_editorCanvas = EditorCanvas( 48, 48 );
 
     M_menu = Menu( &M_shortcutManager );
     M_tools = ToolsSection( M_editorCanvas->currentState(), &M_shortcutManager );
@@ -30,8 +30,8 @@ Termisprite::Termisprite()
     M_boxSelectSettings = BoxSelectSettings( M_editorCanvas->currentState(), &M_shortcutManager );
 
     M_newProjectModal = std::make_shared<NewProjectModal>( *M_editorCanvas, [this]{ M_showNewProjectModal = false; });
-    M_openProjectModal = std::make_shared<OpenProjectModal>( *M_editorCanvas, [this]{ M_showOpenProjectModal = false; });
-    M_saveModal = std::make_shared<SaveModal>( *M_editorCanvas, [this]{ M_showSaveModal = false; });
+    M_openProjectModal = std::make_shared<OpenProjectModal>( *M_editorCanvas, [this]{ M_showOpenProjectModal = false; M_colorSection->reloadPalettes(); }, M_colorSection->palettes() );
+    M_saveModal = std::make_shared<SaveModal>( *M_editorCanvas, [this]{ M_showSaveModal = false; }, M_colorSection->palettes() );
     M_exportModal = std::make_shared<ExportModal>( *M_editorCanvas, [this]{ M_showExportModal = false; });
     M_resizeModal = std::make_shared<ResizeModal>( *M_editorCanvas, [this]{ M_showResizeModal = false; });
     M_aboutModal = std::make_shared<AboutModal>( [this]{ M_showAboutModal = false; });

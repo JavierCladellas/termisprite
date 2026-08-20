@@ -2,11 +2,13 @@
 #pragma once
 
 #include "editor.hpp"
+#include "colorpalettes.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <unordered_map>
 
 
 namespace Termisprite
@@ -70,26 +72,32 @@ private:
 std::shared_ptr<ColorPickerComponent> ColorPicker( ftxui::Color & targetColor );
 
 
-class ColorPaletteComponent
-    : public ftxui::ComponentBase
+class TerminalPaletteComponent : public ftxui::ComponentBase
 {
 public:
-    ColorPaletteComponent( EditorState & editorState );
+    TerminalPaletteComponent(ftxui::Color& targetColor, int maxColors, int columns)
+        : M_targetColor(targetColor), M_maxColors(maxColors), M_columns(columns)
+    {}
 
     ftxui::Element OnRender() override;
+    bool OnEvent(ftxui::Event event) override;
+    bool Focusable() const override { return true; }
 
 private:
-    void rebuildPalette();
+    void updateColorFromCursor();
+    int getIndex(int x, int y) const;
+    int gridWidth() const;
+    int gridHeight() const;
 
 private:
-    std::vector<ftxui::Color> M_lastPalette;
-    EditorState & M_editorState;
 
-    ftxui::Component M_container = ftxui::Container::Vertical({});
+    ftxui::Color& M_targetColor;
+    int M_maxColors;
+    int M_columns;
+    int M_cursorX = 0;
+    int M_cursorY = 0;
+    ftxui::Box M_box;
 };
-
-
-std::shared_ptr<ColorPaletteComponent> ColorPalette( EditorState & editorState );
 
 
 
@@ -97,22 +105,29 @@ class ColorSectionComponent
     : public ftxui::ComponentBase
 {
 public:
-    ColorSectionComponent( EditorState & editorState )
-        : M_editorState( editorState ),
-          M_colorPicker( ColorPicker( editorState.color ) ),
-          M_colorPalette( ColorPalette( editorState ) )
-    {
-        ftxui::ComponentBase::Add(
-            ftxui::Container::Vertical({ M_colorPicker, M_colorPalette })
-        );
-    }
+    ColorSectionComponent( EditorState & editorState );
 
     ftxui::Element OnRender() override;
     bool OnEvent( ftxui::Event event ) override;
 
+    std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes() { return M_colorPalette->palettes(); }
+    void reloadPalettes() { M_colorPalette->rebuildPaletteTabs(); }
+
 private:
-    std::shared_ptr<ColorPickerComponent> M_colorPicker;
+    std::vector<std::string> M_tabNames;
+    int M_tabIndex = 0;
+
+    // Sub-components
+    std::shared_ptr<ColorPickerComponent> M_trueColorPicker;
+    std::shared_ptr<TerminalPaletteComponent> M_palette256;
+    std::shared_ptr<TerminalPaletteComponent> M_palette16;
+
     std::shared_ptr<ColorPaletteComponent> M_colorPalette;
+
+    // Structural Containers
+    ftxui::Component M_tabToggle;
+    ftxui::Component M_tabContainer;
+    ftxui::Component M_mainContainer;
 
     EditorState & M_editorState;
 
