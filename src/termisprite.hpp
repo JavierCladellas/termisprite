@@ -80,7 +80,6 @@ private:
     bool M_showOpenProjectModal = false;
     std::shared_ptr<OpenProjectModal> M_openProjectModal;
 
-
     ShortcutManager M_shortcutManager;
 };
 

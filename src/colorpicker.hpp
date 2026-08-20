@@ -2,11 +2,13 @@
 #pragma once
 
 #include "editor.hpp"
+#include "colorpalettes.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <unordered_map>
 
 
 namespace Termisprite
@@ -97,27 +99,6 @@ private:
     ftxui::Box M_box;
 };
 
-class ColorPaletteComponent
-    : public ftxui::ComponentBase
-{
-public:
-    ColorPaletteComponent( EditorState & editorState );
-
-    ftxui::Element OnRender() override;
-
-private:
-    void rebuildPalette();
-
-private:
-    std::vector<ftxui::Color> M_lastPalette;
-    EditorState & M_editorState;
-
-    ftxui::Component M_container = ftxui::Container::Vertical({});
-};
-
-
-std::shared_ptr<ColorPaletteComponent> ColorPalette( EditorState & editorState );
-
 
 
 class ColorSectionComponent
@@ -129,6 +110,9 @@ public:
     ftxui::Element OnRender() override;
     bool OnEvent( ftxui::Event event ) override;
 
+    std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes() { return M_colorPalette->palettes(); }
+    void reloadPalettes() { M_colorPalette->rebuildPaletteTabs(); }
+
 private:
     std::vector<std::string> M_tabNames;
     int M_tabIndex = 0;
@@ -137,6 +121,7 @@ private:
     std::shared_ptr<ColorPickerComponent> M_trueColorPicker;
     std::shared_ptr<TerminalPaletteComponent> M_palette256;
     std::shared_ptr<TerminalPaletteComponent> M_palette16;
+
     std::shared_ptr<ColorPaletteComponent> M_colorPalette;
 
     // Structural Containers

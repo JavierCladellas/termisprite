@@ -6,6 +6,7 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/screen/box.hpp>
+#include <unordered_map>
 
 namespace Termisprite
 {
@@ -17,7 +18,7 @@ class Modal
 public:
     Modal( std::function<void()> onClose, std::string const& title = "" );
 
-    ftxui::Element OnRender() override;
+    virtual ftxui::Element OnRender() override;
     bool OnEvent( ftxui::Event event ) override;
 
 protected:
@@ -29,10 +30,8 @@ protected:
 
 protected:
     std::function<void()> M_closeCallback;
-
-private:
-    ftxui::Component M_cancelButton; 
-    ftxui::Component M_okButton; 
+    ftxui::Component M_cancelButton;
+    ftxui::Component M_okButton;
 
     ftxui::Box M_box;
     std::string M_title;
@@ -101,8 +100,8 @@ class SaveModal
     : public Modal
 {
 public:
-    SaveModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
-        : Modal( onClose, "Save"), M_editorCanvas( editorCanvas )
+    SaveModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose, std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes = {})
+        : Modal( onClose, "Save"), M_editorCanvas( editorCanvas ), M_palettes( palettes )
     {
         Modal::initTree();
     }
@@ -115,6 +114,7 @@ private:
 
 private:
     EditorCanvasComponent & M_editorCanvas;
+    std::unordered_map<std::string, std::vector<ftxui::Color>> const& M_palettes;
 
     std::string M_filepathInput = "";
     ftxui::Component M_filepathInputComponent = ftxui::Input(&M_filepathInput, "path/to/save.json");
@@ -127,8 +127,8 @@ class OpenProjectModal
     : public Modal
 {
 public:
-    OpenProjectModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose)
-        : Modal( onClose, "Open"), M_editorCanvas( editorCanvas )
+    OpenProjectModal( EditorCanvasComponent & editorCanvas, std::function<void()> onClose, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes )
+        : Modal( onClose, "Open"), M_editorCanvas( editorCanvas ), M_palettes( palettes )
     {
         Modal::initTree();
     }
@@ -141,6 +141,7 @@ private:
 
 private:
     EditorCanvasComponent & M_editorCanvas;
+    std::unordered_map<std::string, std::vector<ftxui::Color>> & M_palettes;
 
     std::string M_filepathInput = "";
     ftxui::Component M_filepathInputComponent = ftxui::Input(&M_filepathInput, "path/to/project.json");
@@ -261,6 +262,102 @@ private:
 
 private:
     ShortcutManager * M_shortcutManager;
+};
+
+
+
+class NewPaletteModal
+    : public Modal
+{
+public:
+    NewPaletteModal( std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes, std::function<void()> onClose)
+        : Modal( onClose, "New Palette"), M_palettes( palettes )
+    {
+        Modal::initTree();
+        M_paletteNameInputComponent->TakeFocus();
+    }
+
+private:
+    void onConfirm() override;
+    ftxui::Component buildContentComponent() const override;
+    ftxui::Element renderModalContent() override;
+
+private:
+    std::unordered_map<std::string, std::vector<ftxui::Color>> & M_palettes;
+    std::string M_paletteNameInput = "";
+    ftxui::Component M_paletteNameInputComponent = ftxui::Input(&M_paletteNameInput, "Palette Name");
+};
+
+
+
+class ImportPaletteModal
+    : public Modal
+{
+public:
+    ImportPaletteModal( std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes, std::function<void()> onClose )
+        : Modal( onClose, "Import Palette"), M_palettes( palettes )
+    {
+        Modal::initTree();
+        M_paletteNameInputComponent->TakeFocus();
+    }
+
+private:
+    void onConfirm() override;
+    ftxui::Component buildContentComponent() const override;
+    ftxui::Element renderModalContent() override;
+
+private:
+    //TODO: Maybe use sort of back inserter here instead of map
+    std::unordered_map<std::string, std::vector<ftxui::Color>> & M_palettes;
+
+    std::string M_paletteNameInput = "";
+    ftxui::Component M_paletteNameInputComponent = ftxui::Input(&M_paletteNameInput, "Palette Name");
+
+    std::string M_paletteFilepathInput = "";
+    ftxui::Component M_paletteFilepathInputComponent = ftxui::Input(&M_paletteFilepathInput, "path/to/palette.gpl");
+
+    std::vector<std::string> M_formatOptions = { "gpl", "png" };
+    int M_selectedFormatIndex = 0;
+    ftxui::Component M_formatDropdown = ftxui::Dropdown( M_formatOptions, &M_selectedFormatIndex);
+
+};
+
+
+
+class ExportPaletteModal
+    : public Modal
+{
+public:
+    ExportPaletteModal( std::function<void()> onClose )
+        : Modal( onClose, "Export Palette")
+    {
+        Modal::initTree();
+        M_paletteFilepathInputComponent->TakeFocus();
+    }
+
+    void setPalette( std::vector<ftxui::Color> const& palette, std::string const& paletteName )
+    {
+        M_palette = palette;
+        M_paletteName = paletteName;
+    }
+
+private:
+    void onConfirm() override;
+    ftxui::Component buildContentComponent() const override;
+    ftxui::Element renderModalContent() override;
+
+private:
+    std::vector<ftxui::Color> M_palette;
+
+    std::string M_paletteName;
+
+    std::string M_paletteFilepathInput = "";
+    ftxui::Component M_paletteFilepathInputComponent = ftxui::Input(&M_paletteFilepathInput, "path/to/palette");
+
+    std::vector<std::string> M_formatOptions = { "gpl", "png" };
+    int M_selectedFormatIndex = 0;
+    ftxui::Component M_formatDropdown = ftxui::Dropdown( M_formatOptions, &M_selectedFormatIndex);
+
 };
 
 

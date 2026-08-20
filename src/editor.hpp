@@ -6,6 +6,7 @@
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <string>
+#include <unordered_map>
 
 #include "sprite.hpp"
 
@@ -124,8 +125,8 @@ public:
     std::function<void()> onBackgroundChangeRequested;
 
     void importImage( std::string const& filepath, int targetWidth = -1 , int targetHeight = -1 );
-    void importProject( std::string const& filepath );
-    void exportProject( std::string const& filepath, std::string const& projectName = "Untitled" );
+    void importProject( std::string const& filepath, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes );
+    void exportProject( std::string const& filepath, std::string const& projectName = "Untitled", std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes = {} );
     void exportImage( std::string const& filepath, std::string const& format = "png" );
 
 private:

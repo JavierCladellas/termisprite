@@ -358,72 +358,6 @@ TerminalPaletteComponent::OnEvent(ftxui::Event event)
     return false;
 }
 
-ColorPaletteComponent::ColorPaletteComponent( EditorState & editorState )
-    : M_editorState( editorState )
-{
-    ftxui::ComponentBase::Add( M_container );
-}
-
-
-void ColorPaletteComponent::rebuildPalette()
-{
-    M_container->DetachAllChildren();
-
-    auto grid = ftxui::Container::Vertical({});
-    auto currentRow = ftxui::Container::Horizontal({});
-    const int columns = 8;
-
-    for ( size_t i = 0; i < M_editorState.palette.size(); ++i )
-    {
-        ftxui::Color color = M_editorState.palette[i];
-
-        ftxui::ButtonOption option;
-        option.transform = [color]( const ftxui::EntryState& s ) {
-            auto block = ftxui::text( "██" ) | ftxui::color( color );
-
-            if ( s.focused )
-                return ftxui::hbox({ ftxui::text("["), block, ftxui::text("]") });
-
-            return ftxui::hbox({ ftxui::text(" "), block, ftxui::text(" ") });
-        };
-
-        auto btn = ftxui::Button("", [this, color] { M_editorState.color = color; }, option);
-
-        currentRow->Add( btn );
-
-        if ( (i + 1) % columns == 0 )
-        {
-            grid->Add( currentRow );
-            currentRow = ftxui::Container::Horizontal({});
-        }
-    }
-
-    if ( M_editorState.palette.size() % columns != 0 )
-        grid->Add( currentRow );
-
-    M_container->Add( grid );
-    M_lastPalette = M_editorState.palette;
-}
-
-
-ftxui::Element
-ColorPaletteComponent::OnRender()
-{
-    if ( M_editorState.palette != M_lastPalette )
-        this->rebuildPalette();
-
-    if ( M_editorState.palette.empty() )
-        return ftxui::vbox({
-            ftxui::text( " Palette " ) | ftxui::color( ftxui::Color::White ),
-            ftxui::text( "" )
-        });
-
-    return ftxui::vbox({
-        ftxui::text( " Palette " ),
-        M_container->Render()
-    }) | ftxui::size( ftxui::HEIGHT, ftxui::LESS_THAN, 6  );
-}
-
 
 bool
 ColorSectionComponent::OnEvent(ftxui::Event event)
@@ -444,12 +378,8 @@ ColorSectionComponent::OnEvent(ftxui::Event event)
                     return true;
             }
 
-            if ( !M_editorState.palette.empty() )
-            {
-                M_colorPalette->TakeFocus();
-                return true;
-            }
-            return false;
+            M_colorPalette->TakeFocus();
+            return true;
         }
 
         if (M_colorPalette->Focused())
@@ -482,12 +412,6 @@ ColorSectionComponent::OnEvent(ftxui::Event event)
     }
 
     return ComponentBase::OnEvent(event);
-}
-
-std::shared_ptr<ColorPaletteComponent>
-ColorPalette( EditorState & editorState )
-{
-    return std::make_shared<ColorPaletteComponent>( editorState );
 }
 
 
@@ -527,40 +451,45 @@ ColorSectionComponent::ColorSectionComponent( EditorState & editorState )
 
     M_tabContainer = ftxui::Container::Tab(tabComponents, &M_tabIndex);
 
-    M_mainContainer = ftxui::Container::Vertical({ M_tabToggle, M_tabContainer, M_colorPalette });
+    auto baseContainer = ftxui::Container::Vertical({ M_tabToggle, M_tabContainer, M_colorPalette });
 
+    M_mainContainer = ftxui::Renderer(baseContainer,[this]{
+        return ftxui::window( ftxui::text(" Color ") | ftxui::bold | ftxui::center,
+            ftxui::vbox({
+                M_tabToggle->Render(),
+                ftxui::separator(),
+                M_tabContainer->Render(),
+                ftxui::separator(),
+                ftxui::hbox({
+                    ftxui::text( " Active Color: " ) | ftxui::color( ftxui::Color::White ),
+                    ftxui::text( " " ) | ftxui::center
+                                       | ftxui::bgcolor( M_editorState.color )
+                                       | ftxui::size( ftxui::HEIGHT, ftxui::EQUAL, 1 )
+                                       | ftxui::xflex
+                }),
+                ftxui::separator(),
+                M_colorPalette->Render()
+            })
+        ) | ftxui::color( Focused() ? ftxui::Color::Cyan : ftxui::Color::White );
+    });
+
+    M_mainContainer = M_colorPalette->applyModals( M_mainContainer );
     Add(M_mainContainer);
 }
 
 ftxui::Element
 ColorSectionComponent::OnRender()
 {
-    ftxui::Color borderColor = Focused() ? ftxui::Color::Cyan : ftxui::Color::White;
-
     if ( M_tabNames.empty() )
     {
+        ftxui::Color borderColor = Focused() ? ftxui::Color::Cyan : ftxui::Color::White;
         return ftxui::window( ftxui::text(" Color ") | ftxui::bold | ftxui::center,
            ftxui::text("No color support")
         ) | ftxui::color( borderColor );
     }
 
-    return ftxui::window( ftxui::text(" Color ") | ftxui::bold | ftxui::center,
-        ftxui::vbox({
-            M_tabToggle->Render(),
-            ftxui::separator(),
-            M_tabContainer->Render(),
-            ftxui::separator(),
-            ftxui::hbox({
-                ftxui::text( " Active Color: " ) | ftxui::color( ftxui::Color::White ),
-                ftxui::text( " " ) | ftxui::center
-                                   | ftxui::bgcolor( M_editorState.color )
-                                   | ftxui::size( ftxui::HEIGHT, ftxui::EQUAL, 1 )
-                                   | ftxui::xflex
-            }),
-            ftxui::separator(),
-            M_colorPalette->Render()
-        })
-    ) | ftxui::color( borderColor );
+    return M_mainContainer->Render();
+
 }
 
 
