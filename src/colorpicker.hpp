@@ -70,6 +70,33 @@ private:
 std::shared_ptr<ColorPickerComponent> ColorPicker( ftxui::Color & targetColor );
 
 
+class TerminalPaletteComponent : public ftxui::ComponentBase
+{
+public:
+    TerminalPaletteComponent(ftxui::Color& targetColor, int maxColors, int columns)
+        : M_targetColor(targetColor), M_maxColors(maxColors), M_columns(columns)
+    {}
+
+    ftxui::Element OnRender() override;
+    bool OnEvent(ftxui::Event event) override;
+    bool Focusable() const override { return true; }
+
+private:
+    void updateColorFromCursor();
+    int getIndex(int x, int y) const;
+    int gridWidth() const;
+    int gridHeight() const;
+
+private:
+
+    ftxui::Color& M_targetColor;
+    int M_maxColors;
+    int M_columns;
+    int M_cursorX = 0;
+    int M_cursorY = 0;
+    ftxui::Box M_box;
+};
+
 class ColorPaletteComponent
     : public ftxui::ComponentBase
 {
@@ -97,22 +124,25 @@ class ColorSectionComponent
     : public ftxui::ComponentBase
 {
 public:
-    ColorSectionComponent( EditorState & editorState )
-        : M_editorState( editorState ),
-          M_colorPicker( ColorPicker( editorState.color ) ),
-          M_colorPalette( ColorPalette( editorState ) )
-    {
-        ftxui::ComponentBase::Add(
-            ftxui::Container::Vertical({ M_colorPicker, M_colorPalette })
-        );
-    }
+    ColorSectionComponent( EditorState & editorState );
 
     ftxui::Element OnRender() override;
     bool OnEvent( ftxui::Event event ) override;
 
 private:
-    std::shared_ptr<ColorPickerComponent> M_colorPicker;
+    std::vector<std::string> M_tabNames;
+    int M_tabIndex = 0;
+
+    // Sub-components
+    std::shared_ptr<ColorPickerComponent> M_trueColorPicker;
+    std::shared_ptr<TerminalPaletteComponent> M_palette256;
+    std::shared_ptr<TerminalPaletteComponent> M_palette16;
     std::shared_ptr<ColorPaletteComponent> M_colorPalette;
+
+    // Structural Containers
+    ftxui::Component M_tabToggle;
+    ftxui::Component M_tabContainer;
+    ftxui::Component M_mainContainer;
 
     EditorState & M_editorState;
 
