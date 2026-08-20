@@ -46,7 +46,7 @@ ToolsComponent::makeToolButton( std::string icon, Shortcut const& shortcut, Tool
         auto content = ftxui::hbox({
             prefix,
             ftxui::text(icon + " " + displayName) | ftxui::flex,
-            ftxui::text( hotkeyText) | ftxui::dim
+            ftxui::text( hotkeyText + " ") | ftxui::dim
         });
 
         if (isActive)

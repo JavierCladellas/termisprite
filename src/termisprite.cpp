@@ -56,7 +56,7 @@ Termisprite::Termisprite()
 
     ftxui::Component baseContainer = ftxui::Container::Vertical({
         ftxui::Container::Horizontal({
-            M_menu, M_editorCanvas, M_settingsContainer, M_tools, M_colorSection
+             M_menu, M_settingsContainer, M_tools, M_editorCanvas, M_colorSection
         }),
         M_statusBar
     });
@@ -67,10 +67,13 @@ Termisprite::Termisprite()
                 M_menu->Render(),
                 ftxui::separatorEmpty(),
                 ftxui::hbox({
-                    M_editorCanvas->Render() | ftxui::flex,
                     ftxui::vbox({
                         M_settingsContainer->Render(),
                         M_tools->Render(),
+                    }),
+                    ftxui::separatorEmpty(),
+                    M_editorCanvas->Render() | ftxui::flex,
+                    ftxui::vbox({
                         M_colorSection->Render()
                     })
                 }) | ftxui::flex,

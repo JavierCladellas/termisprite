@@ -192,7 +192,7 @@ ColorPaletteComponent::OnRender()
         this->rebuildColorsInCanvas();
 
     return ftxui::vbox({
-        ftxui::text( " Palettes " ) | ftxui::color( ftxui::Color::White ),
+        ftxui::text( " Palettes " ) | ftxui::color( Focused() ? ftxui::Color::Cyan : ftxui::Color::White ),
 
         M_colorsInCanvasContainer->ChildCount() > 0 ? ftxui::text( " In Canvas" ) : ftxui::emptyElement() | ftxui::color( ftxui::Color::White ) | ftxui::dim,
         M_colorsInCanvasContainer->ChildCount() > 0 ? M_colorsInCanvasContainer->Render() : ftxui::emptyElement(),
