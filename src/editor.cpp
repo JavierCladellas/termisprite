@@ -35,48 +35,22 @@ EditorCanvasComponent::OnRender()
             }
 
 
-            std::string renderBrushL, renderBrushR; 
-            ftxui::Color renderColor = ftxui::Color::White;
-
-
             Pixel const& cellContent = M_sprite.at(worldX, worldY);
-
-            renderBrushL = cellContent.brush;
-            renderBrushR = cellContent.brush;
-            renderColor = cellContent.color;
-
-            if ( M_currentState.selection.isActive &&
-                 worldX >= M_currentState.selection.minX() && worldX <= M_currentState.selection.maxX() &&
-                 worldY >= M_currentState.selection.minY() && worldY <= M_currentState.selection.maxY() )
-            {
-                bool isTop = (worldY == M_currentState.selection.minY());
-                bool isBottom = (worldY == M_currentState.selection.maxY());
-                bool isLeft = (worldX == M_currentState.selection.minX());
-                bool isRight = (worldX == M_currentState.selection.maxX());
-
-                if (isTop && isLeft && isBottom && isRight) { renderBrushL = "⡏"; renderBrushR = "⢹"; } 
-                else if (isTop && isLeft) { renderBrushL = "⡏"; renderBrushR = "⠉"; }
-                else if (isTop && isRight) { renderBrushL = "⠉"; renderBrushR = "⢹"; }
-                else if (isBottom && isLeft) { renderBrushL = "⣇"; renderBrushR = "⣀"; }
-                else if (isBottom && isRight) { renderBrushL = "⣀"; renderBrushR = "⣸"; }
-                else if (isTop) { renderBrushL = "⠉"; renderBrushR = "⠉"; }
-                else if (isBottom) { renderBrushL = "⣀"; renderBrushR = "⣀"; }
-                else if (isLeft) { renderBrushL = "⡇"; renderBrushR = " "; }
-                else if (isRight) { renderBrushL = " "; renderBrushR = "⢸"; }
-
-                if ( isTop || isBottom || isLeft || isRight )
-                    renderColor = ftxui::Color::White;
-            }
     
-            if ( renderBrushL == " " && renderBrushR == " " ) 
+            std::string brush = cellContent.brush; 
+            if ( cellContent.brush == " " )
                 continue;
 
-            ftxui::Element cell = M_squarePixel ? ftxui::text( renderBrushL + renderBrushR ) : ftxui::text( renderBrushL ) ;
-            cell |= ftxui::color( renderColor );
+            if ( M_squarePixel )
+                brush += brush;
+
+            ftxui::Element cell =  ftxui::text(brush);
+            cell |= ftxui::color( cellContent.color );
             cell |= ftxui::bgcolor( M_currentState.backgroundColor );
             M_cells[sy][sx] = cell;
         }
     }
+    M_selectionTool->render(M_cells, M_squarePixel);
 
     M_cursor->render( M_cells, M_currentState, M_squarePixel );
 
@@ -181,10 +155,10 @@ EditorCanvasComponent::processKeyboardDrawing( ftxui::Event event )
 
     if ( event == ftxui::Event::Escape || event == ftxui::Event::Return )
     {
-        if ( M_currentState.selection.isActive )
+        if ( M_selectionTool->isActive() )
         {
             endTranslation();
-            M_currentState.selection.isActive = false;
+            M_selectionTool->setActive(false);
             saveState();
             return true;
         }
@@ -212,14 +186,14 @@ EditorCanvasComponent::processKeyboardDrawing( ftxui::Event event )
 void
 EditorCanvasComponent::copyToClipboard()
 {
-    int w = M_currentState.selection.width();
-    int h = M_currentState.selection.height();
+    int w = M_selectionTool->width();
+    int h = M_selectionTool->height();
 
     M_currentState.clipboard.data.assign(h, std::vector<Pixel>(w));
 
     for ( int y = 0; y < h; ++y )
         for ( int x = 0; x < w; ++x )
-            M_currentState.clipboard.data[y][x] = M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y);
+            M_currentState.clipboard.data[y][x] = M_sprite.at(M_selectionTool->minX() + x,M_selectionTool->minY() + y);
 
     M_currentState.clipboard.hasData = true;
 }
@@ -227,8 +201,8 @@ EditorCanvasComponent::copyToClipboard()
 void
 EditorCanvasComponent::cutToClipboard()
 {
-    int w = M_currentState.selection.width();
-    int h = M_currentState.selection.height();
+    int w = M_selectionTool->width();
+    int h = M_selectionTool->height();
 
     M_currentState.clipboard.data.assign(h, std::vector<Pixel>(w));
 
@@ -236,13 +210,13 @@ EditorCanvasComponent::cutToClipboard()
     {
         for ( int x = 0; x < w; ++x )
         {
-            M_currentState.clipboard.data[y][x] = M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y);
-            M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y) = Pixel{" ", ftxui::Color::White};
+            M_currentState.clipboard.data[y][x] = M_sprite.at(M_selectionTool->minX() + x,M_selectionTool->minY() + y);
+            M_sprite.at(M_selectionTool->minX() + x,M_selectionTool->minY() + y) = Pixel{" ", ftxui::Color::White};
         }
     }
 
     M_currentState.clipboard.hasData = true;
-    M_currentState.selection.isActive = false;
+    M_selectionTool->setActive(false);
     saveState();
 }
 
@@ -311,7 +285,7 @@ EditorCanvasComponent::processCursorMovement( ftxui::Event event )
 
     if ( dx != 0 || dy != 0 )
     {
-        if ( M_currentState.selection.isActive )
+        if ( M_selectionTool->isActive() )
         {
             translateSelection( dx, dy );
             return true;
@@ -560,18 +534,15 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
             {
                 TakeFocus();
                 M_isDrawing = true;
-                M_currentState.selection.isActive = true;
+                M_selectionTool->setActive(false);
 
-                M_currentState.selection.startX = localX;
-                M_currentState.selection.startY = localY;
-                M_currentState.selection.endX = localX;
-                M_currentState.selection.endY = localY;
+                M_selectionTool->setStart( localX, localY );
+                M_selectionTool->setEnd( localX, localY );
                 return true;
             }
             else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
             {
-                M_currentState.selection.endX = localX;
-                M_currentState.selection.endY = localY;
+                M_selectionTool->setEnd( localX, localY );
                 return true;
             }
         }
@@ -581,10 +552,10 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
             auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
             if ( mouse.motion == ftxui::Mouse::Pressed )
             {
-                if ( M_currentState.selection.isActive )
+                if ( M_selectionTool->isActive() )
                 {
-                    if ( localX >= M_currentState.selection.minX() && localX <= M_currentState.selection.maxX() &&
-                         localY >= M_currentState.selection.minY() && localY <= M_currentState.selection.maxY() )
+                    if ( localX >= M_selectionTool->minX() && localX <= M_selectionTool->maxX() &&
+                         localY >= M_selectionTool->minY() && localY <= M_selectionTool->maxY() )
                     {
                         beginTranslation();
                         M_lastDragX = localX;
@@ -594,7 +565,7 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
                     else
                     {
                         endTranslation();
-                        M_currentState.selection.isActive = false;
+                        M_selectionTool->setActive(false);
                         saveState();
                         return true;
                     }
@@ -629,15 +600,15 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
     if ( M_isDrawing && event == ftxui::Event::Escape )
     {
         M_isDrawing = false;
-        M_currentState.selection.isActive = false;
+        M_selectionTool->setActive(false);
         return true;
     }
 
-    if ( !M_isDrawing && M_currentState.selection.isActive && 
+    if ( !M_isDrawing &&  M_selectionTool->isActive() && 
          (event == ftxui::Event::Escape || event == ftxui::Event::Return) )
     {
         endTranslation();
-        M_currentState.selection.isActive = false;
+        M_selectionTool->setActive(false);
         saveState();
         return true;
     }
@@ -650,12 +621,10 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
         if ( !M_isDrawing )
         {
             M_isDrawing = true;
-            M_currentState.selection.isActive = true;
+            M_selectionTool->setActive(false);
 
-            M_currentState.selection.startX = M_cursor->x();
-            M_currentState.selection.startY = M_cursor->y();
-            M_currentState.selection.endX = M_cursor->x();
-            M_currentState.selection.endY = M_cursor->y();
+            M_selectionTool->setStart(M_cursor->x(), M_cursor->y());
+            M_selectionTool->setEnd(M_cursor->x(), M_cursor->y());
         }
         else
         {
@@ -667,18 +636,17 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
 
     if ( M_isDrawing )
     {
-        bool wasActive = M_currentState.selection.isActive;
-        M_currentState.selection.isActive = false;
+        bool wasActive = M_selectionTool->isActive();
+        M_selectionTool->setActive(false);
 
         bool moved = processCursorMovement(event);
 
-        M_currentState.selection.isActive = wasActive;
+        M_selectionTool->setActive(wasActive);
 
         if ( moved )
         {
             M_cursor->setVisibility(true);
-            M_currentState.selection.endX = M_cursor->x();
-            M_currentState.selection.endY = M_cursor->y();
+            M_selectionTool->setEnd(M_cursor->x(), M_cursor->y());
             return true;
         }
     }
@@ -906,14 +874,14 @@ EditorCanvasComponent::clear()
 void
 EditorCanvasComponent::deleteSelection()
 {
-    int w = M_currentState.selection.width();
-    int h = M_currentState.selection.height();
+    int w = M_selectionTool->width();
+    int h = M_selectionTool->height();
 
     for ( int y = 0; y < h; ++y )
         for ( int x = 0; x < w; ++x )
-            M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y) = Pixel{" ", ftxui::Color::White};
+            M_sprite.at(M_selectionTool->minX() + x,M_selectionTool->minY() + y) = Pixel{" ", ftxui::Color::White};
 
-    M_currentState.selection.isActive = false;
+    M_selectionTool->setActive(false);
     saveState();
 }
 
@@ -1124,21 +1092,21 @@ EditorCanvasComponent::floodFillPaint( int x, int y )
 void
 EditorCanvasComponent::beginTranslation()
 {
-    if ( M_isTranslating || !M_currentState.selection.isActive ) return;
+    if ( M_isTranslating || !M_selectionTool->isActive() ) return;
 
     M_isTranslating = true;
     M_spriteSnapshot = M_sprite;
 
-    int w = M_currentState.selection.width();
-    int h = M_currentState.selection.height();
+    int w = M_selectionTool->width();
+    int h = M_selectionTool->height();
     M_currentState.floatingSelection.assign(h, std::vector<Pixel>(w));
 
     for ( int y = 0; y < h; ++y )
     {
         for ( int x = 0; x < w; ++x )
         {
-            M_currentState.floatingSelection[y][x] = M_spriteSnapshot.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y);
-            M_spriteSnapshot.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y) = Pixel{" ", ftxui::Color::White};
+            M_currentState.floatingSelection[y][x] = M_spriteSnapshot.at(M_selectionTool->minX() + x,M_selectionTool->minY() + y);
+            M_spriteSnapshot.at(M_selectionTool->minX() + x,M_selectionTool->minY() + y) = Pixel{" ", ftxui::Color::White};
         }
     }
 }
@@ -1155,30 +1123,28 @@ EditorCanvasComponent::endTranslation()
 bool
 EditorCanvasComponent::translateSelection( int dx, int dy )
 {
-    if ( !M_currentState.selection.isActive ) return false;
+    if ( !M_selectionTool->isActive() ) return false;
 
     if ( !M_isTranslating ) beginTranslation();
 
-    int minX = M_currentState.selection.minX();
-    int minY = M_currentState.selection.minY();
-    int maxX = M_currentState.selection.maxX();
-    int maxY = M_currentState.selection.maxY();
+    int minX = M_selectionTool->minX();
+    int minY = M_selectionTool->minY();
+    int maxX = M_selectionTool->maxX();
+    int maxY = M_selectionTool->maxY();
 
     if ( minX + dx < 0 || maxX + dx >= M_width || minY + dy < 0 || maxY + dy >= M_height )
         return false;
 
-    M_currentState.selection.startX += dx;
-    M_currentState.selection.endX += dx;
-    M_currentState.selection.startY += dy;
-    M_currentState.selection.endY += dy;
+    M_selectionTool->setStart( M_selectionTool->startX() + dx, M_selectionTool->startY() + dy);
+    M_selectionTool->setEnd( M_selectionTool->endX() + dx, M_selectionTool->endY() + dy);
 
     M_sprite = M_spriteSnapshot;
 
-    int w = M_currentState.selection.width();
-    int h = M_currentState.selection.height();
+    int w = M_selectionTool->width();
+    int h = M_selectionTool->height();
     for ( int y = 0; y < h; ++y )
         for ( int x = 0; x < w; ++x )
-            M_sprite.at(M_currentState.selection.minX() + x,M_currentState.selection.minY() + y) = M_currentState.floatingSelection[y][x];
+            M_sprite.at(M_selectionTool->minX() + x,M_selectionTool->minY() + y) = M_currentState.floatingSelection[y][x];
 
     return true;
 }

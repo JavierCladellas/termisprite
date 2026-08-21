@@ -10,6 +10,7 @@
 
 #include "cursor.hpp"
 #include "grid.hpp"
+#include "selection_tool.hpp"
 #include "sprite.hpp"
 
 namespace Termisprite
@@ -30,19 +31,6 @@ enum class ToolType
     PAN
 };
 
-struct SelectionBounds
-{
-    bool isActive = false;
-    int startX = 0, startY = 0;
-    int endX = 0, endY = 0;
-
-    int minX() const { return std::min(startX, endX); }
-    int minY() const { return std::min(startY, endY); }
-    int maxX() const { return std::max(startX, endX); }
-    int maxY() const { return std::max(startY, endY); }
-    int width() const { return maxX() - minX() + 1; }
-    int height() const { return maxY() - minY() + 1; }
-};
 
 struct Clipboard
 {
@@ -61,7 +49,6 @@ struct EditorState
     ToolType toolType = ToolType::DRAW;
     std::vector<ftxui::Color> palette;
 
-    SelectionBounds selection;
     Sprite::GridData floatingSelection;
     Clipboard clipboard;
 };
@@ -78,7 +65,8 @@ public:
         : M_width( width ), M_height( height ),
           M_sprite( width, height ),
           M_grid( std::make_unique<Grid>() ),
-          M_cursor( std::make_unique<CanvasCursor>() )
+          M_cursor( std::make_unique<CanvasCursor>() ),
+          M_selectionTool( std::make_unique<SelectionTool>() )
     {
         M_cells = std::vector<ftxui::Elements>( M_height, ftxui::Elements( M_width, ftxui::text(" ") ) );
 
@@ -195,6 +183,7 @@ private:
     EditorState M_currentState;
 
     std::unique_ptr<CanvasCursor> M_cursor;
+    std::unique_ptr<SelectionTool> M_selectionTool;
 
     ftxui::Box M_box;
     bool M_isDrawing = false;
