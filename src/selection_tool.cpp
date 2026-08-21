@@ -4,7 +4,7 @@ namespace Termisprite
 {
 
 
-void 
+void
 SelectionTool::render( std::vector<ftxui::Elements> & cells, bool isSquarePixel )
 {
 
@@ -22,7 +22,7 @@ SelectionTool::render( std::vector<ftxui::Elements> & cells, bool isSquarePixel 
             bool isLeft = x == minX();
             bool isRight = x == maxX();
 
-            if (isTop && isLeft && isBot && isRight) { brushL = "⡏"; brushR = "⢹"; } 
+            if (isTop && isLeft && isBot && isRight) { brushL = "⡏"; brushR = "⢹"; }
             else if (isTop && isLeft) { brushL = "⡏"; brushR = "⠉"; }
             else if (isTop && isRight) { brushL = "⠉"; brushR = "⢹"; }
             else if (isBot && isLeft) { brushL = "⣇"; brushR = "⣀"; }

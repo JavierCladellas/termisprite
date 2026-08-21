@@ -80,7 +80,7 @@ ToolsComponent::selectTool( ToolType type )
     M_editorState.toolType = type;
 
     if ( M_editorState.toolType != ToolType::BOX_SELECT )
-        M_editorState.selection.isActive = false;
+        M_editorState.selectionTool->setActive( false );
 
     if ( M_editorState.toolType == ToolType::ERASER )
         M_editorState.brush = " ";

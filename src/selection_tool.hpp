@@ -8,7 +8,7 @@
 namespace Termisprite
 {
 
-class SelectionTool 
+class SelectionTool
 {
 public:
     SelectionTool() {}

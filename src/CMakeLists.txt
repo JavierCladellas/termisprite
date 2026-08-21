@@ -12,6 +12,7 @@ add_library( termisprite_lib termisprite.cpp
                              layers.cpp
                              grid.cpp
                              cursor.cpp
+                             selection_tool.cpp
                              modals.cpp )
 
 target_link_libraries(termisprite_lib PRIVATE nlohmann_json::nlohmann_json)

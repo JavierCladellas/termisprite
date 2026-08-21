@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <ftxui/dom/elements.hpp>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -65,6 +66,7 @@ public:
 
     std::pair<int, int> size() const { return { M_width, M_height }; }
 
+    void render( std::vector<std::vector<ftxui::Element>> & cells, bool isSquarePixel ) const;
 
 private:
     int M_width, M_height;

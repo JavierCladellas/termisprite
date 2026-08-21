@@ -15,6 +15,36 @@ Sprite::resize( int width, int height )
 }
 
 
+
+
+void
+Sprite::render( std::vector<std::vector<ftxui::Element>> & cells, bool isSquarePixel ) const
+{
+
+    for ( int y = 0; y < M_height; ++y )
+    {
+        for ( int x = 0; x < M_width; ++x )
+        {
+            Pixel const& cellContent = at(x, y);
+
+            std::string brush = cellContent.brush;
+            if ( cellContent.brush == " " )
+                continue;
+
+            if ( isSquarePixel )
+                brush += brush;
+
+            ftxui::Element cell =  ftxui::text(brush);
+            cell |= ftxui::color( cellContent.color );
+            cells[y][x] = cell;
+        }
+    }
+
+}
+
+
+
+
 void
 SpriteHistory::save( Sprite const& sprite )
 {

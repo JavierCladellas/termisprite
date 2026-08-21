@@ -18,38 +18,8 @@ EditorCanvasComponent::OnRender()
     M_cameraY = std::clamp(M_cameraY, 0, std::max(0, M_height - visibleH));
 
     M_grid->render(M_cells, M_squarePixel );
+    M_sprite.render(M_cells, M_squarePixel );
 
-    for ( int sy = 0; sy < M_height; ++sy )
-    {
-        for ( int sx = 0; sx < M_width; ++sx )
-        {
-            int worldX = sx + M_cameraX;
-            int worldY = sy + M_cameraY;
-
-
-            bool isOutOfBounds = (worldX < 0 || worldX >= M_width || worldY < 0 || worldY >= M_height);
-            if ( isOutOfBounds )
-            {
-                M_cells[sy][sx] = ftxui::text( M_squarePixel ? "  " : " " ) | ftxui::bgcolor( M_currentState.backgroundColor );
-                continue;
-            }
-
-
-            Pixel const& cellContent = M_sprite.at(worldX, worldY);
-    
-            std::string brush = cellContent.brush; 
-            if ( cellContent.brush == " " )
-                continue;
-
-            if ( M_squarePixel )
-                brush += brush;
-
-            ftxui::Element cell =  ftxui::text(brush);
-            cell |= ftxui::color( cellContent.color );
-            cell |= ftxui::bgcolor( M_currentState.backgroundColor );
-            M_cells[sy][sx] = cell;
-        }
-    }
     M_selectionTool->render(M_cells, M_squarePixel);
 
     M_cursor->render( M_cells, M_currentState, M_squarePixel );
@@ -61,6 +31,7 @@ EditorCanvasComponent::OnRender()
     ftxui::Color borderColor = Focused() ? ftxui::Color::Cyan : ftxui::Color::White;
 
     ftxui::Element canvas = ftxui::vbox( cellsElt )
+                              | ftxui::bgcolor( M_currentState.backgroundColor )
                               | ftxui::reflect( M_box )
                               | ftxui::borderStyled( borderColor )
                               | ftxui::size( ftxui::WIDTH, ftxui::EQUAL, (M_width * (M_squarePixel ? 2 : 1) ) + 1 )
@@ -534,7 +505,7 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
             {
                 TakeFocus();
                 M_isDrawing = true;
-                M_selectionTool->setActive(false);
+                M_selectionTool->setActive(true);
 
                 M_selectionTool->setStart( localX, localY );
                 M_selectionTool->setEnd( localX, localY );
@@ -621,7 +592,7 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
         if ( !M_isDrawing )
         {
             M_isDrawing = true;
-            M_selectionTool->setActive(false);
+            M_selectionTool->setActive(true);
 
             M_selectionTool->setStart(M_cursor->x(), M_cursor->y());
             M_selectionTool->setEnd(M_cursor->x(), M_cursor->y());

@@ -95,11 +95,11 @@ ShortcutManager::bindAllActions( Termisprite * app )
     this->bindAction(ShortcutType::HELP_SHORTCUTS, [app]() { app->showShortcutsModal(); });
 
     this->bindAction(ShortcutType::CLIPBOARD_COPY, [app]() {
-        if ( app->editor()->currentState().selection.isActive )
+        if ( app->editor()->currentState().selectionTool->isActive() )
             app->editor()->copyToClipboard();
     });
     this->bindAction(ShortcutType::CLIPBOARD_CUT, [app]() {
-        if ( app->editor()->currentState().selection.isActive )
+        if ( app->editor()->currentState().selectionTool->isActive() )
             app->editor()->cutToClipboard();
     });
     this->bindAction(ShortcutType::CLIPBOARD_PASTE, [app]() {

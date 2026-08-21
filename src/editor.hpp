@@ -49,6 +49,8 @@ struct EditorState
     ToolType toolType = ToolType::DRAW;
     std::vector<ftxui::Color> palette;
 
+    SelectionTool * selectionTool;
+
     Sprite::GridData floatingSelection;
     Clipboard clipboard;
 };
@@ -68,6 +70,8 @@ public:
           M_cursor( std::make_unique<CanvasCursor>() ),
           M_selectionTool( std::make_unique<SelectionTool>() )
     {
+        M_currentState.selectionTool = M_selectionTool.get();
+
         M_cells = std::vector<ftxui::Elements>( M_height, ftxui::Elements( M_width, ftxui::text(" ") ) );
 
         M_spriteHistory.push( M_sprite );
@@ -85,7 +89,7 @@ public:
 
 
     std::pair<int, int> size() const { return { M_width, M_height }; }
-    void resize( int width, int height ) { 
+    void resize( int width, int height ) {
         M_width = width;
         M_height = height;
 
@@ -99,7 +103,7 @@ public:
         M_cameraX = 0;
         M_cameraY = 0;
 
-        saveState(); 
+        saveState();
     }
 
     //TODO: Implement flipVertical and flipHorizontal in Sprite class
@@ -108,6 +112,7 @@ public:
 
 
     Grid & grid(){ return *M_grid; }
+    SelectionTool & selectionTool(){ return *M_selectionTool; }
 
 
     void undo() {
