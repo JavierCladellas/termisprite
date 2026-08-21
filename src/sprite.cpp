@@ -11,9 +11,7 @@ Sprite::resize( int width, int height )
     M_grid.resize( M_height );
 
     for ( auto & row : M_grid )
-    {
         row.resize( M_width );
-    }
 }
 
 

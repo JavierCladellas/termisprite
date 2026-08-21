@@ -73,8 +73,8 @@ ShortcutManager::bindAllActions( Termisprite * app )
     this->bindAction(ShortcutType::BACKGROUND_COLOR, [app]() { app->showBackgroundColorModal(); });
 
     this->bindAction(ShortcutType::SQUARE_PIXEL, [app]() { app->editor()->toggleSquarePixel(); });
-    this->bindAction(ShortcutType::TOGGLE_GRID, [app]() { app->editor()->toggleGrid(); });
-    this->bindAction(ShortcutType::CHANGE_GRID_TYPE, [app]() { app->editor()->changeGridType(); });
+    this->bindAction(ShortcutType::TOGGLE_GRID, [app]() { app->editor()->grid().toggle(); });
+    this->bindAction(ShortcutType::CHANGE_GRID_TYPE, [app]() { app->editor()->grid().switchType(); });
     this->bindAction(ShortcutType::TOGGLE_PAN, [app]() {
         if ( app->editor()->currentState().toolType == ToolType::PAN )
             app->selectTool(ToolType::DRAW);

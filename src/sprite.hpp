@@ -22,7 +22,7 @@ class Sprite
 public:
     using GridData = std::vector<std::vector<Pixel>>;
 public:
-    Sprite( int width = 32, int height = 32 )
+    Sprite( int width = 48, int height = 48 )
         : M_width( width ), M_height( height )
     {
         M_grid.resize( M_height, std::vector<Pixel>( M_width ) );
@@ -90,6 +90,27 @@ private:
     std::deque<Sprite> M_history;
     int M_maxSize = 50;
     int M_currentIndex = 0;
+};
+
+
+
+class Layer
+{
+
+public:
+    Layer( Sprite & sprite )
+        : M_sprite( sprite )
+    {}
+
+    bool isVisible() const { return M_isVisible; };
+    void toggleVisibility() { M_isVisible = !M_isVisible; }
+
+private:
+    bool M_isVisible = true;
+    std::string M_name;
+    Sprite & M_sprite;
+
+
 };
 
 }

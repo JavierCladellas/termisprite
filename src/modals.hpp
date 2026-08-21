@@ -62,8 +62,8 @@ private:
     std::string M_heightInput;
 
     ftxui::Component M_projectNameInputComponent = ftxui::Input(&M_projectNameInput, "Project Name");
-    ftxui::Component M_widthInputComponent = ftxui::Input(&M_widthInput, "32");
-    ftxui::Component M_heightInputComponent = ftxui::Input(&M_heightInput, "32");
+    ftxui::Component M_widthInputComponent = ftxui::Input(&M_widthInput, "48");
+    ftxui::Component M_heightInputComponent = ftxui::Input(&M_heightInput, "48");
 
 };
 

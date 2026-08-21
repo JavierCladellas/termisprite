@@ -17,6 +17,7 @@ Termisprite::Termisprite()
     M_editorCanvas = EditorCanvas( 48, 48 );
 
     M_menu = Menu( &M_shortcutManager );
+    M_layersSection = LayersSection( M_editorCanvas->currentState(), &M_shortcutManager );
     M_tools = ToolsSection( M_editorCanvas->currentState(), &M_shortcutManager );
     M_colorSection = ColorSection( M_editorCanvas->currentState() );
     M_statusBar = StatusBar( M_editorCanvas->currentState(), &M_shortcutManager );
@@ -56,7 +57,7 @@ Termisprite::Termisprite()
 
     ftxui::Component baseContainer = ftxui::Container::Vertical({
         ftxui::Container::Horizontal({
-             M_menu, M_settingsContainer, M_tools, M_editorCanvas, M_colorSection
+             M_menu, M_settingsContainer, M_tools, M_editorCanvas, M_colorSection, M_layersSection
         }),
         M_statusBar
     });
@@ -74,7 +75,8 @@ Termisprite::Termisprite()
                     ftxui::separatorEmpty(),
                     M_editorCanvas->Render() | ftxui::flex,
                     ftxui::vbox({
-                        M_colorSection->Render()
+                        M_colorSection->Render(),
+                        M_layersSection->Render()
                     })
                 }) | ftxui::flex,
                 ftxui::filler(),

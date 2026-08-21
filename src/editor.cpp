@@ -17,127 +17,84 @@ EditorCanvasComponent::OnRender()
     M_cameraX = std::clamp(M_cameraX, 0, std::max(0, M_width - visibleW));
     M_cameraY = std::clamp(M_cameraY, 0, std::max(0, M_height - visibleH));
 
-    ftxui::Elements rows;
+    M_grid->render(M_cells, M_squarePixel );
 
     for ( int sy = 0; sy < M_height; ++sy )
     {
-        ftxui::Elements row;
         for ( int sx = 0; sx < M_width; ++sx )
         {
             int worldX = sx + M_cameraX;
             int worldY = sy + M_cameraY;
 
-            std::string renderBrushL = " ";
-            std::string renderBrushR = " ";
-            ftxui::Color renderColor = ftxui::Color::White;
 
             bool isOutOfBounds = (worldX < 0 || worldX >= M_width || worldY < 0 || worldY >= M_height);
-
-            if ( !isOutOfBounds )
+            if ( isOutOfBounds )
             {
-                Pixel const& cellContent = M_sprite.at(worldX, worldY);
-                renderBrushL = cellContent.brush;
-                renderBrushR = cellContent.brush;
-                renderColor = cellContent.color;
-
-                if ( M_isGridOn )
-                {
-                    if ( renderBrushL == " " && M_gridType == GridType::POINTS )
-                    {
-                        if ( worldX % 2 == 0 && worldY % 1 == 0 )
-                        {
-                            renderBrushL = "·";
-                            renderBrushR = " ";
-                            renderColor = ftxui::Color::GrayDark;
-                        }
-                    }
-                    else if ( renderBrushL == " " && M_gridType == GridType::LINES )
-                    {
-                        if ( worldY != 0 && worldY % 8 == 0 )
-                        {
-                            renderBrushL = "─";
-                            renderBrushR = "─";
-                            renderColor = ftxui::Color::GrayDark;
-                        }
-                        if ( worldX != 0 && worldX % 8 == 0 )
-                        {
-                            renderBrushL = "│";
-                            if ( worldY != 0 && worldY % 8 == 0 )
-                            {
-                                renderBrushL = "┼";
-                                renderBrushR = "─";
-                            }
-                            renderColor = ftxui::Color::GrayDark;
-                        }
-                    }
-                }
-
-                if ( M_currentState.selection.isActive &&
-                     worldX >= M_currentState.selection.minX() && worldX <= M_currentState.selection.maxX() &&
-                     worldY >= M_currentState.selection.minY() && worldY <= M_currentState.selection.maxY() )
-                {
-                    bool isTop = (worldY == M_currentState.selection.minY());
-                    bool isBottom = (worldY == M_currentState.selection.maxY());
-                    bool isLeft = (worldX == M_currentState.selection.minX());
-                    bool isRight = (worldX == M_currentState.selection.maxX());
-
-                    if (isTop && isLeft && isBottom && isRight) { renderBrushL = "⡏"; renderBrushR = "⢹"; } 
-                    else if (isTop && isLeft) { renderBrushL = "⡏"; renderBrushR = "⠉"; }
-                    else if (isTop && isRight) { renderBrushL = "⠉"; renderBrushR = "⢹"; }
-                    else if (isBottom && isLeft) { renderBrushL = "⣇"; renderBrushR = "⣀"; }
-                    else if (isBottom && isRight) { renderBrushL = "⣀"; renderBrushR = "⣸"; }
-                    else if (isTop) { renderBrushL = "⠉"; renderBrushR = "⠉"; }
-                    else if (isBottom) { renderBrushL = "⣀"; renderBrushR = "⣀"; }
-                    else if (isLeft) { renderBrushL = "⡇"; renderBrushR = " "; }
-                    else if (isRight) { renderBrushL = " "; renderBrushR = "⢸"; }
-
-                    if ( isTop || isBottom || isLeft || isRight )
-                        renderColor = ftxui::Color::White;
-                }
+                M_cells[sy][sx] = ftxui::text( M_squarePixel ? "  " : " " ) | ftxui::bgcolor( M_currentState.backgroundColor );
+                continue;
             }
 
-            ftxui::Element cellL = ftxui::text( renderBrushL ) | ftxui::color( renderColor );
-            ftxui::Element cellR = ftxui::text( renderBrushR ) | ftxui::color( renderColor );
 
-            if ( renderBrushL == " " && M_gridType == GridType::CHECKERBOARD && M_isGridOn )
+            std::string renderBrushL, renderBrushR; 
+            ftxui::Color renderColor = ftxui::Color::White;
+
+             if ( M_showCursor &&
+                M_cursorX + M_currentState.brushSize > worldX && M_cursorX <= worldX &&
+                M_cursorY + M_currentState.brushSize > worldY && M_cursorY <= worldY )
             {
-                if ( (worldX + worldY) % 2 == 0 )
-                {
-                    cellL |= ftxui::bgcolor( ftxui::Color::GrayDark );
-                    cellR |= ftxui::bgcolor( ftxui::Color::GrayDark );
-                }
-                else
-                {
-                    cellL |= ftxui::bgcolor( ftxui::Color::Black );
-                    cellR |= ftxui::bgcolor( ftxui::Color::Black );
-                }
-            }
-            else
-            {
-                cellL |= ftxui::bgcolor( M_currentState.backgroundColor );
-                cellR |= ftxui::bgcolor( M_currentState.backgroundColor );
+                M_cells[sy][sx] = ftxui::text( M_squarePixel ? M_currentState.brush + M_currentState.brush : M_currentState.brush )
+                                        | ftxui::color( M_currentState.color )
+                                        | ftxui::bgcolor( ftxui::Color::Red )
+                                        | ftxui::blink;
+                continue;
             }
 
-            if ( !isOutOfBounds && M_showCursor &&
-                M_cursorX + M_currentState.brushSize > worldX &&
-                M_cursorX <= worldX &&
-                M_cursorY + M_currentState.brushSize > worldY &&
-                M_cursorY <= worldY )
-            {
-                cellL = ftxui::text( M_currentState.brush ) | ftxui::color( M_currentState.color ) | ftxui::bgcolor( ftxui::Color::Red ) | ftxui::blink;
-                cellR = ftxui::text( M_currentState.brush ) | ftxui::color( M_currentState.color ) | ftxui::bgcolor( ftxui::Color::Red ) | ftxui::blink;
-            }
+            Pixel const& cellContent = M_sprite.at(worldX, worldY);
 
-            row.push_back( cellL );
-            if ( M_squarePixel )
-                row.push_back( cellR );
+            renderBrushL = cellContent.brush;
+            renderBrushR = cellContent.brush;
+            renderColor = cellContent.color;
+
+            if ( M_currentState.selection.isActive &&
+                 worldX >= M_currentState.selection.minX() && worldX <= M_currentState.selection.maxX() &&
+                 worldY >= M_currentState.selection.minY() && worldY <= M_currentState.selection.maxY() )
+            {
+                bool isTop = (worldY == M_currentState.selection.minY());
+                bool isBottom = (worldY == M_currentState.selection.maxY());
+                bool isLeft = (worldX == M_currentState.selection.minX());
+                bool isRight = (worldX == M_currentState.selection.maxX());
+
+                if (isTop && isLeft && isBottom && isRight) { renderBrushL = "⡏"; renderBrushR = "⢹"; } 
+                else if (isTop && isLeft) { renderBrushL = "⡏"; renderBrushR = "⠉"; }
+                else if (isTop && isRight) { renderBrushL = "⠉"; renderBrushR = "⢹"; }
+                else if (isBottom && isLeft) { renderBrushL = "⣇"; renderBrushR = "⣀"; }
+                else if (isBottom && isRight) { renderBrushL = "⣀"; renderBrushR = "⣸"; }
+                else if (isTop) { renderBrushL = "⠉"; renderBrushR = "⠉"; }
+                else if (isBottom) { renderBrushL = "⣀"; renderBrushR = "⣀"; }
+                else if (isLeft) { renderBrushL = "⡇"; renderBrushR = " "; }
+                else if (isRight) { renderBrushL = " "; renderBrushR = "⢸"; }
+
+                if ( isTop || isBottom || isLeft || isRight )
+                    renderColor = ftxui::Color::White;
+            }
+    
+            if ( renderBrushL == " " && renderBrushR == " " ) 
+                continue;
+
+            ftxui::Element cell = M_squarePixel ? ftxui::text( renderBrushL + renderBrushR ) : ftxui::text( renderBrushL ) ;
+            cell |= ftxui::color( renderColor );
+            cell |= ftxui::bgcolor( M_currentState.backgroundColor );
+            M_cells[sy][sx] = cell;
         }
-        rows.push_back( ftxui::hbox( row ) );
     }
+
+    ftxui::Elements cellsElt( M_height );
+    for ( int i = 0; i < M_height; ++i )
+        cellsElt[i] = ftxui::hbox(M_cells[i]);
 
     ftxui::Color borderColor = Focused() ? ftxui::Color::Cyan : ftxui::Color::White;
 
-    ftxui::Element canvas = ftxui::vbox( std::move( rows ) )
+    ftxui::Element canvas = ftxui::vbox( cellsElt )
                               | ftxui::reflect( M_box )
                               | ftxui::borderStyled( borderColor )
                               | ftxui::size( ftxui::WIDTH, ftxui::EQUAL, (M_width * (M_squarePixel ? 2 : 1) ) + 1 )
@@ -206,6 +163,7 @@ EditorCanvasComponent::importProject( std::string const& filepath, std::unordere
         auto [width, height] = M_sprite.size();
         M_width = width;
         M_height = height;
+        this->resize(width, height);
         saveState();
     }
 }
@@ -1008,8 +966,8 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
             {
                 //TODO: Use enums
                 case 0: if ( onBackgroundChangeRequested ) onBackgroundChangeRequested(); break;
-                case 1: toggleGrid(); break;
-                case 2: changeGridType(); break;
+                case 1: M_grid->toggle(); break;
+                case 2: M_grid->switchType(); break;
                 case 3: this->undo(); break;
                 case 4: this->redo(); break;
                 case 5: this->clear(); break;

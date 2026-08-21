@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "grid.hpp"
 #include "sprite.hpp"
 
 namespace Termisprite
@@ -72,12 +73,16 @@ class EditorCanvasComponent
     : public ftxui::ComponentBase
 {
 public:
-    EditorCanvasComponent( int width = 32, int height = 32 )
+    EditorCanvasComponent( int width = 48, int height = 48 )
         : M_width( width ), M_height( height ),
           M_cursorX( 0 ), M_cursorY( 0 ),
-          M_sprite( width, height )
+          M_sprite( width, height ),
+          M_grid( std::make_unique<Grid>() )
     {
+        M_cells = std::vector<ftxui::Elements>( M_height, ftxui::Elements( M_width, ftxui::text(" ") ) );
+
         M_spriteHistory.push( M_sprite );
+
         Add( M_rightClickModal );
     }
 
@@ -91,11 +96,34 @@ public:
 
 
     std::pair<int, int> size() const { return { M_width, M_height }; }
-    void resize( int width, int height ) { M_width = width; M_height = height; M_sprite.resize( width, height ); saveState(); }
+    void resize( int width, int height ) { 
+        M_width = width;
+        M_height = height;
+
+        M_cells.resize( height );
+        for ( auto & row : M_cells )
+            row.resize( width );
+
+        //TODO: Remove below when layers impl
+        M_sprite.resize( width, height );
+
+
+        M_cursorX = std::clamp(M_cursorX, 0, std::max(0, width - 1));
+        M_cursorY = std::clamp(M_cursorY, 0, std::max(0, height - 1));
+
+        M_cameraX = 0;
+        M_cameraY = 0;
+
+        saveState(); 
+    }
 
     //TODO: Implement flipVertical and flipHorizontal in Sprite class
     void flipVertical() { M_sprite.flipVertical(); saveState(); }
     void flipHorizontal() { M_sprite.flipHorizontal(); saveState(); }
+
+
+    Grid & grid(){ return *M_grid; }
+
 
     void undo() {
         M_spriteHistory.undo( M_sprite );
@@ -108,11 +136,6 @@ public:
         auto [width, height] = M_sprite.size();
         M_width = width;
         M_height = height;
-    }
-    void toggleGrid() { M_isGridOn = !M_isGridOn; }
-    void changeGridType()
-    {
-        M_gridType = (GridType)(((int)M_gridType + 1) % 3);
     }
     void toggleSquarePixel() {
         M_squarePixel = !M_squarePixel;
@@ -195,16 +218,11 @@ private:
     int M_shapeStartX = 0;
     int M_shapeStartY = 0;
 
-    enum class GridType
-    {
-        POINTS,
-        LINES,
-        CHECKERBOARD
-    };
-    GridType M_gridType = GridType::POINTS;
-    bool M_isGridOn = true;
-
     bool M_squarePixel = true;
+
+    std::vector<ftxui::Elements> M_cells;
+
+    std::unique_ptr<Grid> M_grid;
 
     //TODO: REFACTOR
     int M_modalX = 0;
@@ -218,6 +236,6 @@ private:
 };
 
 
-std::shared_ptr<EditorCanvasComponent> EditorCanvas( int width = 32, int height = 32 );
+std::shared_ptr<EditorCanvasComponent> EditorCanvas( int width = 48, int height = 48 );
 
 }
