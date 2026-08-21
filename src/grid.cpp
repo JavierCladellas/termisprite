@@ -8,13 +8,13 @@ namespace Termisprite
 
 
 void
-Grid::render( std::vector<ftxui::Elements> & canvasGrid, bool isPixelSquare ) const
+Grid::render( std::vector<ftxui::Elements> & cells, bool isPixelSquare ) const
 {
     
-    int height = canvasGrid.size();
+    int height = cells.size();
     for ( int y = 0; y < height; ++y )
     {
-        ftxui::Elements & row = canvasGrid[y];
+        ftxui::Elements & row = cells[y];
         int width = row.size(); // For potential support to non rectangular grids?
 
         for ( int x = 0; x < width; ++x )

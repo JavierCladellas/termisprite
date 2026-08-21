@@ -38,16 +38,6 @@ EditorCanvasComponent::OnRender()
             std::string renderBrushL, renderBrushR; 
             ftxui::Color renderColor = ftxui::Color::White;
 
-             if ( M_showCursor &&
-                M_cursorX + M_currentState.brushSize > worldX && M_cursorX <= worldX &&
-                M_cursorY + M_currentState.brushSize > worldY && M_cursorY <= worldY )
-            {
-                M_cells[sy][sx] = ftxui::text( M_squarePixel ? M_currentState.brush + M_currentState.brush : M_currentState.brush )
-                                        | ftxui::color( M_currentState.color )
-                                        | ftxui::bgcolor( ftxui::Color::Red )
-                                        | ftxui::blink;
-                continue;
-            }
 
             Pixel const& cellContent = M_sprite.at(worldX, worldY);
 
@@ -87,6 +77,8 @@ EditorCanvasComponent::OnRender()
             M_cells[sy][sx] = cell;
         }
     }
+
+    M_cursor->render( M_cells, M_currentState, M_squarePixel );
 
     ftxui::Elements cellsElt( M_height );
     for ( int i = 0; i < M_height; ++i )
@@ -200,15 +192,15 @@ EditorCanvasComponent::processKeyboardDrawing( ftxui::Event event )
 
     if ( event == ftxui::Event::Character( ' ' ) || event == ftxui::Event::Return )
     {
-        applyBrushAt( M_cursorX, M_cursorY );
-        M_showCursor = true;
+        applyBrushAt( M_cursor->x(), M_cursor->y() );
+        M_cursor->setVisibility(true);
         saveState();
         return true;
     }
     if ( event == ftxui::Event::Backspace || event == ftxui::Event::Delete )
     {
-        applyBrushAt( M_cursorX, M_cursorY );
-        M_showCursor = true;
+        applyBrushAt( M_cursor->x(), M_cursor->y() );
+        M_cursor->setVisibility(true);
         saveState();
         return true;
     }
@@ -265,8 +257,8 @@ EditorCanvasComponent::pasteClipboard()
     {
         for ( int x = 0; x < w; ++x )
         {
-            int targetY = M_cursorY + y;
-            int targetX = M_cursorX + x;
+            int targetY = M_cursor->y() + y;
+            int targetX = M_cursor->x() + x;
 
             if ( targetY >= 0 && targetY < M_height && targetX >= 0 && targetX < M_width )
                 M_sprite.at(targetX,targetY) = M_currentState.clipboard.data[y][x];
@@ -326,9 +318,9 @@ EditorCanvasComponent::processCursorMovement( ftxui::Event event )
         }
         else
         {
-            M_cursorX = std::clamp( M_cursorX + dx, 0, M_width - 1 );
-            M_cursorY = std::clamp( M_cursorY + dy, 0, M_height - 1 );
-            M_showCursor = true;
+            M_cursor->x() = std::clamp( M_cursor->x() + dx, 0, M_width - 1 );
+            M_cursor->y() = std::clamp( M_cursor->y() + dy, 0, M_height - 1 );
+            M_cursor->setVisibility(true);
             return true;
         }
     }
@@ -361,7 +353,7 @@ EditorCanvasComponent::processMouseDrawing( ftxui::Event event )
 
     if ( mouse.button == ftxui::Mouse::Button::Left )
     {
-        M_showCursor = false;
+        M_cursor->setVisibility(false);
 
         auto [worldX, worldY ] = screenToWorld(mouse.x, mouse.y);
 
@@ -408,7 +400,7 @@ EditorCanvasComponent::processPanning( ftxui::Event event )
         {
             TakeFocus();
             M_isPanning = true;
-            M_showCursor = false;
+            M_cursor->setVisibility(false);
             M_lastPanMouseX = mouse.x;
             M_lastPanMouseY = mouse.y;
             return true;
@@ -457,7 +449,7 @@ EditorCanvasComponent::processEyeDropper( ftxui::Event event )
 
     if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
     {
-        Pixel & cell = M_sprite.at(M_cursorX,M_cursorY);
+        Pixel & cell = M_sprite.at(M_cursor->x(),M_cursor->y());
 
         M_currentState.brush = cell.brush;
         M_currentState.color = cell.color;
@@ -505,7 +497,7 @@ EditorCanvasComponent::processPaintFill( ftxui::Event event )
 
     if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
     {
-        floodFillPaint(M_cursorX, M_cursorY);
+        floodFillPaint(M_cursor->x(), M_cursor->y());
         saveState();
         return true;
     }
@@ -557,7 +549,7 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
 
         if ( mouse.button == ftxui::Mouse::Button::Left )
         {
-            M_showCursor = false;
+            M_cursor->setVisibility(false);
 
             auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
 
@@ -652,7 +644,7 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
 
     if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
     {
-        M_showCursor = true;
+        M_cursor->setVisibility(true);
         TakeFocus();
 
         if ( !M_isDrawing )
@@ -660,10 +652,10 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
             M_isDrawing = true;
             M_currentState.selection.isActive = true;
 
-            M_currentState.selection.startX = M_cursorX;
-            M_currentState.selection.startY = M_cursorY;
-            M_currentState.selection.endX = M_cursorX;
-            M_currentState.selection.endY = M_cursorY;
+            M_currentState.selection.startX = M_cursor->x();
+            M_currentState.selection.startY = M_cursor->y();
+            M_currentState.selection.endX = M_cursor->x();
+            M_currentState.selection.endY = M_cursor->y();
         }
         else
         {
@@ -684,9 +676,9 @@ EditorCanvasComponent::processBoxSelection( ftxui::Event event )
 
         if ( moved )
         {
-            M_showCursor = true;
-            M_currentState.selection.endX = M_cursorX;
-            M_currentState.selection.endY = M_cursorY;
+            M_cursor->setVisibility(true);
+            M_currentState.selection.endX = M_cursor->x();
+            M_currentState.selection.endY = M_cursor->y();
             return true;
         }
     }
@@ -721,7 +713,7 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
 
         if ( mouse.button == ftxui::Mouse::Button::Left )
         {
-            M_showCursor = false;
+            M_cursor->setVisibility(false);
 
             int localX = std::clamp((mouse.x - M_box.x_min)/(M_squarePixel ? 2 : 1), 0, M_width - 1);
             int localY = std::clamp(mouse.y - M_box.y_min, 0, M_height - 1);
@@ -762,21 +754,21 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
 
     if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
     {
-        M_showCursor = true;
+        M_cursor->setVisibility(true);
         if ( !M_isDrawing )
         {
             M_isDrawing = true;
-            M_shapeStartX = M_cursorX;
-            M_shapeStartY = M_cursorY;
+            M_shapeStartX = M_cursor->x();
+            M_shapeStartY = M_cursor->y();
             M_spriteSnapshot = M_sprite;
 
             M_sprite = M_spriteSnapshot;
             if ( M_currentState.toolType == ToolType::SQUARE )
-                drawSquare( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
+                drawSquare( M_shapeStartX, M_shapeStartY, M_cursor->x(), M_cursor->y() );
             else if ( M_currentState.toolType == ToolType::CIRCLE )
-                drawCircle( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
+                drawCircle( M_shapeStartX, M_shapeStartY, M_cursor->x(), M_cursor->y() );
             else if ( M_currentState.toolType == ToolType::LINE )
-                drawLine( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
+                drawLine( M_shapeStartX, M_shapeStartY, M_cursor->x(), M_cursor->y() );
         }
         else
         {
@@ -792,36 +784,36 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
 
         if ( event == ftxui::Event::ArrowUp || event == ftxui::Event::Character('k') )
         {
-            M_cursorY = std::max(0, M_cursorY - 1);
+            M_cursor->y() = std::max(0, M_cursor->y() - 1);
             moved = true;
         }
         else if ( event == ftxui::Event::ArrowDown || event == ftxui::Event::Character('j') )
         {
-            M_cursorY = std::min(M_height - 1, M_cursorY + 1);
+            M_cursor->y() = std::min(M_height - 1, M_cursor->y() + 1);
             moved = true;
         }
         else if ( event == ftxui::Event::ArrowLeft || event == ftxui::Event::Character('h') )
         {
-            M_cursorX = std::max(0, M_cursorX - 1);
+            M_cursor->x() = std::max(0, M_cursor->x() - 1);
             moved = true;
         }
         else if ( event == ftxui::Event::ArrowRight || event == ftxui::Event::Character('l') )
         {
-            M_cursorX = std::min(M_width - 1, M_cursorX + 1);
+            M_cursor->x() = std::min(M_width - 1, M_cursor->x() + 1);
             moved = true;
         }
 
         if ( moved )
         {
-            M_showCursor = true;
+            M_cursor->setVisibility(true);
             M_sprite = M_spriteSnapshot;
 
             if ( M_currentState.toolType == ToolType::SQUARE )
-                drawSquare( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
+                drawSquare( M_shapeStartX, M_shapeStartY, M_cursor->x(), M_cursor->y() );
             else if ( M_currentState.toolType == ToolType::CIRCLE )
-                drawCircle( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
+                drawCircle( M_shapeStartX, M_shapeStartY, M_cursor->x(), M_cursor->y() );
             else if ( M_currentState.toolType == ToolType::LINE )
-                drawLine( M_shapeStartX, M_shapeStartY, M_cursorX, M_cursorY );
+                drawLine( M_shapeStartX, M_shapeStartY, M_cursor->x(), M_cursor->y() );
 
             return true;
         }

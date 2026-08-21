@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "cursor.hpp"
 #include "grid.hpp"
 #include "sprite.hpp"
 
@@ -75,9 +76,9 @@ class EditorCanvasComponent
 public:
     EditorCanvasComponent( int width = 48, int height = 48 )
         : M_width( width ), M_height( height ),
-          M_cursorX( 0 ), M_cursorY( 0 ),
           M_sprite( width, height ),
-          M_grid( std::make_unique<Grid>() )
+          M_grid( std::make_unique<Grid>() ),
+          M_cursor( std::make_unique<CanvasCursor>() )
     {
         M_cells = std::vector<ftxui::Elements>( M_height, ftxui::Elements( M_width, ftxui::text(" ") ) );
 
@@ -106,10 +107,6 @@ public:
 
         //TODO: Remove below when layers impl
         M_sprite.resize( width, height );
-
-
-        M_cursorX = std::clamp(M_cursorX, 0, std::max(0, width - 1));
-        M_cursorY = std::clamp(M_cursorY, 0, std::max(0, height - 1));
 
         M_cameraX = 0;
         M_cameraY = 0;
@@ -190,14 +187,14 @@ private:
 
 private:
     int M_width, M_height;
-    int M_cursorX, M_cursorY;
-    bool M_showCursor = true;
 
     Sprite M_sprite;
     Sprite M_spriteSnapshot;
     SpriteHistory M_spriteHistory;
 
     EditorState M_currentState;
+
+    std::unique_ptr<CanvasCursor> M_cursor;
 
     ftxui::Box M_box;
     bool M_isDrawing = false;
