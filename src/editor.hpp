@@ -5,53 +5,29 @@
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <memory>
 #include <string>
-#include <unordered_map>
 
+#include "tools.hpp"
+#include "brush_tool.hpp"
 #include "cursor.hpp"
 #include "grid.hpp"
 #include "selection_tool.hpp"
 #include "sprite.hpp"
+#include "clipboard.hpp"
 
 namespace Termisprite
 {
 
 
 
-enum class ToolType
-{
-    DRAW,
-    ERASER,
-    SQUARE,
-    CIRCLE,
-    LINE,
-    EYE_DROPPER,
-    PAINT_FILL,
-    BOX_SELECT,
-    PAN
-};
-
-
-struct Clipboard
-{
-    bool hasData = false;
-    Sprite::GridData data;
-};
-
 
 struct EditorState
 {
-    std::string brush = "█";
-    std::string selectedBrush = "█";
-    int brushSize = 1;
-    ftxui::Color color = ftxui::Color::RGB(255, 255, 255);
     ftxui::Color backgroundColor = ftxui::Color();
     ToolType toolType = ToolType::DRAW;
-    std::vector<ftxui::Color> palette;
 
     SelectionTool * selectionTool;
-
-    Sprite::GridData floatingSelection;
     Clipboard clipboard;
 };
 
@@ -68,7 +44,8 @@ public:
           M_sprite( width, height ),
           M_grid( std::make_unique<Grid>() ),
           M_cursor( std::make_unique<CanvasCursor>() ),
-          M_selectionTool( std::make_unique<SelectionTool>() )
+          M_selectionTool( std::make_unique<SelectionTool>() ),
+          M_brushTool( std::make_unique<BrushTool>() )
     {
         M_currentState.selectionTool = M_selectionTool.get();
 
@@ -100,9 +77,6 @@ public:
         //TODO: Remove below when layers impl
         M_sprite.resize( width, height );
 
-        M_cameraX = 0;
-        M_cameraY = 0;
-
         saveState();
     }
 
@@ -113,6 +87,9 @@ public:
 
     Grid & grid(){ return *M_grid; }
     SelectionTool & selectionTool(){ return *M_selectionTool; }
+    Sprite & sprite(){ return M_sprite; }
+    CanvasCursor & cursor(){ return *M_cursor; }
+    BrushTool & brushTool(){ return *M_brushTool; }
 
 
     void undo() {
@@ -127,31 +104,25 @@ public:
         M_width = width;
         M_height = height;
     }
-    void toggleSquarePixel() {
-        M_squarePixel = !M_squarePixel;
-    }
+    void toggleSquarePixel() { M_squarePixel = !M_squarePixel; }
 
-    void copyToClipboard();
-    void cutToClipboard();
-    void pasteClipboard();
+    std::vector<ftxui::Color> const& colorsInCanvas() const { return M_colorsInCanvas; }
     void clear();
-    void deleteSelection();
 
     std::function<void()> onBackgroundChangeRequested;
 
     void importImage( std::string const& filepath, int targetWidth = -1 , int targetHeight = -1 , std::string const& format = "png" );
-    void importProject( std::string const& filepath, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes );
-    void exportProject( std::string const& filepath, std::string const& projectName = "Untitled", std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes = {} );
     void exportImage( std::string const& filepath, std::string const& format = "png" );
+
+    void saveState();
 
 private:
 
     std::pair<int,int> screenToWorld(int screenX, int screenY) const;
     std::pair<int,int> worldToScreen(int worldX, int worldY) const;
 
-    std::vector<ftxui::Color> palette() const;
+    std::vector<ftxui::Color> computeColorsInCanvas() const;
 
-    void saveState();
 
     //Bresenham's line algorithm
     void drawLine( int x0, int y0, int x1, int y1 );
@@ -161,20 +132,14 @@ private:
     void floodFillPaint( int x, int y );
 
 
-    void applyBrushAt( int targetX, int targetY, bool isEraser = false );
-
-    void beginTranslation();
-    void endTranslation();
-    bool translateSelection( int dx, int dy );
-
     bool processPanning( ftxui::Event event );
-    bool processCursorMovement( ftxui::Event event );
+    bool processTranslation( ftxui::Event event );
     bool processKeyboardDrawing( ftxui::Event event );
 
+    bool processBoxSelection( ftxui::Event event );
     bool processMouseDrawing( ftxui::Event event );
     bool processEyeDropper( ftxui::Event event );
     bool processPaintFill( ftxui::Event event );
-    bool processBoxSelection( ftxui::Event event );
     bool processShapeDrawing( ftxui::Event event );
     bool processRightClickModal( ftxui::Event event );
 
@@ -187,17 +152,23 @@ private:
 
     EditorState M_currentState;
 
+    std::unique_ptr<BrushTool> M_brushTool;
     std::unique_ptr<CanvasCursor> M_cursor;
     std::unique_ptr<SelectionTool> M_selectionTool;
+    std::vector<ftxui::Elements> M_cells;
+    std::unique_ptr<Grid> M_grid;
+
+
+    std::vector<ftxui::Color> M_colorsInCanvas;
+
+    int M_lastDragX = 0;
+    int M_lastDragY = 0;
 
     ftxui::Box M_box;
     bool M_isDrawing = false;
     int M_lastDrawX = 0;
     int M_lastDrawY = 0;
 
-    bool M_isTranslating = false;
-    int M_lastDragX = 0;
-    int M_lastDragY = 0;
 
     int M_cameraX = 0;
     int M_cameraY = 0;
@@ -210,10 +181,6 @@ private:
     int M_shapeStartY = 0;
 
     bool M_squarePixel = true;
-
-    std::vector<ftxui::Elements> M_cells;
-
-    std::unique_ptr<Grid> M_grid;
 
     //TODO: REFACTOR
     int M_modalX = 0;

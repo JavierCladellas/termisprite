@@ -96,15 +96,21 @@ ShortcutManager::bindAllActions( Termisprite * app )
 
     this->bindAction(ShortcutType::CLIPBOARD_COPY, [app]() {
         if ( app->editor()->currentState().selectionTool->isActive() )
-            app->editor()->copyToClipboard();
+            app->editor()->currentState().clipboard.copy( app->editor()->sprite(), app->editor()->selectionTool() );
     });
     this->bindAction(ShortcutType::CLIPBOARD_CUT, [app]() {
         if ( app->editor()->currentState().selectionTool->isActive() )
-            app->editor()->cutToClipboard();
+        {
+            app->editor()->currentState().clipboard.cut( app->editor()->sprite(), app->editor()->selectionTool() );
+            app->editor()->saveState();
+        }
     });
     this->bindAction(ShortcutType::CLIPBOARD_PASTE, [app]() {
         if ( app->editor()->currentState().clipboard.hasData )
-            app->editor()->pasteClipboard();
+        {
+            app->editor()->currentState().clipboard.paste( app->editor()->sprite(), app->editor()->cursor().x(), app->editor()->cursor().y() );
+            app->editor()->saveState();
+        }
     });
 }
 

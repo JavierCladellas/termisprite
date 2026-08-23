@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "editor.hpp"
 #include "colorpalettes.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
@@ -105,7 +104,7 @@ class ColorSectionComponent
     : public ftxui::ComponentBase
 {
 public:
-    ColorSectionComponent( EditorState & editorState );
+    ColorSectionComponent( ftxui::Color & activeColor, std::vector<ftxui::Color> const& colorsInCanvas );
 
     ftxui::Element OnRender() override;
     bool OnEvent( ftxui::Event event ) override;
@@ -129,12 +128,10 @@ private:
     ftxui::Component M_tabContainer;
     ftxui::Component M_mainContainer;
 
-    EditorState & M_editorState;
-
 };
 
 
-std::shared_ptr<ColorSectionComponent> ColorSection( EditorState & editorState );
+std::shared_ptr<ColorSectionComponent> ColorSection( ftxui::Color & activeColor, std::vector<ftxui::Color> const& colorsInCanvas );
 
 
 }

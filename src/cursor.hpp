@@ -1,14 +1,15 @@
 #pragma once
 
-#include <ftxui/screen/color.hpp>
 #include <vector>
 
+#include <ftxui/component/event.hpp>
+#include <ftxui/screen/color.hpp>
 #include <ftxui/dom/elements.hpp>
 
 namespace Termisprite
 {
 
-class EditorState;
+class BrushTool;
 class CanvasCursor
 {
 public:
@@ -22,7 +23,9 @@ public:
     bool isVisible() const { return M_isVisible; }
     void setVisibility( bool isVisible ){ M_isVisible = isVisible; }
 
-    void render( std::vector<ftxui::Elements> & cells, EditorState const& editorState, bool isSquarePixel );
+    void render( std::vector<ftxui::Elements> & cells, BrushTool const& brushTool, bool isSquarePixel );
+
+    bool processMovement( ftxui::Event event, int canvasHeight, int canvasWidth );
 
 private:
     int M_x, M_y;

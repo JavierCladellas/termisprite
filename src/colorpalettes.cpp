@@ -10,8 +10,8 @@
 namespace Termisprite
 {
 
-ColorPaletteComponent::ColorPaletteComponent( EditorState & editorState )
-    : M_editorState( editorState )
+ColorPaletteComponent::ColorPaletteComponent( ftxui::Color & activeColor, std::vector<ftxui::Color> const& colorsInCanvas )
+    : M_activeColor(activeColor), M_colorsInCanvas( colorsInCanvas)
 {
     M_newPaletteModal = std::make_shared<NewPaletteModal>( M_palettes, [this] {
         M_showNewPaletteModal = false;
@@ -103,7 +103,7 @@ ColorPaletteComponent::rebuildPaletteTabs()
         }
 
         auto addButton = ftxui::Button( "[+]", [this, paletteName] {
-            M_palettes[paletteName].push_back( M_editorState.color );
+            M_palettes[paletteName].push_back( M_activeColor );
             rebuildPaletteTabs();
         }, ftxui::ButtonOption::Ascii() );
         currentRow->Add( addButton );
@@ -131,7 +131,7 @@ ColorPaletteComponent::buildColorButton( ftxui::Color color, std::function<void(
         return ftxui::hbox({ ftxui::text(" "), block, ftxui::text(" ") });
     };
 
-    auto btn = ftxui::Button("", [this, color] { M_editorState.color = color; }, option);
+    auto btn = ftxui::Button("", [this, color] { M_activeColor = color; }, option);
 
     btn |= ftxui::reflect( *box );
 
@@ -163,9 +163,9 @@ ColorPaletteComponent::rebuildColorsInCanvas()
     auto currentRow = ftxui::Container::Horizontal({});
     const int columns = 8;
 
-    for ( size_t i = 0; i < M_editorState.palette.size(); ++i )
+    for ( size_t i = 0; i < M_colorsInCanvas.size(); ++i )
     {
-        ftxui::Color color = M_editorState.palette[i];
+        ftxui::Color color = M_colorsInCanvas[i];
 
         auto btn = buildColorButton( color );
         currentRow->Add( btn );
@@ -177,18 +177,18 @@ ColorPaletteComponent::rebuildColorsInCanvas()
         }
     }
 
-    if ( M_editorState.palette.size() % columns != 0 )
+    if ( M_colorsInCanvas.size() % columns != 0 )
         grid->Add( currentRow );
 
     M_colorsInCanvasContainer->Add( grid );
-    M_lastColorsInCanvas = M_editorState.palette;
+    M_lastColorsInCanvas = M_colorsInCanvas;
 }
 
 
 ftxui::Element
 ColorPaletteComponent::OnRender()
 {
-    if ( M_editorState.palette != M_lastColorsInCanvas )
+    if ( M_colorsInCanvas != M_lastColorsInCanvas )
         this->rebuildColorsInCanvas();
 
     return ftxui::vbox({
@@ -214,9 +214,9 @@ ColorPaletteComponent::OnRender()
 
 
 std::shared_ptr<ColorPaletteComponent>
-ColorPalette( EditorState & editorState )
+ColorPalette( ftxui::Color & activeColor, std::vector<ftxui::Color> const& colorsInCanvas )
 {
-    return std::make_shared<ColorPaletteComponent>( editorState );
+    return std::make_shared<ColorPaletteComponent>( activeColor, colorsInCanvas );
 }
 
 }

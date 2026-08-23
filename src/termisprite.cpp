@@ -18,17 +18,17 @@ Termisprite::Termisprite()
 
     M_menu = Menu( &M_shortcutManager );
     M_layersSection = LayersSection( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_tools = ToolsSection( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_colorSection = ColorSection( M_editorCanvas->currentState() );
+    M_tools = ToolsSection( M_editorCanvas->currentState().toolType, &M_shortcutManager );
+    M_colorSection = ColorSection( M_editorCanvas->brushTool().activeColor() ,M_editorCanvas->colorsInCanvas() );
     M_statusBar = StatusBar( M_editorCanvas->currentState(), &M_shortcutManager );
 
-    M_brushSettings = BrushSettings( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_eraserSettings = EraserSettings( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_rectangleSettings = RectangleSettings( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_ellipseSettings = EllipseSettings( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_lineSettings = LineSettings( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_paintFillSettings = PaintFillSettings( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_boxSelectSettings = BoxSelectSettings( M_editorCanvas->currentState(), &M_shortcutManager );
+    M_brushSettings = BrushSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
+    M_eraserSettings = EraserSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
+    M_rectangleSettings = RectangleSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
+    M_ellipseSettings = EllipseSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
+    M_lineSettings = LineSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
+    M_paintFillSettings = PaintFillSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
+    M_boxSelectSettings = BoxSelectSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
 
     M_newProjectModal = std::make_shared<NewProjectModal>( *M_editorCanvas, [this]{ M_showNewProjectModal = false; });
     M_openProjectModal = std::make_shared<OpenProjectModal>( *M_editorCanvas, [this]{ M_showOpenProjectModal = false; M_colorSection->reloadPalettes(); }, M_colorSection->palettes() );

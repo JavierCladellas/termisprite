@@ -415,8 +415,7 @@ ColorSectionComponent::OnEvent(ftxui::Event event)
 }
 
 
-ColorSectionComponent::ColorSectionComponent( EditorState & editorState )
-    : M_editorState( editorState )
+ColorSectionComponent::ColorSectionComponent( ftxui::Color & activeColor, std::vector<ftxui::Color> const& colorsInCanvas )
 {
     ftxui::Components tabComponents;
     auto colorSupport = ftxui::Terminal::ColorSupport();
@@ -427,25 +426,25 @@ ColorSectionComponent::ColorSectionComponent( EditorState & editorState )
 
     if (hasTrueColor)
     {
-        M_trueColorPicker = ColorPicker(editorState.color);
+        M_trueColorPicker = ColorPicker(activeColor);
         M_tabNames.push_back("True Color");
         tabComponents.push_back(M_trueColorPicker);
     }
 
     if ( has256 )
     {
-        M_palette256 = std::make_shared<TerminalPaletteComponent>(editorState.color, 256, 36);
+        M_palette256 = std::make_shared<TerminalPaletteComponent>(activeColor, 256, 36);
         M_tabNames.push_back("256");
         tabComponents.push_back(M_palette256);
     }
     if ( has16 )
     {
-        M_palette16 = std::make_shared<TerminalPaletteComponent>(editorState.color, 16, 8);
+        M_palette16 = std::make_shared<TerminalPaletteComponent>(activeColor, 16, 8);
         M_tabNames.push_back("16");
         tabComponents.push_back(M_palette16);
     }
 
-    M_colorPalette = ColorPalette(editorState);
+    M_colorPalette = ColorPalette(activeColor, colorsInCanvas);
 
     M_tabToggle = ftxui::Toggle(&M_tabNames, &M_tabIndex);
 
@@ -453,7 +452,7 @@ ColorSectionComponent::ColorSectionComponent( EditorState & editorState )
 
     auto baseContainer = ftxui::Container::Vertical({ M_tabToggle, M_tabContainer, M_colorPalette });
 
-    M_mainContainer = ftxui::Renderer(baseContainer,[this]{
+    M_mainContainer = ftxui::Renderer(baseContainer,[this,&activeColor]{
         return ftxui::window( ftxui::text(" Color ") | ftxui::bold | ftxui::center,
             ftxui::vbox({
                 M_tabToggle->Render(),
@@ -463,7 +462,7 @@ ColorSectionComponent::ColorSectionComponent( EditorState & editorState )
                 ftxui::hbox({
                     ftxui::text( " Active Color: " ) | ftxui::color( ftxui::Color::White ),
                     ftxui::text( " " ) | ftxui::center
-                                       | ftxui::bgcolor( M_editorState.color )
+                                       | ftxui::bgcolor( activeColor )
                                        | ftxui::size( ftxui::HEIGHT, ftxui::EQUAL, 1 )
                                        | ftxui::xflex
                 }),
@@ -493,9 +492,9 @@ ColorSectionComponent::OnRender()
 }
 
 
-std::shared_ptr<ColorSectionComponent> ColorSection( EditorState & editorState )
+std::shared_ptr<ColorSectionComponent> ColorSection( ftxui::Color & activeColor, std::vector<ftxui::Color> const& colorsInCanvas )
 {
-    return std::make_shared<ColorSectionComponent>( editorState );
+    return std::make_shared<ColorSectionComponent>( activeColor, colorsInCanvas );
 }
 
 

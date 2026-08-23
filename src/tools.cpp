@@ -4,8 +4,8 @@
 namespace Termisprite
 {
 
-ToolsComponent::ToolsComponent( EditorState & editorState, ShortcutManager * shortcutManager )
-    : M_editorState( editorState ), M_shortcutManager( shortcutManager )
+ToolsComponent::ToolsComponent( ToolType & activeTool, ShortcutManager * shortcutManager )
+    :  M_activeTool(activeTool), M_shortcutManager( shortcutManager )
 {
     auto drawGroup = ftxui::Container::Vertical({
         makeToolButton("✎", shortcutManager->getShortcut(ShortcutType::SELECT_BRUSH_TOOL), ToolType::DRAW),
@@ -39,7 +39,7 @@ ToolsComponent::makeToolButton( std::string icon, Shortcut const& shortcut, Tool
 
     option.transform = [this, icon, displayName, hotkeyText, type](const ftxui::EntryState& s)
     {
-        bool isActive = (M_editorState.toolType == type);
+        bool isActive = (M_activeTool == type);
 
         auto prefix = isActive ? ftxui::text("▶ ") | ftxui::bold : ftxui::text("  ");
 
@@ -61,7 +61,7 @@ ToolsComponent::makeToolButton( std::string icon, Shortcut const& shortcut, Tool
         return content;
     };
 
-    return ftxui::Button("", [this, type] { selectTool(type); }, option);
+    return ftxui::Button("", [this, type] { M_shortcutManager->execute(M_toolToAction.at(type)); }, option);
 }
 
 
@@ -72,20 +72,6 @@ ToolsComponent::OnEvent( ftxui::Event event )
         return false;
 
     return ftxui::ComponentBase::OnEvent(event);
-}
-
-void
-ToolsComponent::selectTool( ToolType type )
-{
-    M_editorState.toolType = type;
-
-    if ( M_editorState.toolType != ToolType::BOX_SELECT )
-        M_editorState.selectionTool->setActive( false );
-
-    if ( M_editorState.toolType == ToolType::ERASER )
-        M_editorState.brush = " ";
-    else
-        M_editorState.brush = M_editorState.selectedBrush;
 }
 
 
@@ -115,9 +101,9 @@ ToolsComponent::OnRender()
     ) | ftxui::color( borderColor );
 }
 
-std::shared_ptr<ToolsComponent> ToolsSection( EditorState & editorState, ShortcutManager * shortcutManager )
+std::shared_ptr<ToolsComponent> ToolsSection( ToolType & activeTool, ShortcutManager * shortcutManager )
 {
-    return std::make_shared<ToolsComponent>( editorState, shortcutManager );
+    return std::make_shared<ToolsComponent>( activeTool, shortcutManager );
 }
 
 }

@@ -41,7 +41,17 @@ public:
     void showOpenProjectModal() { M_showOpenProjectModal = true; }
 
     EditorCanvasComponent * editor() { return M_editorCanvas.get(); }
-    void selectTool(ToolType type) { M_tools->selectTool(type); }
+    void selectTool(ToolType type) {
+        M_editorCanvas->currentState().toolType = type;
+
+        if ( type != ToolType::BOX_SELECT )
+            M_editorCanvas->selectionTool().setActive( false );
+
+        if ( type == ToolType::ERASER )
+            M_editorCanvas->brushTool().setCurrentBrush(" ");
+        else
+            M_editorCanvas->brushTool().updateCurrentBrush();
+    }
 
 
 private:
