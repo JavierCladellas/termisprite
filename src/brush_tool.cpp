@@ -5,7 +5,7 @@ namespace Termisprite
 {
 
 void 
-BrushTool::apply( Sprite & sprite, int targetX, int targetY, bool isEraser )
+BrushTool::apply( Sprite & sprite, int targetX, int targetY )
 {
     int width, height;
     std::tie( width, height ) = sprite.size();
@@ -19,23 +19,37 @@ BrushTool::apply( Sprite & sprite, int targetX, int targetY, bool isEraser )
 
             if ( px >= 0 && px < width && py >= 0 && py < height )
             {
-                auto & cell = sprite.at(px, py);
-                if ( isEraser )
-                {
-                    cell.brush = " ";
-                    cell.color = ftxui::Color::White;
-                }
-                else
-                {
-                    cell.brush = M_currentChar;
-                    cell.color = M_color; 
-                }
+                auto & pixel = sprite.at(px, py);
+                apply( pixel );
             }
         }
     }
 
 
 }
+
+bool
+BrushTool::processKeyboardEvent( Sprite & sprite, CanvasCursor & cursor, ftxui::Event event )
+{
+
+    if ( event == ftxui::Event::Character( ' ' ) || event == ftxui::Event::Return )
+    {
+        apply( sprite, cursor.x(), cursor.y() );
+        cursor.setVisibility(true);
+        return true;
+    }
+    if ( M_currentChar != " " && ( event == ftxui::Event::Backspace || event == ftxui::Event::Delete ))
+    {
+        setCurrentBrush(" ");
+        apply( sprite, cursor.x(), cursor.y());
+        cursor.setVisibility(true);
+        updateCurrentBrush();
+        return true;
+    }
+
+    return false;
+}
+
 
 
 

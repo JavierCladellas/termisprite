@@ -101,41 +101,6 @@ EditorCanvasComponent::exportImage( std::string const& filepath, std::string con
 }
 
 
-bool
-EditorCanvasComponent::processKeyboardDrawing( ftxui::Event event )
-{
-    if ( M_currentState.toolType != ToolType::DRAW && M_currentState.toolType != ToolType::ERASER )
-        return false;
-
-    if ( event == ftxui::Event::Escape || event == ftxui::Event::Return )
-    {
-        if ( M_selectionTool->isActive() )
-        {
-            M_selectionTool->endTranslation();
-            saveState();
-            return true;
-        }
-    }
-
-    if ( event == ftxui::Event::Character( ' ' ) || event == ftxui::Event::Return )
-    {
-        M_brushTool->apply( M_sprite, M_cursor->x(), M_cursor->y() );
-        M_cursor->setVisibility(true);
-        saveState();
-        return true;
-    }
-    if ( event == ftxui::Event::Backspace || event == ftxui::Event::Delete )
-    {
-        M_brushTool->apply( M_sprite, M_cursor->x(), M_cursor->y(), true );
-        M_cursor->setVisibility(true);
-        saveState();
-        return true;
-    }
-
-    return false;
-}
-
-
 
 
 
@@ -799,8 +764,12 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
 
 
 
-    if ( processKeyboardDrawing( event ) )
-        return true;
+    if ( M_currentState.toolType == ToolType::DRAW || M_currentState.toolType == ToolType::ERASER )
+        if ( M_brushTool->processKeyboardEvent( M_sprite, *M_cursor, event ) )
+        {
+            saveState();
+            return true;
+        }
 
     if ( processShapeDrawing( event ) )
         return true;

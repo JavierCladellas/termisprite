@@ -134,7 +134,6 @@ private:
 
     bool processPanning( ftxui::Event event );
     bool processTranslation( ftxui::Event event );
-    bool processKeyboardDrawing( ftxui::Event event );
 
     bool processBoxSelection( ftxui::Event event );
     bool processMouseDrawing( ftxui::Event event );

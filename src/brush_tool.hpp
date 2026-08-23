@@ -1,6 +1,8 @@
 #pragma once
 
+#include "cursor.hpp"
 #include "sprite.hpp"
+#include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <string>
 
@@ -15,12 +17,13 @@ class BrushTool
 public:
     BrushTool() {}
 
-    void apply( Sprite & sprite, int targetX, int targetY, bool isEraser = false );
+    void apply( Sprite & sprite, int targetX, int targetY );
     void apply( Pixel & pixel )
     {
         pixel.brush = M_currentChar;
         pixel.color = M_color;
     }
+    bool processKeyboardEvent( Sprite & sprite, CanvasCursor & cursor, ftxui::Event event );
 
     void setCurrentBrush( std::string const& currentChar ){ M_currentChar = currentChar; }
     void setColor( ftxui::Color const& color ){ M_color = color; }
