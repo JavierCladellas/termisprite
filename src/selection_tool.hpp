@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cursor.hpp"
 #include "sprite.hpp"
 
 #include <ftxui/component/event.hpp>
@@ -17,10 +18,16 @@ public:
     SelectionTool() {}
 
     void render( std::vector<ftxui::Elements> & cells, bool isSquarePixel );
-    bool processSelection( ftxui::Event event );
+    bool processSelection( CanvasCursor & cursor, Sprite & sprite, Sprite & snapshot, bool & isDrawing,
+                           int canvasHeight, int canvasWidth, ftxui::Event event,
+                           std::function<std::pair<int,int>(int,int)> screenToWorld = [](int x, int y){ return std::pair<int,int>{x,y}; } );
+
+    bool processTranslation( CanvasCursor & cursor, Sprite & sprite, Sprite & snapshot,
+                             int canvasHeight, int canvasWidth, ftxui::Event event );
+
 
     bool isActive() const { return M_isActive; }
-    void setActive( bool active ) { M_isActive = active; } 
+    void setActive( bool active ) { M_isActive = active; }
 
     int width() const { return maxX() - minX() + 1; }
     int height() const { return maxY() - minY() + 1; }
@@ -52,6 +59,8 @@ public:
 private:
     int M_startX = 0, M_startY = 0;
     int M_endX = 0, M_endY = 0;
+
+    int M_lastDragX = 0, M_lastDragY = 0;
 
     bool M_isActive = false;
     ftxui::Color M_color = ftxui::Color::White;

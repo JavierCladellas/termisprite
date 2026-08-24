@@ -111,8 +111,6 @@ public:
 
     std::function<void()> onBackgroundChangeRequested;
 
-    void importImage( std::string const& filepath, int targetWidth = -1 , int targetHeight = -1 , std::string const& format = "png" );
-    void exportImage( std::string const& filepath, std::string const& format = "png" );
 
     void saveState();
 
@@ -160,8 +158,6 @@ private:
 
     std::vector<ftxui::Color> M_colorsInCanvas;
 
-    int M_lastDragX = 0;
-    int M_lastDragY = 0;
 
     ftxui::Box M_box;
     bool M_isDrawing = false;

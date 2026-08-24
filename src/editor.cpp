@@ -1,5 +1,4 @@
 #include "editor.hpp"
-#include "sprite_io.hpp"
 #include <cmath>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -82,53 +81,10 @@ EditorCanvasComponent::OnRender()
 
 }
 
-void
-EditorCanvasComponent::importImage( std::string const& filepath, int targetWidth, int targetHeight, std::string const& format )
-{
-    int newWidth = (targetWidth > 0) ? targetWidth : M_width;
-    int newHeight = (targetHeight > 0) ? targetHeight : M_height;
-    this->resize(newWidth, newHeight);
-    if ( SpriteImporter::importImage( filepath, M_sprite, newWidth, newHeight, format) )
-        saveState();
-}
-
-
-
-void
-EditorCanvasComponent::exportImage( std::string const& filepath, std::string const& format )
-{
-    SpriteExporter::exportImage( filepath, M_sprite, format );
-}
 
 
 
 
-
-
-bool
-EditorCanvasComponent::processTranslation( ftxui::Event event )
-{
-    int dx = 0, dy = 0;
-
-    if ( event == ftxui::Event::ArrowUp || event == ftxui::Event::Character( 'k' ) ) dy = -1;
-    else if ( event == ftxui::Event::ArrowDown || event == ftxui::Event::Character( 'j' ) ) dy = 1;
-    else if ( event == ftxui::Event::ArrowLeft || event == ftxui::Event::Character( 'h' ) ) dx = -1;
-    else if ( event == ftxui::Event::ArrowRight || event == ftxui::Event::Character( 'l' ) ) dx = 1;
-
-    if ( dx != 0 || dy != 0 )
-    {
-        if ( M_selectionTool->isActive() )
-        {
-            M_selectionTool->translateContent( M_sprite, M_spriteSnapshot, M_height, M_width, dx, dy ) ;
-            return true;
-        }
-    }
-
-    if ( M_cursor->processMovement(event, M_height, M_width ) )
-        return true;
-
-    return false;
-}
 
 bool
 EditorCanvasComponent::processMouseDrawing( ftxui::Event event )
@@ -328,159 +284,7 @@ EditorCanvasComponent::processPaintFill( ftxui::Event event )
     return true;
 }
 
-bool
-EditorCanvasComponent::processBoxSelection( ftxui::Event event )
-{
-    if ( M_currentState.toolType != ToolType::BOX_SELECT )
-        return false;
 
-    if ( event.is_mouse() )
-    {
-        auto mouse = event.mouse();
-
-        if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Released )
-        {
-            if ( M_isDrawing )
-            {
-                M_isDrawing = false;
-                return true;
-            }
-        }
-
-        if ( !M_box.Contain( mouse.x, mouse.y ) )
-            return false;
-
-        if ( mouse.button == ftxui::Mouse::Button::Left )
-        {
-            M_cursor->setVisibility(false);
-
-            auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
-
-            localX = std::clamp(localX, 0, M_width - 1);
-            localY = std::clamp(localY, 0, M_height - 1);
-
-            if ( mouse.motion == ftxui::Mouse::Pressed )
-            {
-                TakeFocus();
-                M_isDrawing = true;
-                M_selectionTool->setActive(true);
-
-                M_selectionTool->setStart( localX, localY );
-                M_selectionTool->setEnd( localX, localY );
-                return true;
-            }
-            else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
-            {
-                M_selectionTool->setEnd( localX, localY );
-                return true;
-            }
-        }
-
-        if ( mouse.button == ftxui::Mouse::Button::Right )
-        {
-            auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
-            if ( mouse.motion == ftxui::Mouse::Pressed )
-            {
-                if ( M_selectionTool->isActive() )
-                {
-                    if ( localX >= M_selectionTool->minX() && localX <= M_selectionTool->maxX() &&
-                         localY >= M_selectionTool->minY() && localY <= M_selectionTool->maxY() )
-                    {
-                        M_selectionTool->beginTranslation( M_sprite, M_spriteSnapshot );
-                        M_lastDragX = localX;
-                        M_lastDragY = localY;
-                        return true;
-                    }
-                    else
-                    {
-                        M_selectionTool->endTranslation();
-                        saveState();
-                        return true;
-                    }
-                }
-            }
-            else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_selectionTool->isTranslating() )
-            {
-                int dx = localX - M_lastDragX;
-                int dy = localY - M_lastDragY;
-
-                if ( dx != 0 || dy != 0 )
-                {
-                    if ( M_selectionTool->translateContent( M_sprite, M_spriteSnapshot, M_height, M_width, dx, dy ) )
-                    {
-                        M_lastDragX = localX;
-                        M_lastDragY = localY;
-                    }
-                }
-                return true;
-            }
-            else if ( mouse.motion == ftxui::Mouse::Released && M_selectionTool->isTranslating() )
-            {
-                M_selectionTool->endTranslation();
-                saveState();
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-
-    if ( M_isDrawing && event == ftxui::Event::Escape )
-    {
-        M_isDrawing = false;
-        M_selectionTool->setActive(false);
-        return true;
-    }
-
-    if ( !M_isDrawing &&  M_selectionTool->isActive() && 
-         (event == ftxui::Event::Escape || event == ftxui::Event::Return) )
-    {
-        M_selectionTool->endTranslation();
-        saveState();
-        return true;
-    }
-
-    if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
-    {
-        M_cursor->setVisibility(true);
-        TakeFocus();
-
-        if ( !M_isDrawing )
-        {
-            M_isDrawing = true;
-            M_selectionTool->setActive(true);
-
-            M_selectionTool->setStart(M_cursor->x(), M_cursor->y());
-            M_selectionTool->setEnd(M_cursor->x(), M_cursor->y());
-        }
-        else
-        {
-            // Finish the box shape
-            M_isDrawing = false;
-        }
-        return true;
-    }
-
-    if ( M_isDrawing )
-    {
-        bool wasActive = M_selectionTool->isActive();
-        M_selectionTool->setActive(false);
-
-        bool moved = processTranslation(event);
-
-        M_selectionTool->setActive(wasActive);
-
-        if ( moved )
-        {
-            M_cursor->setVisibility(true);
-            M_selectionTool->setEnd(M_cursor->x(), M_cursor->y());
-            return true;
-        }
-    }
-
-    return false;
-}
 
 bool
 EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
@@ -780,10 +584,16 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
     if ( processPaintFill( event ) )
         return true;
 
-    if ( processBoxSelection( event ) )
-        return true;
 
-    if ( processTranslation( event ) )
+    if ( M_currentState.toolType == ToolType::BOX_SELECT )
+        if ( M_selectionTool->processSelection( *M_cursor, M_sprite, M_spriteSnapshot, M_isDrawing, M_height, M_width, event, [this](int x, int y){ return screenToWorld(x,y);} ) )
+        {
+            TakeFocus();
+            saveState();
+            return true;
+        }
+
+    if ( M_selectionTool->processTranslation( *M_cursor, M_sprite, M_spriteSnapshot, M_height, M_width, event ) )
         return true;
 
     if ( M_cursor->processMovement(event, M_height, M_width ) )
@@ -834,6 +644,9 @@ EditorCanvasComponent::saveState()
 std::pair<int,int>
 EditorCanvasComponent::screenToWorld(int screenX, int screenY) const
 {
+    if (!M_box.Contain(screenX, screenY))
+        return {-1, -1};
+
     int worldX = ((screenX - M_box.x_min) / (M_squarePixel ? 2 : 1)) + M_cameraX;
     int worldY = (screenY - M_box.y_min) + M_cameraY;
     return {worldX, worldY};

@@ -33,7 +33,7 @@ CanvasCursor::render( std::vector<ftxui::Elements> & cells, BrushTool const& bru
 
 }
 
-bool 
+bool
 CanvasCursor::processMovement( ftxui::Event event, int canvasHeight, int canvasWidth )
 {
 

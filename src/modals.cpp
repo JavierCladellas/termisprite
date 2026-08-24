@@ -269,13 +269,11 @@ OpenProjectModal::renderModalContent()
 }
 
 
-
-
 void
 ExportModal::onConfirm()
 {
     if (!M_filepathInput.empty())
-        M_editorCanvas.exportImage(M_filepathInput, M_formatOptions[M_selectedFormatIndex] );
+        SpriteExporter::exportImage( M_filepathInput, M_editorCanvas.sprite(), M_formatOptions[M_selectedFormatIndex] );
     M_filepathInput = "";
 }
 
@@ -313,7 +311,14 @@ ImportModal::onConfirm()
     if ( M_targetHeightInput.empty() )
         M_targetHeightInput = "64";
     if (!M_filepathInput.empty())
-        M_editorCanvas.importImage(M_filepathInput,std::stoi(M_targetWidthInput), std::stoi(M_targetHeightInput), M_formatOptions[M_selectedFormatIndex] );
+    {
+        int newWidth = std::stoi(M_targetWidthInput);
+        int newHeight = std::stoi(M_targetHeightInput);
+        M_editorCanvas.resize(newWidth, newHeight);
+
+        if ( SpriteImporter::importImage( M_filepathInput, M_editorCanvas.sprite(), newWidth, newHeight, M_formatOptions[M_selectedFormatIndex]) )
+            M_editorCanvas.saveState();
+    }
     M_filepathInput = "";
     M_targetWidthInput = "";
     M_targetHeightInput = "";
