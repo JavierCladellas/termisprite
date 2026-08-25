@@ -47,12 +47,12 @@ SelectionTool::render( std::vector<ftxui::Elements> & cells, bool isSquarePixel 
 
 
 void
-SelectionTool::beginTranslation( Sprite const& sprite, Sprite & snapshot )
+SelectionTool::beginTranslation()
 {
     if ( M_isTranslating || !isActive() ) return;
 
     M_isTranslating = true;
-    snapshot = sprite;
+    M_snapshot = M_sprite;
 
     int w = width();
     int h = height();
@@ -62,8 +62,8 @@ SelectionTool::beginTranslation( Sprite const& sprite, Sprite & snapshot )
     {
         for ( int x = 0; x < w; ++x )
         {
-            M_selection[y][x] = snapshot.at(minX() + x,minY() + y);
-            snapshot.at(minX() + x,minY() + y) = Pixel{" ", ftxui::Color::White};
+            M_selection[y][x] = M_snapshot.at(minX() + x,minY() + y);
+            M_snapshot.at(minX() + x,minY() + y) = Pixel{" ", ftxui::Color::White};
         }
     }
 }
@@ -78,26 +78,29 @@ SelectionTool::endTranslation()
 }
 
 bool
-SelectionTool::translateContent( Sprite & sprite, Sprite & snapshot, int maxH, int maxW, int dx, int dy )
+SelectionTool::translateContent( int dx, int dy )
 {
     if ( !isActive() ) return false;
 
     if ( !M_isTranslating )
-        beginTranslation( sprite, snapshot);
+        beginTranslation();
 
-    if ( minX() + dx < 0 || maxX() + dx >= maxW || minY() + dy < 0 || maxY() + dy >= maxH )
+    if ( minX() + dx < 0 ||  minY() + dy < 0 )
         return false;
+
+    // if ( maxX() + dx >= maxW || maxY() + dy >= maxH )
+    //     return false;
 
     setStart( startX() + dx, startY() + dy);
     setEnd( endX() + dx, endY() + dy);
 
-    sprite = snapshot;
+    M_sprite = M_snapshot;
 
     int w = width();
     int h = height();
     for ( int y = 0; y < h; ++y )
         for ( int x = 0; x < w; ++x )
-            sprite.at(minX() + x,minY() + y) = M_selection[y][x];
+            M_sprite.at(minX() + x,minY() + y) = M_selection[y][x];
 
     return true;
 }
@@ -116,48 +119,99 @@ SelectionTool::deleteContent( Sprite & sprite )
     setActive(false);
 }
 
+bool
+SelectionTool::processKeyboardEvent( ftxui::Event event )
+{
+    if ( M_isDrawing && event == ftxui::Event::Escape )
+    {
+        M_isDrawing = false;
+        setActive(false);
+        return true;
+    }
+
+    if ( !M_isDrawing &&  isActive() &&
+         (event == ftxui::Event::Escape || event == ftxui::Event::Return) )
+    {
+        endTranslation();
+        return true;
+    }
+
+    if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
+    {
+        M_cursor.setVisibility(true);
+
+        if ( !M_isDrawing )
+        {
+            M_isDrawing = true;
+            setActive(true);
+
+            setStart(M_cursor.x(), M_cursor.y());
+            setEnd(M_cursor.x(), M_cursor.y());
+        }
+        else
+        {
+            // Finish the box shape
+            M_isDrawing = false;
+        }
+        return true;
+    }
+
+    if ( M_isDrawing )
+    {
+        bool wasActive = isActive();
+        setActive(false);
+
+        bool moved = processTranslation( event );
+
+        setActive(wasActive);
+
+        if ( moved )
+        {
+            M_cursor.setVisibility(true);
+            setEnd(M_cursor.x(), M_cursor.y());
+            return true;
+        }
+    }
+
+    return false;
+
+}
+
 
 bool
-SelectionTool::processSelection( CanvasCursor & cursor, Sprite & sprite, Sprite & snapshot, bool & isDrawing, 
-                                 int canvasHeight, int canvasWidth, ftxui::Event event,
-                                 std::function<std::pair<int,int>(int,int)> screenToWorld )
+SelectionTool::processMouseEvent( ftxui::Event event )
 {
-
     if ( event.is_mouse() )
     {
         auto mouse = event.mouse();
 
         if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Released )
         {
-            if ( isDrawing )
+            if ( M_isDrawing )
             {
-                isDrawing = false;
+                M_isDrawing = false;
                 return true;
             }
         }
 
-        auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
+        auto [localX, localY] = M_screenToWorld(mouse.x, mouse.y);
         if ( localX < 0 || localY < 0 ) //screenToWorld returned invalid coordinates (out of screen box )
             return false;
 
         if ( mouse.button == ftxui::Mouse::Button::Left )
         {
-            cursor.setVisibility(false);
-
-
-            localX = std::clamp(localX, 0, canvasWidth - 1);
-            localY = std::clamp(localY, 0, canvasHeight - 1);
+            M_cursor.setVisibility(false);
 
             if ( mouse.motion == ftxui::Mouse::Pressed )
             {
-                isDrawing = true;
+                M_isDrawing = true;
                 setActive(true);
 
                 setStart( localX, localY );
                 setEnd( localX, localY );
                 return true;
             }
-            else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && isDrawing )
+            else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
             {
                 setEnd( localX, localY );
                 return true;
@@ -173,9 +227,9 @@ SelectionTool::processSelection( CanvasCursor & cursor, Sprite & sprite, Sprite 
                     if ( localX >= minX() && localX <= maxX() &&
                          localY >= minY() && localY <= maxY() )
                     {
-                        beginTranslation( sprite, snapshot );
-                        M_lastDragX = localX;
-                        M_lastDragY = localY;
+                        beginTranslation(  );
+                        M_lastX = localX;
+                        M_lastY = localY;
                         return true;
                     }
                     else
@@ -187,15 +241,15 @@ SelectionTool::processSelection( CanvasCursor & cursor, Sprite & sprite, Sprite 
             }
             else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && isTranslating() )
             {
-                int dx = localX - M_lastDragX;
-                int dy = localY - M_lastDragY;
+                int dx = localX - M_lastX;
+                int dy = localY - M_lastY;
 
                 if ( dx != 0 || dy != 0 )
                 {
-                    if ( translateContent( sprite, snapshot, canvasHeight, canvasWidth, dx, dy ) )
+                    if ( translateContent( dx, dy ) )
                     {
-                        M_lastDragX = localX;
-                        M_lastDragY = localY;
+                        M_lastX = localX;
+                        M_lastY = localY;
                     }
                 }
                 return true;
@@ -210,64 +264,11 @@ SelectionTool::processSelection( CanvasCursor & cursor, Sprite & sprite, Sprite 
         return false;
     }
 
-
-    if ( isDrawing && event == ftxui::Event::Escape )
-    {
-        isDrawing = false;
-        setActive(false);
-        return true;
-    }
-
-    if ( !isDrawing &&  isActive() &&
-         (event == ftxui::Event::Escape || event == ftxui::Event::Return) )
-    {
-        endTranslation();
-        return true;
-    }
-
-    if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
-    {
-        cursor.setVisibility(true);
-
-        if ( !isDrawing )
-        {
-            isDrawing = true;
-            setActive(true);
-
-            setStart(cursor.x(), cursor.y());
-            setEnd(cursor.x(), cursor.y());
-        }
-        else
-        {
-            // Finish the box shape
-            isDrawing = false;
-        }
-        return true;
-    }
-
-    if ( isDrawing )
-    {
-        bool wasActive = isActive();
-        setActive(false);
-
-        bool moved = processTranslation(cursor, sprite, snapshot, canvasHeight, canvasWidth, event );
-
-        setActive(wasActive);
-
-        if ( moved )
-        {
-            cursor.setVisibility(true);
-            setEnd(cursor.x(), cursor.y());
-            return true;
-        }
-    }
-
-    return false;
 }
 
+
 bool
-SelectionTool::processTranslation( CanvasCursor & cursor, Sprite & sprite, Sprite & snapshot,
-                                   int canvasHeight, int canvasWidth, ftxui::Event event )
+SelectionTool::processTranslation( ftxui::Event event )
 {
     int dx = 0, dy = 0;
 
@@ -280,12 +281,12 @@ SelectionTool::processTranslation( CanvasCursor & cursor, Sprite & sprite, Sprit
     {
         if ( isActive() )
         {
-            translateContent( sprite, snapshot, canvasHeight, canvasWidth, dx, dy ) ;
+            translateContent( dx, dy ) ;
             return true;
         }
     }
 
-    if ( cursor.processMovement(event, canvasHeight, canvasWidth ) )
+    if ( M_cursor.processMovement(event) )
         return true;
 
     return false;

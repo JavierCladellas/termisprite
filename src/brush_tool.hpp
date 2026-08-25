@@ -1,7 +1,6 @@
 #pragma once
 
-#include "cursor.hpp"
-#include "sprite.hpp"
+#include "tool.hpp"
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <string>
@@ -13,17 +12,22 @@ namespace Termisprite
 {
 
 class BrushTool
+    : public Tool
 {
 public:
-    BrushTool() {}
+    BrushTool( Sprite & sprite, BrushTool & brush, CanvasCursor & cursor, std::function<std::pair<int,int>(int,int)> screenToWorld )
+        : Tool( sprite, brush, cursor, screenToWorld )
+    {}
 
-    void apply( Sprite & sprite, int targetX, int targetY );
+    void apply();
+    void apply( int targetX, int targetY );
     void apply( Pixel & pixel )
     {
         pixel.brush = M_currentChar;
         pixel.color = M_color;
     }
-    bool processKeyboardEvent( Sprite & sprite, CanvasCursor & cursor, ftxui::Event event );
+    bool processKeyboardEvent( ftxui::Event event ) override;
+    bool processMouseEvent( ftxui::Event event ) override;
 
     void setCurrentBrush( std::string const& currentChar ){ M_currentChar = currentChar; }
     void setColor( ftxui::Color const& color ){ M_color = color; }

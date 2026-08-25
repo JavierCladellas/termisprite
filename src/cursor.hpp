@@ -25,7 +25,7 @@ public:
 
     void render( std::vector<ftxui::Elements> & cells, BrushTool const& brushTool, bool isSquarePixel );
 
-    bool processMovement( ftxui::Event event, int canvasHeight, int canvasWidth );
+    bool processMovement( ftxui::Event event );
 
 private:
     int M_x, M_y;

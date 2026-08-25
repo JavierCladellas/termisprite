@@ -1,8 +1,6 @@
 #pragma once
 
-#include "cursor.hpp"
-#include "sprite.hpp"
-
+#include "tool.hpp"
 #include <ftxui/component/event.hpp>
 #include <ftxui/screen/color.hpp>
 #include <vector>
@@ -13,21 +11,18 @@ namespace Termisprite
 {
 
 class SelectionTool
+    : public Tool
 {
 public:
-    SelectionTool() {}
+    SelectionTool( Sprite & sprite, BrushTool & brush, CanvasCursor & cursor, Sprite & snapshot, std::function<std::pair<int,int>(int,int)> screenToWorld )
+        : Tool( sprite, brush, cursor, screenToWorld ), M_snapshot(snapshot)
+     {}
 
     void render( std::vector<ftxui::Elements> & cells, bool isSquarePixel );
-    bool processSelection( CanvasCursor & cursor, Sprite & sprite, Sprite & snapshot, bool & isDrawing,
-                           int canvasHeight, int canvasWidth, ftxui::Event event,
-                           std::function<std::pair<int,int>(int,int)> screenToWorld = [](int x, int y){ return std::pair<int,int>{x,y}; } );
+    bool processKeyboardEvent( ftxui::Event event ) override;
+    bool processMouseEvent( ftxui::Event event ) override;
 
-    bool processTranslation( CanvasCursor & cursor, Sprite & sprite, Sprite & snapshot,
-                             int canvasHeight, int canvasWidth, ftxui::Event event );
-
-
-    bool isActive() const { return M_isActive; }
-    void setActive( bool active ) { M_isActive = active; }
+    bool processTranslation( ftxui::Event event );
 
     int width() const { return maxX() - minX() + 1; }
     int height() const { return maxY() - minY() + 1; }
@@ -50,19 +45,18 @@ public:
 public:
     void deleteContent( Sprite & sprite );
 
-    void beginTranslation( Sprite const& sprite, Sprite & snapshot );
+    void beginTranslation();
     void endTranslation();
-    bool translateContent( Sprite & sprite, Sprite & snapshot, int maxH, int maxW, int dx, int dy );
+    bool translateContent( int dx, int dy );
 
 
 
 private:
+    Sprite & M_snapshot;
+
     int M_startX = 0, M_startY = 0;
     int M_endX = 0, M_endY = 0;
 
-    int M_lastDragX = 0, M_lastDragY = 0;
-
-    bool M_isActive = false;
     ftxui::Color M_color = ftxui::Color::White;
 
     //Copy of sprite fragment as sort of floating layer

@@ -34,7 +34,7 @@ CanvasCursor::render( std::vector<ftxui::Elements> & cells, BrushTool const& bru
 }
 
 bool
-CanvasCursor::processMovement( ftxui::Event event, int canvasHeight, int canvasWidth )
+CanvasCursor::processMovement( ftxui::Event event )
 {
 
     int dx = 0, dy = 0;
@@ -46,8 +46,8 @@ CanvasCursor::processMovement( ftxui::Event event, int canvasHeight, int canvasW
 
     if ( dx != 0 || dy != 0 )
     {
-        M_x = std::clamp( M_x + dx, 0, canvasWidth - 1 );
-        M_y = std::clamp( M_y + dy, 0, canvasHeight - 1 );
+        M_x += dx;
+        M_y += dy;
         setVisibility(true);
         return true;
     }

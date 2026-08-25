@@ -7,7 +7,7 @@
 #include "menu.hpp"
 #include "shortcuts.hpp"
 #include "statusbar.hpp"
-#include "tools.hpp"
+#include "tools_section.hpp"
 #include "modals.hpp"
 
 #include <ftxui/component/component.hpp>

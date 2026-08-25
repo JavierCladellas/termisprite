@@ -1,3 +1,4 @@
+#include "geometry.hpp"
 #include "editor.hpp"
 #include <cmath>
 #include <ftxui/component/event.hpp>
@@ -86,62 +87,6 @@ EditorCanvasComponent::OnRender()
 
 
 
-bool
-EditorCanvasComponent::processMouseDrawing( ftxui::Event event )
-{
-
-    if ( M_currentState.toolType != ToolType::DRAW && M_currentState.toolType != ToolType::ERASER )
-        return false;
-
-    if ( !event.is_mouse() )
-        return false;
-
-    auto mouse = event.mouse();
-
-    if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Released )
-    {
-        if ( M_isDrawing )
-        {
-            M_isDrawing = false;
-            saveState();
-        }
-    }
-
-    if ( !M_box.Contain( mouse.x, mouse.y ) )
-        return false;
-
-    if ( mouse.button == ftxui::Mouse::Button::Left )
-    {
-        M_cursor->setVisibility(false);
-
-        auto [worldX, worldY ] = screenToWorld(mouse.x, mouse.y);
-
-        // Clamp to sprite bounds so we don't draw outside the canvas
-        worldX = std::clamp(worldX, 0, M_width - 1);
-        worldY = std::clamp(worldY, 0, M_height - 1);
-
-
-        if ( mouse.motion == ftxui::Mouse::Pressed )
-        {
-            TakeFocus();
-            M_isDrawing = true;
-            M_lastDrawX = worldX;
-            M_lastDrawY = worldY;
-
-            M_brushTool->apply( M_sprite, worldX, worldY);
-            return true;
-        }
-        else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
-        {
-            drawLine( M_lastDrawX, M_lastDrawY, worldX, worldY );
-            M_lastDrawX = worldX;
-            M_lastDrawY = worldY;
-            return true;
-        }
-    }
-
-    return false;
-}
 
 
 bool
@@ -200,90 +145,6 @@ EditorCanvasComponent::processPanning( ftxui::Event event )
 }
 
 
-bool
-EditorCanvasComponent::processEyeDropper( ftxui::Event event )
-{
-    if ( M_currentState.toolType != ToolType::EYE_DROPPER )
-        return false;
-
-    if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
-    {
-        Pixel & cell = M_sprite.at(M_cursor->x(),M_cursor->y());
-
-        M_brushTool->setCurrentBrush(cell.brush);
-        M_brushTool->setColor(cell.color);
-
-        M_currentState.toolType = ToolType::DRAW;
-
-        return true;
-    }
-
-    if ( !event.is_mouse() )
-        return false;
-
-    auto mouse = event.mouse();
-
-
-    if ( !M_box.Contain( mouse.x, mouse.y ) )
-        return false;
-
-    if ( mouse.button != ftxui::Mouse::Button::Left)
-        return false;
-    if ( mouse.motion != ftxui::Mouse::Pressed )
-        return false;
-
-    auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
-
-    localX = std::clamp(localX, 0, M_width - 1);
-    localY = std::clamp(localY, 0, M_height - 1);
-
-    Pixel & cell = M_sprite.at(localX, localY);
-    if ( cell.brush != " " )
-    {
-        M_brushTool->setCurrentBrush(cell.brush);
-        M_brushTool->setColor(cell.color);
-    }
-    M_currentState.toolType = ToolType::DRAW;
-    return true;
-
-}
-
-bool
-EditorCanvasComponent::processPaintFill( ftxui::Event event )
-{
-    if ( M_currentState.toolType != ToolType::PAINT_FILL )
-        return false;
-
-    if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
-    {
-        floodFillPaint(M_cursor->x(), M_cursor->y());
-        saveState();
-        return true;
-    }
-
-    if ( !event.is_mouse() )
-        return false;
-
-    auto mouse = event.mouse();
-
-    if ( !M_box.Contain( mouse.x, mouse.y ) )
-        return false;
-
-    if ( mouse.button != ftxui::Mouse::Button::Left)
-        return false;
-    if ( mouse.motion != ftxui::Mouse::Pressed )
-        return false;
-
-    auto [localX, localY] = screenToWorld(mouse.x, mouse.y);
-
-    localX = std::clamp(localX, 0, M_width - 1);
-    localY = std::clamp(localY, 0, M_height - 1);
-
-    floodFillPaint( localX, localY );
-    saveState();
-    return true;
-}
-
 
 
 bool
@@ -337,7 +198,7 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
                 else if ( M_currentState.toolType == ToolType::CIRCLE )
                     drawCircle( M_shapeStartX, M_shapeStartY, localX, localY );
                 else if ( M_currentState.toolType == ToolType::LINE )
-                    drawLine( M_shapeStartX, M_shapeStartY, localX, localY );
+                    Geometry::drawLine(*M_brushTool, M_sprite, M_shapeStartX, M_shapeStartY, localX, localY );
 
                 return true;
             }
@@ -368,7 +229,7 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
             else if ( M_currentState.toolType == ToolType::CIRCLE )
                 drawCircle( M_shapeStartX, M_shapeStartY, M_cursor->x(), M_cursor->y() );
             else if ( M_currentState.toolType == ToolType::LINE )
-                drawLine( M_shapeStartX, M_shapeStartY, M_cursor->x(), M_cursor->y() );
+                Geometry::drawLine(*M_brushTool, M_sprite, M_shapeStartX, M_shapeStartY, M_cursor->x(), M_cursor->y() );
         }
         else
         {
@@ -413,7 +274,7 @@ EditorCanvasComponent::processShapeDrawing( ftxui::Event event )
             else if ( M_currentState.toolType == ToolType::CIRCLE )
                 drawCircle( M_shapeStartX, M_shapeStartY, M_cursor->x(), M_cursor->y() );
             else if ( M_currentState.toolType == ToolType::LINE )
-                drawLine( M_shapeStartX, M_shapeStartY, M_cursor->x(), M_cursor->y() );
+                Geometry::drawLine(*M_brushTool, M_sprite, M_shapeStartX, M_shapeStartY, M_cursor->x(), M_cursor->y() );
 
             return true;
         }
@@ -432,14 +293,14 @@ EditorCanvasComponent::drawSquare( int x0, int y0, int x1, int y1 )
 
     for ( int x = minX; x <= maxX; ++x )
     {
-        M_brushTool->apply( M_sprite,x, minY);
-        M_brushTool->apply( M_sprite,x, maxY);
+        M_brushTool->apply( x, minY);
+        M_brushTool->apply( x, maxY);
     }
 
     for ( int y = minY; y <= maxY; ++y )
     {
-        M_brushTool->apply( M_sprite,minX, y);
-        M_brushTool->apply( M_sprite,maxX, y);
+        M_brushTool->apply( minX, y);
+        M_brushTool->apply( maxX, y);
     }
 }
 
@@ -453,7 +314,7 @@ EditorCanvasComponent::drawCircle( int x0, int y0, int x1, int y1 )
 
     if ( x0 == x1 && y0 == y1 )
     {
-        M_brushTool->apply( M_sprite, x0, y0 );
+        M_brushTool->apply( x0, y0 );
         return;
     }
 
@@ -466,7 +327,7 @@ EditorCanvasComponent::drawCircle( int x0, int y0, int x1, int y1 )
         int y = std::round(yc + b * std::sin(theta));
 
         if ( x >= 0 && x < M_width && y >= 0 && y < M_height )
-            M_brushTool->apply( M_sprite,x,y);
+            M_brushTool->apply( x,y );
     }
 }
 
@@ -567,43 +428,81 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
     }
 
 
+    //TODO All this can be refactored into strategy & or vector of tools
 
     if ( M_currentState.toolType == ToolType::DRAW || M_currentState.toolType == ToolType::ERASER )
-        if ( M_brushTool->processKeyboardEvent( M_sprite, *M_cursor, event ) )
+    {
+        if ( M_brushTool->processKeyboardEvent( event ) )
+        {
+            saveState();
+            return true;
+        }
+        if ( M_brushTool->processMouseEvent( event ) )
+        {
+            TakeFocus();
+            if ( !M_brushTool->isDrawing() )
+                saveState();
+            return true;
+        }
+    }
+
+    if ( processShapeDrawing( event ) )
+        return true;
+
+    if ( M_currentState.toolType == ToolType::EYE_DROPPER )
+    {
+        if ( M_eyeDropperTool->processKeyboardEvent( event ) )
+        {
+            M_currentState.toolType = ToolType::DRAW;
+            return true;
+        }
+        if ( M_eyeDropperTool->processMouseEvent( event ) )
+        {
+            M_currentState.toolType = ToolType::DRAW;
+            return true;
+        }
+    }
+
+    if ( M_currentState.toolType == ToolType::PAINT_FILL )
+    {
+        if ( M_paintTool->processKeyboardEvent( event ) )
+        {
+            saveState();
+            return true;
+        }
+        if ( M_paintTool->processMouseEvent( event ) )
         {
             saveState();
             return true;
         }
 
-    if ( processShapeDrawing( event ) )
-        return true;
-
-    if ( processEyeDropper( event ) )
-        return true;
-
-    if ( processPaintFill( event ) )
-        return true;
-
+    }
 
     if ( M_currentState.toolType == ToolType::BOX_SELECT )
-        if ( M_selectionTool->processSelection( *M_cursor, M_sprite, M_spriteSnapshot, M_isDrawing, M_height, M_width, event, [this](int x, int y){ return screenToWorld(x,y);} ) )
+    {
+        if ( M_selectionTool->processKeyboardEvent( event ) )
         {
             TakeFocus();
             saveState();
             return true;
         }
+        if ( M_selectionTool->processMouseEvent( event ) )
+        {
+            TakeFocus();
+            saveState();
+            return true;
+        }
+        if ( M_selectionTool->processTranslation( event ) )
+            return true;
+    }
 
-    if ( M_selectionTool->processTranslation( *M_cursor, M_sprite, M_spriteSnapshot, M_height, M_width, event ) )
-        return true;
 
-    if ( M_cursor->processMovement(event, M_height, M_width ) )
+    if ( M_cursor->processMovement( event ) )
         return true;
 
 
     if ( event.is_mouse() )
     {
-        if ( processMouseDrawing( event ) )
-            return true;
 
         if ( processRightClickModal( event ) )
             return true;
@@ -649,80 +548,22 @@ EditorCanvasComponent::screenToWorld(int screenX, int screenY) const
 
     int worldX = ((screenX - M_box.x_min) / (M_squarePixel ? 2 : 1)) + M_cameraX;
     int worldY = (screenY - M_box.y_min) + M_cameraY;
+
+    worldX = std::clamp(worldX, 0, M_width - 1);
+    worldY = std::clamp(worldY, 0, M_height - 1);
+
     return {worldX, worldY};
 }
 
 std::pair<int,int>
- EditorCanvasComponent::worldToScreen(int worldX, int worldY) const
+EditorCanvasComponent::worldToScreen(int worldX, int worldY) const
 {
     int screenX = ((worldX - M_cameraX) * (M_squarePixel ? 2 : 1) ) + M_box.x_min;
     int screenY = (worldY - M_cameraY) + M_box.y_min;
     return {screenX, screenY};
 }
 
-void
-EditorCanvasComponent::drawLine( int x0, int y0, int x1, int y1 )
-{
-    int dx = std::abs(x1 - x0);
-    int sx = x0 < x1 ? 1 : -1;
-    int dy = -std::abs(y1 - y0);
-    int sy = y0 < y1 ? 1 : -1;
-    int err = dx + dy;
 
-    while (true)
-    {
-        M_brushTool->apply(M_sprite, x0, y0);
-
-        if (x0 == x1 && y0 == y1) break;
-
-        int e2 = 2 * err;
-        if (e2 >= dy) {
-            err += dy;
-            x0 += sx;
-        }
-        if (e2 <= dx) {
-            err += dx;
-            y0 += sy;
-        }
-    }
-}
-
-void
-EditorCanvasComponent::floodFillPaint( int x, int y )
-{
-    if ( x < 0 || x >= M_width || y < 0 || y >= M_height )
-        return;
-
-    Pixel & targetCell = M_sprite.at(x, y);
-    Pixel targetPixel = targetCell;
-
-    if ( *M_brushTool == targetPixel )
-        return;
-
-    std::stack<std::pair<int, int>> stack;
-    stack.push({x, y});
-
-    while (!stack.empty())
-    {
-        auto [cx, cy] = stack.top();
-        stack.pop();
-
-        if ( cx < 0 || cx >= M_width || cy < 0 || cy >= M_height )
-            continue;
-
-        Pixel & currentCell = M_sprite.at(cx, cy);
-
-        if ( currentCell.brush != targetPixel.brush || currentCell.color != targetPixel.color )
-            continue;
-
-        M_brushTool->apply(currentCell);
-
-        stack.push({cx + 1, cy});
-        stack.push({cx - 1, cy});
-        stack.push({cx, cy + 1});
-        stack.push({cx, cy - 1});
-    }
-}
 
 
 

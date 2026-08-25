@@ -1,14 +1,22 @@
+#include "geometry.hpp"
 #include "brush_tool.hpp"
 
 
 namespace Termisprite
 {
 
-void 
-BrushTool::apply( Sprite & sprite, int targetX, int targetY )
+
+void
+BrushTool::apply()
+{
+    apply( M_cursor.x(), M_cursor.y() );
+}
+
+void
+BrushTool::apply( int targetX, int targetY )
 {
     int width, height;
-    std::tie( width, height ) = sprite.size();
+    std::tie( width, height ) = M_sprite.size();
 
     for ( int by = 0; by < M_size; ++by )
     {
@@ -19,7 +27,7 @@ BrushTool::apply( Sprite & sprite, int targetX, int targetY )
 
             if ( px >= 0 && px < width && py >= 0 && py < height )
             {
-                auto & pixel = sprite.at(px, py);
+                auto & pixel = M_sprite.at(px, py);
                 apply( pixel );
             }
         }
@@ -29,20 +37,20 @@ BrushTool::apply( Sprite & sprite, int targetX, int targetY )
 }
 
 bool
-BrushTool::processKeyboardEvent( Sprite & sprite, CanvasCursor & cursor, ftxui::Event event )
+BrushTool::processKeyboardEvent( ftxui::Event event )
 {
 
     if ( event == ftxui::Event::Character( ' ' ) || event == ftxui::Event::Return )
     {
-        apply( sprite, cursor.x(), cursor.y() );
-        cursor.setVisibility(true);
+        apply();
+        M_cursor.setVisibility(true);
         return true;
     }
     if ( M_currentChar != " " && ( event == ftxui::Event::Backspace || event == ftxui::Event::Delete ))
     {
         setCurrentBrush(" ");
-        apply( sprite, cursor.x(), cursor.y());
-        cursor.setVisibility(true);
+        apply();
+        M_cursor.setVisibility(true);
         updateCurrentBrush();
         return true;
     }
@@ -50,6 +58,54 @@ BrushTool::processKeyboardEvent( Sprite & sprite, CanvasCursor & cursor, ftxui::
     return false;
 }
 
+bool
+BrushTool::processMouseEvent( ftxui::Event event )
+{
+    if ( !event.is_mouse() )
+        return false;
+
+    auto mouse = event.mouse();
+
+    if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Released )
+    {
+        if ( M_isDrawing )
+        {
+            M_isDrawing = false;
+            return true;
+        }
+    }
+
+
+    if ( mouse.button == ftxui::Mouse::Button::Left )
+    {
+        M_cursor.setVisibility(false);
+
+        auto [worldX, worldY ] = M_screenToWorld(mouse.x, mouse.y);
+
+        if ( worldX < 0 || worldY < 0 ) //screenToWorld returned invalid coordinates (out of screen box )
+            return false;
+
+        if ( mouse.motion == ftxui::Mouse::Pressed )
+        {
+            M_isDrawing = true;
+            M_lastX = worldX;
+            M_lastY = worldY;
+
+            apply( worldX, worldY);
+            return true;
+        }
+        else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
+        {
+            Geometry::drawLine( *this, M_sprite, M_lastX, M_lastY, worldX, worldY );
+            M_lastX = worldX;
+            M_lastY = worldY;
+            return true;
+        }
+    }
+
+    return false;
+
+}
 
 
 

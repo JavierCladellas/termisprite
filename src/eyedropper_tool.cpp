@@ -1,0 +1,50 @@
+#include "eyedropper_tool.hpp"
+#include "brush_tool.hpp"
+
+
+namespace Termisprite
+{
+
+bool EyeDropperTool::processKeyboardEvent( ftxui::Event event )
+{
+
+    if ( event != ftxui::Event::Character(' ') && event != ftxui::Event::Return )
+        return false;
+
+    Pixel & cell = M_sprite.at(M_cursor.x(),M_cursor.y());
+
+    M_brush.setCurrentBrush(cell.brush);
+    M_brush.setColor(cell.color);
+
+    return true;
+}
+
+bool EyeDropperTool::processMouseEvent( ftxui::Event event )
+{
+    if ( !event.is_mouse() )
+        return false;
+
+    auto mouse = event.mouse();
+
+
+    auto [localX, localY] = M_screenToWorld(mouse.x, mouse.y);
+
+    if ( localX < 0 || localY < 0 )
+        return false;
+    if ( mouse.button != ftxui::Mouse::Button::Left || mouse.motion != ftxui::Mouse::Pressed )
+        return false;
+
+    Pixel & cell = M_sprite.at(localX, localY);
+    if ( cell.brush != " " )
+    {
+        M_brush.setCurrentBrush(cell.brush);
+        M_brush.setColor(cell.color);
+    }
+
+    return true;
+
+}
+
+
+
+}

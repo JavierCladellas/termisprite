@@ -8,7 +8,9 @@
 #include <memory>
 #include <string>
 
-#include "tools.hpp"
+#include "eyedropper_tool.hpp"
+#include "paint_tool.hpp"
+#include "tools_section.hpp"
 #include "brush_tool.hpp"
 #include "cursor.hpp"
 #include "grid.hpp"
@@ -43,11 +45,15 @@ public:
         : M_width( width ), M_height( height ),
           M_sprite( width, height ),
           M_grid( std::make_unique<Grid>() ),
-          M_cursor( std::make_unique<CanvasCursor>() ),
-          M_selectionTool( std::make_unique<SelectionTool>() ),
-          M_brushTool( std::make_unique<BrushTool>() )
+          M_cursor( std::make_unique<CanvasCursor>() )
     {
+        //TODO: Its super weird that the brush tool needs a ref to itself hehe
+        M_brushTool = std::make_unique<BrushTool>( M_sprite, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+
+        M_selectionTool = std::make_unique<SelectionTool>( M_sprite, *M_brushTool, *M_cursor, M_spriteSnapshot, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
         M_currentState.selectionTool = M_selectionTool.get();
+        M_eyeDropperTool = std::make_unique<EyeDropperTool>( M_sprite, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_paintTool = std::make_unique<PaintTool>( M_sprite, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
 
         M_cells = std::vector<ftxui::Elements>( M_height, ftxui::Elements( M_width, ftxui::text(" ") ) );
 
@@ -122,21 +128,11 @@ private:
     std::vector<ftxui::Color> computeColorsInCanvas() const;
 
 
-    //Bresenham's line algorithm
-    void drawLine( int x0, int y0, int x1, int y1 );
     void drawSquare( int x0, int y0, int x1, int y1 );
     void drawCircle( int x0, int y0, int x1, int y1 );
 
-    void floodFillPaint( int x, int y );
-
-
     bool processPanning( ftxui::Event event );
-    bool processTranslation( ftxui::Event event );
 
-    bool processBoxSelection( ftxui::Event event );
-    bool processMouseDrawing( ftxui::Event event );
-    bool processEyeDropper( ftxui::Event event );
-    bool processPaintFill( ftxui::Event event );
     bool processShapeDrawing( ftxui::Event event );
     bool processRightClickModal( ftxui::Event event );
 
@@ -152,6 +148,9 @@ private:
     std::unique_ptr<BrushTool> M_brushTool;
     std::unique_ptr<CanvasCursor> M_cursor;
     std::unique_ptr<SelectionTool> M_selectionTool;
+    std::unique_ptr<EyeDropperTool> M_eyeDropperTool;
+    std::unique_ptr<PaintTool> M_paintTool;
+
     std::vector<ftxui::Elements> M_cells;
     std::unique_ptr<Grid> M_grid;
 
