@@ -18,6 +18,7 @@ add_library( termisprite_lib termisprite.cpp
                              paint_tool.cpp
                              clipboard.cpp
                              brush_tool.cpp
+                             shape_tool.cpp
                              geometry.cpp
                              modals.cpp )
 

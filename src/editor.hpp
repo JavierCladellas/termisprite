@@ -10,6 +10,7 @@
 
 #include "eyedropper_tool.hpp"
 #include "paint_tool.hpp"
+#include "shape_tool.hpp"
 #include "tools_section.hpp"
 #include "brush_tool.hpp"
 #include "cursor.hpp"
@@ -54,6 +55,7 @@ public:
         M_currentState.selectionTool = M_selectionTool.get();
         M_eyeDropperTool = std::make_unique<EyeDropperTool>( M_sprite, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
         M_paintTool = std::make_unique<PaintTool>( M_sprite, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_shapeTool = std::make_unique<ShapeTool>( M_currentState.toolType, M_sprite, M_spriteSnapshot, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
 
         M_cells = std::vector<ftxui::Elements>( M_height, ftxui::Elements( M_width, ftxui::text(" ") ) );
 
@@ -127,13 +129,8 @@ private:
 
     std::vector<ftxui::Color> computeColorsInCanvas() const;
 
-
-    void drawSquare( int x0, int y0, int x1, int y1 );
-    void drawCircle( int x0, int y0, int x1, int y1 );
-
     bool processPanning( ftxui::Event event );
 
-    bool processShapeDrawing( ftxui::Event event );
     bool processRightClickModal( ftxui::Event event );
 
 private:
@@ -150,6 +147,7 @@ private:
     std::unique_ptr<SelectionTool> M_selectionTool;
     std::unique_ptr<EyeDropperTool> M_eyeDropperTool;
     std::unique_ptr<PaintTool> M_paintTool;
+    std::unique_ptr<ShapeTool> M_shapeTool;
 
     std::vector<ftxui::Elements> M_cells;
     std::unique_ptr<Grid> M_grid;
@@ -157,12 +155,7 @@ private:
 
     std::vector<ftxui::Color> M_colorsInCanvas;
 
-
     ftxui::Box M_box;
-    bool M_isDrawing = false;
-    int M_lastDrawX = 0;
-    int M_lastDrawY = 0;
-
 
     int M_cameraX = 0;
     int M_cameraY = 0;
@@ -171,8 +164,6 @@ private:
     int M_lastPanMouseX = 0;
     int M_lastPanMouseY = 0;
 
-    int M_shapeStartX = 0;
-    int M_shapeStartY = 0;
 
     bool M_squarePixel = true;
 
