@@ -265,7 +265,8 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
     {
         if ( M_shapeTool->processKeyboardEvent( event ) )
         {
-            saveState();
+            if ( !M_shapeTool->isDrawing() )
+                saveState();
             return true;
         }
         if ( M_shapeTool->processMouseEvent( event ) )
