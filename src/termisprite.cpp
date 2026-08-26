@@ -14,7 +14,7 @@ namespace Termisprite
 Termisprite::Termisprite()
     : M_shortcutManager( this )
 {
-    M_editorCanvas = EditorCanvas( 48, 48 );
+    M_editorCanvas = EditorCanvas( 48, 48, &M_shortcutManager );
 
     M_menu = Menu( &M_shortcutManager );
     M_layersSection = LayersSection( M_editorCanvas->currentState(), &M_shortcutManager );

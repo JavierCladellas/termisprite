@@ -8,9 +8,11 @@
 #include <memory>
 #include <string>
 
+#include "contextwindow.hpp"
 #include "eyedropper_tool.hpp"
 #include "paint_tool.hpp"
 #include "shape_tool.hpp"
+#include "shortcuts.hpp"
 #include "tools_section.hpp"
 #include "brush_tool.hpp"
 #include "cursor.hpp"
@@ -42,11 +44,13 @@ class EditorCanvasComponent
     : public ftxui::ComponentBase
 {
 public:
-    EditorCanvasComponent( int width = 48, int height = 48 )
+    EditorCanvasComponent( int width = 48, int height = 48, ShortcutManager * shortcutManager = nullptr )
         : M_width( width ), M_height( height ),
           M_sprite( width, height ),
           M_grid( std::make_unique<Grid>() ),
-          M_cursor( std::make_unique<CanvasCursor>() )
+          M_cursor( std::make_unique<CanvasCursor>() ),
+          M_shortcutManager( shortcutManager ),
+          M_contextWindow( ContextWindow( shortcutManager) )
     {
         //TODO: Its super weird that the brush tool needs a ref to itself hehe
         M_brushTool = std::make_unique<BrushTool>( M_sprite, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
@@ -61,7 +65,7 @@ public:
 
         M_spriteHistory.push( M_sprite );
 
-        Add( M_rightClickModal );
+        Add( M_contextWindow );
     }
 
     ftxui::Element OnRender() override;
@@ -134,6 +138,8 @@ private:
     bool processRightClickModal( ftxui::Event event );
 
 private:
+    ShortcutManager * M_shortcutManager;
+
     int M_width, M_height;
 
     Sprite M_sprite;
@@ -148,6 +154,8 @@ private:
     std::unique_ptr<EyeDropperTool> M_eyeDropperTool;
     std::unique_ptr<PaintTool> M_paintTool;
     std::unique_ptr<ShapeTool> M_shapeTool;
+
+    std::shared_ptr<ContextWindowComponent> M_contextWindow;
 
     std::vector<ftxui::Elements> M_cells;
     std::unique_ptr<Grid> M_grid;
@@ -167,18 +175,9 @@ private:
 
     bool M_squarePixel = true;
 
-    //TODO: REFACTOR
-    int M_modalX = 0;
-    int M_modalY = 0;
-    ftxui::Box M_rightClickModalBox;
-    bool M_showRightClickModal = false;
-    int M_rightClickModalIndex = 0;
-    std::vector<std::string> M_rightClickModalOptions = { "Background", "Toggle Grid [g]", "Switch Grid [G]", "Undo [u]", "Redo [Ctrl+r]", "Clear [Ctrl+d]", "Cancel [Esc]" };
-    ftxui::Component M_rightClickModal = ftxui::Menu(&M_rightClickModalOptions, &M_rightClickModalIndex);
-
 };
 
 
-std::shared_ptr<EditorCanvasComponent> EditorCanvas( int width = 48, int height = 48 );
+std::shared_ptr<EditorCanvasComponent> EditorCanvas( int width = 48, int height = 48, ShortcutManager * shortcutManager = nullptr );
 
 }

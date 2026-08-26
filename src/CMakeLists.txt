@@ -1,6 +1,7 @@
 add_library( termisprite_lib termisprite.cpp
                              tool.cpp
                              tools_section.cpp
+                             contextwindow.cpp
                              editor.cpp
                              colorpicker.cpp
                              menu.cpp

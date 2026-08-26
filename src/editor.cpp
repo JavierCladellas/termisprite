@@ -60,22 +60,8 @@ EditorCanvasComponent::OnRender()
     //-----------------------------//
 
 
-    if ( M_showRightClickModal )
-    {
-        ftxui::Element modal = ftxui::window( ftxui::text(" Options "), M_rightClickModal->Render() )
-                             | ftxui::clear_under
-                             | ftxui::reflect( M_rightClickModalBox );
-
-        ftxui::Element positionedModal = ftxui::vbox({
-            ftxui::text("") | ftxui::size(ftxui::HEIGHT, ftxui::EQUAL, M_modalY),
-            ftxui::hbox({
-                ftxui::text("") | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, M_modalX),
-                modal
-            })
-        });
-
-        return ftxui::dbox({ canvasWithAxes, positionedModal });
-    }
+    if ( M_contextWindow->isActive() )
+        return ftxui::dbox({ canvasWithAxes, M_contextWindow->Render() });
 
     return canvasWithAxes;
 
@@ -159,10 +145,10 @@ EditorCanvasComponent::processRightClickModal( ftxui::Event event )
     {
         if ( M_box.Contain( mouse.x, mouse.y ) )
         {
-            M_showRightClickModal = true;
+            M_contextWindow->show();
 
-            M_modalX = std::clamp(mouse.x - M_box.x_min, 0, M_width * (M_squarePixel ? 2 : 1) );
-            M_modalY = std::clamp(mouse.y - M_box.y_min, 0, M_height);
+            M_contextWindow->x() = std::clamp(mouse.x - M_box.x_min, 0, M_width * (M_squarePixel ? 2 : 1) );
+            M_contextWindow->y() = std::clamp(mouse.y - M_box.y_min, 0, M_height);
 
             return true;
         }
@@ -184,64 +170,8 @@ EditorCanvasComponent::clear()
 bool
 EditorCanvasComponent::OnEvent( ftxui::Event event )
 {
-
-    //TODO: Refactor into a separate method
-    if ( M_showRightClickModal )
-    {
-        bool handled = M_rightClickModal->OnEvent( event );
-
-        bool executeAction = ( event == ftxui::Event::Return || event == ftxui::Event::Character('\n') );
-
-        if ( event.is_mouse() )
-        {
-            auto mouse = event.mouse();
-            if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Pressed )
-            {
-                if ( M_rightClickModalBox.Contain( mouse.x, mouse.y ) )
-                    executeAction = true;
-                else
-                {
-                    M_showRightClickModal = false;
-                    return true;
-                }
-            }
-            if ( mouse.button == ftxui::Mouse::Button::Right && mouse.motion == ftxui::Mouse::Pressed )
-            {
-                if ( !M_rightClickModalBox.Contain( mouse.x, mouse.y ) && M_box.Contain( mouse.x, mouse.y ) )
-                {
-                    M_showRightClickModal = false;
-                    return processRightClickModal(event);
-                }
-            }
-        }
-
-        if ( executeAction )
-        {
-            switch ( M_rightClickModalIndex )
-            {
-                //TODO: Use enums
-                case 0: if ( onBackgroundChangeRequested ) onBackgroundChangeRequested(); break;
-                case 1: M_grid->toggle(); break;
-                case 2: M_grid->switchType(); break;
-                case 3: this->undo(); break;
-                case 4: this->redo(); break;
-                case 5: this->clear(); break;
-                default: break;
-            }
-            M_showRightClickModal = false;
-            M_rightClickModalIndex = 0;
-            return true;
-        }
-
-        if ( event == ftxui::Event::Escape )
-        {
-            M_showRightClickModal = false;
-            return true;
-        }
-
+    if( M_contextWindow->OnEvent( event ) )
         return true;
-    }
-
 
     //TODO All this can be refactored into strategy & or vector of tools
 
@@ -397,9 +327,9 @@ EditorCanvasComponent::worldToScreen(int worldX, int worldY) const
 
 
 
-std::shared_ptr<EditorCanvasComponent> EditorCanvas( int width, int height )
+std::shared_ptr<EditorCanvasComponent> EditorCanvas( int width, int height, ShortcutManager * shortcutManager )
 {
-    return std::make_shared<EditorCanvasComponent>( width, height );
+    return std::make_shared<EditorCanvasComponent>( width, height, shortcutManager );
 }
 
 }
