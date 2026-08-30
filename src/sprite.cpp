@@ -20,23 +20,30 @@ Sprite::resize( int width, int height )
 void
 Sprite::render( std::vector<std::vector<ftxui::Element>> & cells, bool isSquarePixel ) const
 {
+    int canvasHeight = cells.size();
+    if ( canvasHeight == 0 ) return;
+    int canvasWidth = cells[0].size();
 
-    for ( int y = 0; y < M_height; ++y )
+    int scale = isSquarePixel ? 2 : 1;
+
+    for ( int logicalY = 0; logicalY < M_height; ++logicalY )
     {
-        for ( int x = 0; x < M_width; ++x )
+        if ( logicalY >= canvasHeight ) break;
+        for ( int logicalX = 0; logicalX < M_width; ++logicalX )
         {
-            Pixel const& cellContent = at(x, y);
+            Pixel const& cellContent = at(logicalX, logicalY);
 
             std::string brush = cellContent.brush;
             if ( cellContent.brush == " " )
                 continue;
 
-            if ( isSquarePixel )
-                brush += brush;
-
-            ftxui::Element cell =  ftxui::text(brush);
-            cell |= ftxui::color( cellContent.color );
-            cells[y][x] = cell;
+            int terminalXStart = logicalX * scale;
+            for ( int i = 0; i < scale; ++i )
+            {
+                int terminalX = terminalXStart + i;
+                if ( terminalX >= canvasWidth ) break;
+                cells[logicalY][terminalX] = ftxui::text(brush) | ftxui::color( cellContent.color );
+            }
         }
     }
 

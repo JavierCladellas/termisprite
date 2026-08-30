@@ -7,20 +7,32 @@ namespace Termisprite
 void
 SelectionTool::render( std::vector<ftxui::Elements> & cells, bool isSquarePixel )
 {
-
     if ( !M_isActive ) return;
 
-    std::string brushL, brushR;
-    std::string brush;
-    for ( int y = minY(); y < minY() + height(); ++y )
-    {
-        bool isTop = y == minY();
-        bool isBot = y == maxY();
+    int canvasHeight = cells.size();
+    if ( canvasHeight == 0 ) return;
+    int canvasWidth = cells[0].size();
 
-        for ( int x = minX(); x < minX() + width(); ++x )
+    int scale = isSquarePixel ? 2 : 1;
+
+    for ( int logicalY = minY(); logicalY < minY() + height(); ++logicalY )
+    {
+        if ( logicalY < 0 || logicalY >= canvasHeight ) continue;
+
+        bool isTop = (logicalY == minY());
+        bool isBot = (logicalY == maxY());
+
+        for ( int logicalX = minX(); logicalX < minX() + width(); ++logicalX )
         {
-            bool isLeft = x == minX();
-            bool isRight = x == maxX();
+            bool isLeft = (logicalX == minX());
+            bool isRight = (logicalX == maxX());
+            if ( !(isTop || isBot || isLeft || isRight) ) continue;
+
+            int terminalXStart = logicalX * scale;
+
+            if ( terminalXStart < 0 || terminalXStart >= canvasWidth ) continue;
+
+            std::string brushL, brushR;
 
             if (isTop && isLeft && isBot && isRight) { brushL = "⡏"; brushR = "⢹"; }
             else if (isTop && isLeft) { brushL = "⡏"; brushR = "⠉"; }
@@ -32,16 +44,12 @@ SelectionTool::render( std::vector<ftxui::Elements> & cells, bool isSquarePixel 
             else if (isLeft) { brushL = "⡇"; brushR = " "; }
             else if (isRight) { brushL = " "; brushR = "⢸"; }
 
-            brush = brushL;
-            if ( isSquarePixel )
-                brush += brushR;
+            cells[logicalY][terminalXStart] = ftxui::text(brushL) | ftxui::color( M_color );
 
-
-            if ( isTop || isBot || isLeft || isRight )
-                cells[y][x] = ftxui::text(brush) | ftxui::color( M_color );
+            if ( isSquarePixel && (terminalXStart + 1 < canvasWidth) )
+                cells[logicalY][terminalXStart + 1] = ftxui::text(brushR) | ftxui::color( M_color );
         }
     }
-
 }
 
 
@@ -161,7 +169,7 @@ SelectionTool::processKeyboardEvent( ftxui::Event event )
         bool wasActive = isActive();
         setActive(false);
 
-        bool moved = processTranslation( event );
+        bool moved = processTranslation( event, 10000, 10000 );
 
         setActive(wasActive);
 
@@ -181,94 +189,94 @@ SelectionTool::processKeyboardEvent( ftxui::Event event )
 bool
 SelectionTool::processMouseEvent( ftxui::Event event )
 {
-    if ( event.is_mouse() )
-    {
-        auto mouse = event.mouse();
-
-        if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Released )
-        {
-            if ( M_isDrawing )
-            {
-                M_isDrawing = false;
-                return true;
-            }
-        }
-
-        auto [localX, localY] = M_screenToWorld(mouse.x, mouse.y);
-        if ( localX < 0 || localY < 0 ) //screenToWorld returned invalid coordinates (out of screen box )
-            return false;
-
-        if ( mouse.button == ftxui::Mouse::Button::Left )
-        {
-            M_cursor.setVisibility(false);
-
-            if ( mouse.motion == ftxui::Mouse::Pressed )
-            {
-                M_isDrawing = true;
-                setActive(true);
-
-                setStart( localX, localY );
-                setEnd( localX, localY );
-                return true;
-            }
-            else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
-            {
-                setEnd( localX, localY );
-                return true;
-            }
-        }
-
-        if ( mouse.button == ftxui::Mouse::Button::Right )
-        {
-            if ( mouse.motion == ftxui::Mouse::Pressed )
-            {
-                if ( isActive() )
-                {
-                    if ( localX >= minX() && localX <= maxX() &&
-                         localY >= minY() && localY <= maxY() )
-                    {
-                        beginTranslation(  );
-                        M_lastX = localX;
-                        M_lastY = localY;
-                        return true;
-                    }
-                    else
-                    {
-                        endTranslation();
-                        return true;
-                    }
-                }
-            }
-            else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && isTranslating() )
-            {
-                int dx = localX - M_lastX;
-                int dy = localY - M_lastY;
-
-                if ( dx != 0 || dy != 0 )
-                {
-                    if ( translateContent( dx, dy ) )
-                    {
-                        M_lastX = localX;
-                        M_lastY = localY;
-                    }
-                }
-                return true;
-            }
-            else if ( mouse.motion == ftxui::Mouse::Released && isTranslating() )
-            {
-                endTranslation();
-                return true;
-            }
-        }
-
+    if ( !event.is_mouse() )
         return false;
+
+    auto mouse = event.mouse();
+
+    if ( mouse.button == ftxui::Mouse::Button::Left && mouse.motion == ftxui::Mouse::Released )
+    {
+        if ( M_isDrawing )
+        {
+            M_isDrawing = false;
+            return true;
+        }
     }
+
+    auto [localX, localY] = M_screenToWorld(mouse.x, mouse.y);
+    if ( localX < 0 || localY < 0 ) //screenToWorld returned invalid coordinates (out of screen box )
+        return false;
+
+    if ( mouse.button == ftxui::Mouse::Button::Left )
+    {
+        M_cursor.setVisibility(false);
+
+        if ( mouse.motion == ftxui::Mouse::Pressed )
+        {
+            M_isDrawing = true;
+            setActive(true);
+
+            setStart( localX, localY );
+            setEnd( localX, localY );
+            return true;
+        }
+        else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
+        {
+            setEnd( localX, localY );
+            return true;
+        }
+    }
+
+    if ( mouse.button == ftxui::Mouse::Button::Right )
+    {
+        if ( mouse.motion == ftxui::Mouse::Pressed )
+        {
+            if ( isActive() )
+            {
+                if ( localX >= minX() && localX <= maxX() &&
+                     localY >= minY() && localY <= maxY() )
+                {
+                    beginTranslation(  );
+                    M_lastX = localX;
+                    M_lastY = localY;
+                    return true;
+                }
+                else
+                {
+                    endTranslation();
+                    return true;
+                }
+            }
+        }
+        else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && isTranslating() )
+        {
+            int dx = localX - M_lastX;
+            int dy = localY - M_lastY;
+
+            if ( dx != 0 || dy != 0 )
+            {
+                if ( translateContent( dx, dy ) )
+                {
+                    M_lastX = localX;
+                    M_lastY = localY;
+                }
+            }
+            return true;
+        }
+        else if ( mouse.motion == ftxui::Mouse::Released && isTranslating() )
+        {
+            endTranslation();
+            return true;
+        }
+    }
+
+    return false;
 
 }
 
 
 bool
-SelectionTool::processTranslation( ftxui::Event event )
+SelectionTool::processTranslation( ftxui::Event event, int maxWidth, int maxHeight )
 {
     int dx = 0, dy = 0;
 
@@ -286,7 +294,7 @@ SelectionTool::processTranslation( ftxui::Event event )
         }
     }
 
-    if ( M_cursor.processMovement(event) )
+    if ( M_cursor.processMovement(event, maxWidth, maxHeight) )
         return true;
 
     return false;

@@ -14,7 +14,7 @@ namespace Termisprite
 Termisprite::Termisprite()
     : M_shortcutManager( this )
 {
-    M_editorCanvas = EditorCanvas( 48, 48, &M_shortcutManager );
+    M_editorCanvas = EditorCanvas( 32, 32, &M_shortcutManager );
 
     M_menu = Menu( &M_shortcutManager );
     M_layersSection = LayersSection( M_editorCanvas->currentState(), &M_shortcutManager );
@@ -72,14 +72,12 @@ Termisprite::Termisprite()
                         M_settingsContainer->Render(),
                         M_tools->Render(),
                     }),
-                    ftxui::separatorEmpty(),
                     M_editorCanvas->Render() | ftxui::flex,
                     ftxui::vbox({
                         M_colorSection->Render(),
                         M_layersSection->Render()
                     })
                 }) | ftxui::flex,
-                ftxui::filler(),
                 M_statusBar->Render()
             }),
             M_menu->RenderOverlay()

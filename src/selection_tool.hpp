@@ -22,7 +22,7 @@ public:
     bool processKeyboardEvent( ftxui::Event event ) override;
     bool processMouseEvent( ftxui::Event event ) override;
 
-    bool processTranslation( ftxui::Event event );
+    bool processTranslation( ftxui::Event event, int maxWidth, int maxHeight );
 
     int width() const { return maxX() - minX() + 1; }
     int height() const { return maxY() - minY() + 1; }

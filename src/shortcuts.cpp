@@ -68,8 +68,14 @@ ShortcutManager::bindAllActions( Termisprite * app )
     this->bindAction(ShortcutType::CLEAR, [app]() { app->editor()->clear(); });
 
     this->bindAction(ShortcutType::RESIZE_CANVAS, [app]() { app->showResizeModal(); });
-    this->bindAction(ShortcutType::FLIP_VERTICAL, [app]() { app->editor()->flipVertical(); });
-    this->bindAction(ShortcutType::FLIP_HORIZONTAL, [app]() { app->editor()->flipHorizontal(); });
+    this->bindAction(ShortcutType::FLIP_VERTICAL, [app]() {
+        app->editor()->sprite().flipVertical();
+        app->editor()->saveState();
+    });
+    this->bindAction(ShortcutType::FLIP_HORIZONTAL, [app]() {
+        app->editor()->sprite().flipHorizontal();
+        app->editor()->saveState();
+    });
     this->bindAction(ShortcutType::BACKGROUND_COLOR, [app]() { app->showBackgroundColorModal(); });
 
     this->bindAction(ShortcutType::SQUARE_PIXEL, [app]() { app->editor()->toggleSquarePixel(); });

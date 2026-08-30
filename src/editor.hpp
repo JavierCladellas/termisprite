@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 
+#include "camera.hpp"
 #include "contextwindow.hpp"
 #include "eyedropper_tool.hpp"
 #include "paint_tool.hpp"
@@ -47,11 +48,22 @@ public:
     EditorCanvasComponent( int width = 48, int height = 48, ShortcutManager * shortcutManager = nullptr )
         : M_width( width ), M_height( height ),
           M_sprite( width, height ),
-          M_grid( std::make_unique<Grid>() ),
-          M_cursor( std::make_unique<CanvasCursor>() ),
           M_shortcutManager( shortcutManager ),
           M_contextWindow( ContextWindow( shortcutManager) )
     {
+        M_camera = std::make_unique<Camera>( M_width, M_height );
+        //TODO: Must compute available size in screen
+        M_cells = std::vector<ftxui::Elements>( M_camera->height(), ftxui::Elements( M_camera->width() * ( M_squarePixel ? 2 : 1 ), ftxui::text(" ") ) );
+
+        // updateViewport();
+        //editor width height = how many pixels, user defined
+        //camera width height = how many pixels fit on the screen, can be smaller than editor and sprite. Controls M_cells
+        //sprite width height = how many pixels in the sprite, can be bigger than camera and editor
+        //
+
+
+        M_grid = std::make_unique<Grid>(),
+        M_cursor = std::make_unique<CanvasCursor>();
         //TODO: Its super weird that the brush tool needs a ref to itself hehe
         M_brushTool = std::make_unique<BrushTool>( M_sprite, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
 
@@ -61,7 +73,6 @@ public:
         M_paintTool = std::make_unique<PaintTool>( M_sprite, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
         M_shapeTool = std::make_unique<ShapeTool>( M_currentState.toolType, M_sprite, M_spriteSnapshot, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
 
-        M_cells = std::vector<ftxui::Elements>( M_height, ftxui::Elements( M_width, ftxui::text(" ") ) );
 
         M_spriteHistory.push( M_sprite );
 
@@ -76,25 +87,9 @@ public:
     EditorState & currentState() { return M_currentState; }
     void setCurrentState( EditorState state ) { M_currentState = state; }
 
-
     std::pair<int, int> size() const { return { M_width, M_height }; }
-    void resize( int width, int height ) {
-        M_width = width;
-        M_height = height;
-
-        M_cells.resize( height );
-        for ( auto & row : M_cells )
-            row.resize( width );
-
-        //TODO: Remove below when layers impl
-        M_sprite.resize( width, height );
-
-        saveState();
-    }
-
-    //TODO: Implement flipVertical and flipHorizontal in Sprite class
-    void flipVertical() { M_sprite.flipVertical(); saveState(); }
-    void flipHorizontal() { M_sprite.flipHorizontal(); saveState(); }
+    void resize( int width, int height );
+    void updateViewport();
 
 
     Grid & grid(){ return *M_grid; }
@@ -106,17 +101,15 @@ public:
 
     void undo() {
         M_spriteHistory.undo( M_sprite );
-        auto [width, height] = M_sprite.size();
-        M_width = width;
-        M_height = height;
     }
     void redo() {
         M_spriteHistory.redo( M_sprite );
-        auto [width, height] = M_sprite.size();
-        M_width = width;
-        M_height = height;
     }
-    void toggleSquarePixel() { M_squarePixel = !M_squarePixel; }
+    void toggleSquarePixel()
+    {
+        M_squarePixel = !M_squarePixel;
+        updateViewport();
+    }
 
     std::vector<ftxui::Color> const& colorsInCanvas() const { return M_colorsInCanvas; }
     void clear();
@@ -132,8 +125,6 @@ private:
     std::pair<int,int> worldToScreen(int worldX, int worldY) const;
 
     std::vector<ftxui::Color> computeColorsInCanvas() const;
-
-    bool processPanning( ftxui::Event event );
 
     bool processRightClickModal( ftxui::Event event );
 
@@ -154,6 +145,7 @@ private:
     std::unique_ptr<EyeDropperTool> M_eyeDropperTool;
     std::unique_ptr<PaintTool> M_paintTool;
     std::unique_ptr<ShapeTool> M_shapeTool;
+    std::unique_ptr<Camera> M_camera;
 
     std::shared_ptr<ContextWindowComponent> M_contextWindow;
 
@@ -164,14 +156,7 @@ private:
     std::vector<ftxui::Color> M_colorsInCanvas;
 
     ftxui::Box M_box;
-
-    int M_cameraX = 0;
-    int M_cameraY = 0;
-
-    bool M_isPanning = false;
-    int M_lastPanMouseX = 0;
-    int M_lastPanMouseY = 0;
-
+    ftxui::Box M_availableBox;
 
     bool M_squarePixel = true;
 

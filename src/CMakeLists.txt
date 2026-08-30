@@ -1,5 +1,6 @@
 add_library( termisprite_lib termisprite.cpp
                              tool.cpp
+                             camera.cpp
                              tools_section.cpp
                              contextwindow.cpp
                              editor.cpp

@@ -6,6 +6,8 @@
 #include <ftxui/screen/color.hpp>
 #include <ftxui/dom/elements.hpp>
 
+#include "camera.hpp"
+
 namespace Termisprite
 {
 
@@ -25,7 +27,7 @@ public:
 
     void render( std::vector<ftxui::Elements> & cells, BrushTool const& brushTool, bool isSquarePixel );
 
-    bool processMovement( ftxui::Event event );
+    bool processMovement( ftxui::Event event, int maxWidth, int maxHeight );
 
 private:
     int M_x, M_y;

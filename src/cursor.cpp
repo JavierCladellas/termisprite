@@ -10,31 +10,37 @@ CanvasCursor::render( std::vector<ftxui::Elements> & cells, BrushTool const& bru
     if ( !M_isVisible ) return;
 
     int height = cells.size();
-    int width = height > 0 ? cells[0].size() : 0; //Assumes rectangular canvas
+    int width = height > 0 ? cells[0].size() : 0;
 
     std::string brush = brushTool.currentChar();
-    if ( isSquarePixel )
-        brush += brush;
 
-    for ( int y = M_y; y < M_y + brushTool.size(); ++y )
+    int scale = isSquarePixel ? 2 : 1;
+
+    for ( int logicalY = M_y; logicalY < M_y + brushTool.size(); ++logicalY )
     {
-        if ( y < 0 || y >= height ) break;
-        for ( int x = M_x; x < M_x + brushTool.size(); ++x )
+        if ( logicalY < 0 || logicalY >= height ) continue;
+
+        for ( int logicalX = M_x; logicalX < M_x + brushTool.size(); ++logicalX )
         {
-            if ( x< 0 || x >= width ) continue;
+            int terminalXStart = logicalX * scale;
 
-            cells[y][x] = ftxui::text( brush )
-                            | ftxui::color( brushTool.activeColor() )
-                            | ftxui::bgcolor( M_bgColor )
-                            | ftxui::blink;
+            for ( int i = 0; i < scale; ++i )
+            {
+                int terminalX = terminalXStart + i;
 
+                if ( terminalX < 0 || terminalX >= width ) continue;
+
+                cells[logicalY][terminalX] = ftxui::text( brush )
+                                             | ftxui::color( brushTool.activeColor() )
+                                             | ftxui::bgcolor( M_bgColor )
+                                             | ftxui::blink;
+            }
         }
     }
-
 }
 
 bool
-CanvasCursor::processMovement( ftxui::Event event )
+CanvasCursor::processMovement( ftxui::Event event, int maxWidth, int maxHeight )
 {
 
     int dx = 0, dy = 0;
@@ -46,8 +52,9 @@ CanvasCursor::processMovement( ftxui::Event event )
 
     if ( dx != 0 || dy != 0 )
     {
-        M_x += dx;
-        M_y += dy;
+        // TODO CLAMP WITH EDITOR SIZE
+        M_x = std::clamp( M_x + dx, 0, maxWidth - 1);
+        M_y = std::clamp( M_y + dy, 0, maxHeight - 1);
         setVisibility(true);
         return true;
     }
