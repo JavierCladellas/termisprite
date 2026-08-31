@@ -337,8 +337,8 @@ EditorCanvasComponent::screenToWorld(int screenX, int screenY) const
     int worldX = ((screenX - M_box.x_min) / (M_squarePixel ? 2 : 1));
     int worldY = (screenY - M_box.y_min);
 
-    worldX = std::clamp(worldX, 0, M_width - 1);
-    worldY = std::clamp(worldY, 0, M_height - 1);
+    worldX = std::clamp(worldX, 0, M_camera->width() - 1);
+    worldY = std::clamp(worldY, 0, M_camera->height() - 1);
 
     return {worldX, worldY};
 }

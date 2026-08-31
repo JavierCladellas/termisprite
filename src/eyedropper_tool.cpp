@@ -11,6 +11,11 @@ bool EyeDropperTool::processKeyboardEvent( ftxui::Event event )
     if ( event != ftxui::Event::Character(' ') && event != ftxui::Event::Return )
         return false;
 
+    int spriteW, spriteH;
+    std::tie(spriteW, spriteH) = M_sprite.size();
+    if ( M_cursor.x() < 0 || M_cursor.x() >= spriteW || M_cursor.y() < 0 || M_cursor.y() >= spriteH )
+        return false;
+
     Pixel & cell = M_sprite.at(M_cursor.x(),M_cursor.y());
 
     M_brush.setCurrentBrush(cell.brush);
@@ -34,6 +39,10 @@ bool EyeDropperTool::processMouseEvent( ftxui::Event event )
     if ( mouse.button != ftxui::Mouse::Button::Left || mouse.motion != ftxui::Mouse::Pressed )
         return false;
 
+    int spriteW, spriteH;
+    std::tie(spriteW, spriteH) = M_sprite.size();
+    if ( localX >= spriteW || localY >= spriteH )
+        return false;
     Pixel & cell = M_sprite.at(localX, localY);
     if ( cell.brush != " " )
     {
