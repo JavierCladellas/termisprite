@@ -66,10 +66,15 @@ SelectionTool::beginTranslation()
     int h = height();
     M_selection.assign(h, std::vector<Pixel>(w));
 
+    int maxW, maxH;
+    std::tie(maxW, maxH) = M_sprite.size();
+
     for ( int y = 0; y < h; ++y )
     {
+        if ( minY() + y < 0 || minY() + y >= maxH ) continue;
         for ( int x = 0; x < w; ++x )
         {
+            if ( minX() + x < 0 || minX() + x >= maxW ) continue;
             M_selection[y][x] = M_snapshot.at(minX() + x,minY() + y);
             M_snapshot.at(minX() + x,minY() + y) = Pixel{" ", ftxui::Color::White};
         }
@@ -93,22 +98,26 @@ SelectionTool::translateContent( int dx, int dy )
     if ( !M_isTranslating )
         beginTranslation();
 
-    if ( minX() + dx < 0 ||  minY() + dy < 0 )
-        return false;
 
-    // if ( maxX() + dx >= maxW || maxY() + dy >= maxH )
-    //     return false;
+    M_sprite = M_snapshot;
+    int maxW, maxH;
+    std::tie(maxW, maxH) = M_sprite.size();
 
     setStart( startX() + dx, startY() + dy);
     setEnd( endX() + dx, endY() + dy);
 
-    M_sprite = M_snapshot;
 
     int w = width();
     int h = height();
     for ( int y = 0; y < h; ++y )
+    {
+        if ( minY() + y < 0 || minY() + y >= maxH ) continue;
         for ( int x = 0; x < w; ++x )
+        {
+            if ( minX() + x < 0 || minX() + x >= maxW ) continue;
             M_sprite.at(minX() + x,minY() + y) = M_selection[y][x];
+        }
+    }
 
     return true;
 }
@@ -120,9 +129,18 @@ SelectionTool::deleteContent( Sprite & sprite )
     int w = width();
     int h = height();
 
+    int maxW, maxH;
+    std::tie(maxW, maxH) = sprite.size();
+
     for ( int y = 0; y < h; ++y )
+    {
+        if ( minY() + y < 0 || minY() + y >= maxH ) continue;
         for ( int x = 0; x < w; ++x )
+        {
+            if ( minX() + x < 0 || minX() + x >= maxW ) continue;
             sprite.at(minX() + x,minY() + y) = Pixel{" ", ftxui::Color::White};
+        }
+    }
 
     setActive(false);
 }
@@ -169,7 +187,9 @@ SelectionTool::processKeyboardEvent( ftxui::Event event )
         bool wasActive = isActive();
         setActive(false);
 
-        bool moved = processTranslation( event, 10000, 10000 );
+        int maxW, maxH;
+        std::tie(maxW, maxH) = M_sprite.size();
+        bool moved = processTranslation( event, maxW, maxH );
 
         setActive(wasActive);
 
