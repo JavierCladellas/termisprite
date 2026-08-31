@@ -117,26 +117,50 @@ public:
 
     void saveState();
 
-    Layer & activeLayer() { return *M_layers[M_activeLayer]; }
-    Layer const& activeLayer() const { return *M_layers[M_activeLayer]; }
+    std::vector<std::unique_ptr<Layer>> const& layers() const { return M_layers; }
+    int const& activeLayerIndex() const { return M_activeLayerIndex; }
+    Layer & activeLayer() { return *M_layers[M_activeLayerIndex]; }
+    Layer const& activeLayer() const { return *M_layers[M_activeLayerIndex]; }
     void addLayer( std::string const& name = "New Layer" )
     {
         M_layers.push_back( std::make_unique<Layer>( M_width, M_height, name ) );
-        M_activeLayer = M_layers.size() - 1;
+        M_activeLayerIndex = M_layers.size() - 1;
     }
     void removeLayer( int index )
     {
         if ( index < 0 || index >= M_layers.size() )
             return;
+        if ( M_layers.size() == 1 ) //Always need at least one layer
+            return;
         M_layers.erase( M_layers.begin() + index );
-        if ( M_activeLayer >= M_layers.size() )
-            M_activeLayer = M_layers.size() - 1;
+        if ( M_activeLayerIndex >= M_layers.size() )
+            M_activeLayerIndex = M_layers.size() - 1;
     }
     void setActiveLayer( int index )
     {
         if ( index < 0 || index >= M_layers.size() )
             return;
-        M_activeLayer = index;
+        M_activeLayerIndex = index;
+    }
+    void moveLayerUp( int index )
+    {
+        if ( index <= 0 || index >= M_layers.size() )
+            return;
+        std::swap( M_layers[index], M_layers[index - 1] );
+        if ( M_activeLayerIndex == index )
+            M_activeLayerIndex--;
+        else if ( M_activeLayerIndex == index - 1 )
+            M_activeLayerIndex++;
+    }
+    void moveLayerDown( int index )
+    {
+        if ( index < 0 || index >= M_layers.size() - 1 )
+            return;
+        std::swap( M_layers[index], M_layers[index + 1] );
+        if ( M_activeLayerIndex == index )
+            M_activeLayerIndex++;
+        else if ( M_activeLayerIndex == index + 1 )
+            M_activeLayerIndex--;
     }
 
 private:
@@ -153,7 +177,7 @@ private:
 
     int M_width, M_height;
 
-    int M_activeLayer = 0;
+    int M_activeLayerIndex = 0;
     std::vector<std::unique_ptr<Layer>> M_layers;
 
     Layer M_spriteSnapshot;

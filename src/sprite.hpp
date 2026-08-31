@@ -71,6 +71,8 @@ public:
 
     void render( std::vector<std::vector<ftxui::Element>> & cells, bool isSquarePixel ) const;
 
+    std::string const& name() const { return M_name; }
+
 private:
     int M_width, M_height;
     GridData M_grid;

@@ -14,22 +14,24 @@ class LayersComponent
     : public ftxui::ComponentBase
 {
 public:
-    LayersComponent( EditorState & editorState, ShortcutManager * shortcutManager );
+    LayersComponent( EditorCanvasComponent * editor, ShortcutManager * shortcutManager );
 
     ftxui::Element OnRender() override;
     // bool OnEvent( ftxui::Event event ) override;
 
 private:
 
+    void rebuild();
+    ftxui::Component createLayerRow( int index );
+
 private:
-    ftxui::Component M_container;
-    EditorState & M_editorState;
+    EditorCanvasComponent * M_editor;
     ShortcutManager * M_shortcutManager;
 
 };
 
 
-std::shared_ptr<LayersComponent> LayersSection(  EditorState & editorState, ShortcutManager * shortcutManager  );
+std::shared_ptr<LayersComponent> LayersSection( EditorCanvasComponent * editor, ShortcutManager * shortcutManager );
 
 
 

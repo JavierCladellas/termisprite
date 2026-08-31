@@ -17,7 +17,7 @@ Termisprite::Termisprite()
     M_editorCanvas = EditorCanvas( 32, 32, &M_shortcutManager );
 
     M_menu = Menu( &M_shortcutManager );
-    M_layersSection = LayersSection( M_editorCanvas->currentState(), &M_shortcutManager );
+    M_layersSection = LayersSection( M_editorCanvas.get(), &M_shortcutManager );
     M_tools = ToolsSection( M_editorCanvas->currentState().toolType, &M_shortcutManager );
     M_colorSection = ColorSection( M_editorCanvas->brushTool().activeColor() ,M_editorCanvas->colorsInCanvas() );
     M_statusBar = StatusBar( M_editorCanvas->currentState(), &M_shortcutManager );
