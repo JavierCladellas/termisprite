@@ -12,7 +12,7 @@ class EyeDropperTool
     : public Tool
 {
 public:
-    EyeDropperTool( Layer & layer, BrushTool & brush, CanvasCursor & cursor, std::function<std::pair<int,int>(int,int)> screenToWorld )
+    EyeDropperTool( Layer * layer, BrushTool & brush, CanvasCursor & cursor, std::function<std::pair<int,int>(int,int)> screenToWorld )
         : Tool( layer, brush, cursor, screenToWorld )
     {}
 

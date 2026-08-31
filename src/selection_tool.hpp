@@ -14,7 +14,7 @@ class SelectionTool
     : public Tool
 {
 public:
-    SelectionTool( Layer & layer, BrushTool & brush, CanvasCursor & cursor, Layer & snapshot, std::function<std::pair<int,int>(int,int)> screenToWorld )
+    SelectionTool( Layer * layer, BrushTool & brush, CanvasCursor & cursor, Layer * snapshot, std::function<std::pair<int,int>(int,int)> screenToWorld )
         : Tool( layer, brush, cursor, screenToWorld ), M_snapshot(snapshot)
      {}
 
@@ -52,7 +52,7 @@ public:
 
 
 private:
-    Layer & M_snapshot;
+    Layer * M_snapshot;
 
     int M_startX = 0, M_startY = 0;
     int M_endX = 0, M_endY = 0;

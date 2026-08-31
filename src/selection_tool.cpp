@@ -67,7 +67,7 @@ SelectionTool::beginTranslation()
     M_selection.assign(h, std::vector<Pixel>(w));
 
     int maxW, maxH;
-    std::tie(maxW, maxH) = M_layer.size();
+    std::tie(maxW, maxH) = M_layer->size();
 
     for ( int y = 0; y < h; ++y )
     {
@@ -75,8 +75,8 @@ SelectionTool::beginTranslation()
         for ( int x = 0; x < w; ++x )
         {
             if ( minX() + x < 0 || minX() + x >= maxW ) continue;
-            M_selection[y][x] = M_snapshot.at(minX() + x,minY() + y);
-            M_snapshot.at(minX() + x,minY() + y) = Pixel{" ", ftxui::Color::White};
+            M_selection[y][x] = M_snapshot->at(minX() + x,minY() + y);
+            M_snapshot->at(minX() + x,minY() + y) = Pixel{" ", ftxui::Color::White};
         }
     }
 }
@@ -101,7 +101,7 @@ SelectionTool::translateContent( int dx, int dy )
 
     M_layer = M_snapshot;
     int maxW, maxH;
-    std::tie(maxW, maxH) = M_layer.size();
+    std::tie(maxW, maxH) = M_layer->size();
 
     setStart( startX() + dx, startY() + dy);
     setEnd( endX() + dx, endY() + dy);
@@ -115,7 +115,7 @@ SelectionTool::translateContent( int dx, int dy )
         for ( int x = 0; x < w; ++x )
         {
             if ( minX() + x < 0 || minX() + x >= maxW ) continue;
-            M_layer.at(minX() + x,minY() + y) = M_selection[y][x];
+            M_layer->at(minX() + x,minY() + y) = M_selection[y][x];
         }
     }
 
@@ -188,7 +188,7 @@ SelectionTool::processKeyboardEvent( ftxui::Event event )
         setActive(false);
 
         int maxW, maxH;
-        std::tie(maxW, maxH) = M_layer.size();
+        std::tie(maxW, maxH) = M_layer->size();
         bool moved = processTranslation( event, maxW, maxH );
 
         setActive(wasActive);

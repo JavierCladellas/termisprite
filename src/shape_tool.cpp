@@ -11,7 +11,7 @@ namespace Termisprite
 void
 ShapeTool::drawLine( int x0, int y0, int x1, int y1 )
 {
-    Geometry::drawLine(M_brush, M_layer, x0, y0, x1, y1);
+    Geometry::drawLine(M_brush, *M_layer, x0, y0, x1, y1);
 }
 
 void
@@ -51,7 +51,7 @@ ShapeTool::drawEllipse( int x0, int y0, int x1, int y1 )
 
     int points = std::max(a, b) * 8;
     int width, height;
-    std::tie(width, height) = M_layer.size();
+    std::tie(width, height) = M_layer->size();
     for ( int i = 0; i <= points; ++i )
     {
         float theta = 2. * M_PI * i / points;
@@ -106,7 +106,7 @@ ShapeTool::processKeyboardEvent( ftxui::Event event )
     {
 
         int width, height;
-        std::tie(width, height) = M_layer.size();
+        std::tie(width, height) = M_layer->size();
 
         bool moved = false;
 

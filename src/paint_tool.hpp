@@ -12,7 +12,7 @@ class PaintTool
     : public Tool
 {
 public:
-    PaintTool( Layer & layer, BrushTool & brush, CanvasCursor & cursor, std::function<std::pair<int,int>(int,int)> screenToWorld )
+    PaintTool( Layer * layer, BrushTool & brush, CanvasCursor & cursor, std::function<std::pair<int,int>(int,int)> screenToWorld )
         : Tool( layer, brush, cursor, screenToWorld )
     {}
 

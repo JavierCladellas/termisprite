@@ -16,7 +16,7 @@ void
 BrushTool::apply( int targetX, int targetY )
 {
     int width, height;
-    std::tie( width, height ) = M_layer.size();
+    std::tie( width, height ) = M_layer->size();
 
     for ( int by = 0; by < M_size; ++by )
     {
@@ -27,7 +27,7 @@ BrushTool::apply( int targetX, int targetY )
 
             if ( px >= 0 && px < width && py >= 0 && py < height )
             {
-                auto & pixel = M_layer.at(px, py);
+                auto & pixel = M_layer->at(px, py);
                 apply( pixel );
             }
         }
@@ -96,7 +96,7 @@ BrushTool::processMouseEvent( ftxui::Event event )
         }
         else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
         {
-            Geometry::drawLine( *this, M_layer, M_lastX, M_lastY, worldX, worldY );
+            Geometry::drawLine( *this, *M_layer, M_lastX, M_lastY, worldX, worldY );
             M_lastX = worldX;
             M_lastY = worldY;
             return true;

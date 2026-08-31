@@ -14,8 +14,11 @@ EditorCanvasComponent::OnRender()
 {
 
     M_grid->render( M_cells, M_squarePixel );
-    for ( auto & layer : M_layers )
-        layer->render( M_cells, M_squarePixel );
+
+    //Reverse order
+    for ( int i = M_layers.size() - 1; i >= 0; --i )
+        M_layers[i].get()->render( M_cells, M_squarePixel );
+
     M_selectionTool->render(M_cells, M_squarePixel);
     M_cursor->render( M_cells, *M_brushTool, M_squarePixel );
 
@@ -195,7 +198,7 @@ EditorCanvasComponent::processRightClickModal( ftxui::Event event )
 void
 EditorCanvasComponent::clear()
 {
-    activeLayer().clear();
+    M_activeLayer->clear();
     saveState();
 }
 
@@ -309,14 +312,20 @@ std::vector<ftxui::Color>
 EditorCanvasComponent::computeColorsInCanvas() const
 {
     std::vector<ftxui::Color> usedColors;
-    for ( auto const & row : activeLayer() )
-        for ( auto const& cell : row )
+    for ( auto const & layer : M_layers )
+    {
+        if ( !layer || !layer->isVisible() ) continue;
+        for ( auto const & row : *layer )
         {
-            if ( cell.brush == " " ) continue;
+            for ( auto const& cell : row )
+            {
+                if ( cell.brush == " " ) continue;
 
-            if ( std::find(usedColors.begin(), usedColors.end(), cell.color) == usedColors.end() )
-                usedColors.push_back( cell.color );
+                if ( std::find(usedColors.begin(), usedColors.end(), cell.color) == usedColors.end() )
+                    usedColors.push_back( cell.color );
+            }
         }
+    }
     return usedColors;
 }
 
@@ -324,7 +333,7 @@ EditorCanvasComponent::computeColorsInCanvas() const
 void
 EditorCanvasComponent::saveState()
 {
-    M_spriteHistory.save( activeLayer() );
+    M_spriteHistory.save( *M_activeLayer );
     M_colorsInCanvas = computeColorsInCanvas();
 }
 

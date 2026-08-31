@@ -51,6 +51,8 @@ public:
           M_contextWindow( ContextWindow( shortcutManager) )
     {
         M_layers.push_back( std::make_unique<Layer>( width, height, "Layer 1" ) );
+        setActiveLayer( 0 );
+
         M_camera = std::make_unique<Camera>( M_width, M_height );
         //TODO: Must compute available size in screen
         M_cells = std::vector<ftxui::Elements>( M_camera->height(), ftxui::Elements( M_camera->width() * ( M_squarePixel ? 2 : 1 ), ftxui::text(" ") ) );
@@ -64,17 +66,16 @@ public:
 
         M_grid = std::make_unique<Grid>(),
         M_cursor = std::make_unique<CanvasCursor>();
-        //TODO: Its super weird that the brush tool needs a ref to itself hehe
-        M_brushTool = std::make_unique<BrushTool>( activeLayer(), *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_brushTool = std::make_unique<BrushTool>( M_activeLayer, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
 
-        M_selectionTool = std::make_unique<SelectionTool>( activeLayer(), *M_brushTool, *M_cursor, M_spriteSnapshot, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_selectionTool = std::make_unique<SelectionTool>( M_activeLayer, *M_brushTool, *M_cursor, &M_spriteSnapshot, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
         M_currentState.selectionTool = M_selectionTool.get();
-        M_eyeDropperTool = std::make_unique<EyeDropperTool>( activeLayer(), *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
-        M_paintTool = std::make_unique<PaintTool>( activeLayer(), *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
-        M_shapeTool = std::make_unique<ShapeTool>( M_currentState.toolType, activeLayer(), M_spriteSnapshot, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_eyeDropperTool = std::make_unique<EyeDropperTool>( M_activeLayer, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_paintTool = std::make_unique<PaintTool>( M_activeLayer, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_shapeTool = std::make_unique<ShapeTool>( M_currentState.toolType, M_activeLayer, &M_spriteSnapshot, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
 
 
-        M_spriteHistory.push( activeLayer() );
+        M_spriteHistory.push( *M_activeLayer );
 
         Add( M_contextWindow );
     }
@@ -99,10 +100,12 @@ public:
 
 
     void undo() {
-        M_spriteHistory.undo( activeLayer() );
+        //TODO: Fix this, buggy.
+        M_spriteHistory.undo( *M_activeLayer );
     }
     void redo() {
-        M_spriteHistory.redo( activeLayer() );
+        //TODO: Fix this, buggy.
+        M_spriteHistory.redo( *M_activeLayer );
     }
     void toggleSquarePixel()
     {
@@ -141,6 +144,15 @@ public:
         if ( index < 0 || index >= M_layers.size() )
             return;
         M_activeLayerIndex = index;
+        M_activeLayer = M_layers[index].get();
+
+        if (M_brushTool) M_brushTool->setLayer( M_activeLayer );
+        if (M_selectionTool) M_selectionTool->setLayer( M_activeLayer );
+        if (M_eyeDropperTool) M_eyeDropperTool->setLayer( M_activeLayer );
+        if (M_paintTool) M_paintTool->setLayer( M_activeLayer );
+        if (M_shapeTool) M_shapeTool->setLayer( M_activeLayer );
+
+
     }
     void moveLayerUp( int index )
     {
@@ -178,6 +190,7 @@ private:
     int M_width, M_height;
 
     int M_activeLayerIndex = 0;
+    Layer * M_activeLayer = nullptr;
     std::vector<std::unique_ptr<Layer>> M_layers;
 
     Layer M_spriteSnapshot;

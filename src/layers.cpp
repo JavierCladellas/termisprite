@@ -89,7 +89,7 @@ LayersComponent::rebuild()
         layerRows.push_back(createLayerRow(i));
 
     auto addButton = Button("+ Add Layer", [this] {
-        M_editor->addLayer("New Layer");
+        M_editor->addLayer("Layer " + std::to_string(M_editor->layers().size() + 1));
         rebuild();
     }, ftxui::ButtonOption::Ascii());
 
