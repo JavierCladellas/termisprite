@@ -11,7 +11,7 @@ namespace Termisprite
 void
 ShapeTool::drawLine( int x0, int y0, int x1, int y1 )
 {
-    Geometry::drawLine(M_brush, M_sprite, x0, y0, x1, y1);
+    Geometry::drawLine(M_brush, M_layer, x0, y0, x1, y1);
 }
 
 void
@@ -51,7 +51,7 @@ ShapeTool::drawEllipse( int x0, int y0, int x1, int y1 )
 
     int points = std::max(a, b) * 8;
     int width, height;
-    std::tie(width, height) = M_sprite.size();
+    std::tie(width, height) = M_layer.size();
     for ( int i = 0; i <= points; ++i )
     {
         float theta = 2. * M_PI * i / points;
@@ -74,7 +74,7 @@ ShapeTool::processKeyboardEvent( ftxui::Event event )
     if ( M_isDrawing && event == ftxui::Event::Escape )
     {
         M_isDrawing = false;
-        M_sprite = M_snapshot;
+        M_layer = M_snapshot;
         return true;
     }
 
@@ -86,9 +86,9 @@ ShapeTool::processKeyboardEvent( ftxui::Event event )
             M_isDrawing = true;
             M_shapeStartX = M_cursor.x();
             M_shapeStartY = M_cursor.y();
-            M_snapshot = M_sprite;
+            M_snapshot = M_layer;
 
-            M_sprite = M_snapshot;
+            M_layer = M_snapshot;
             if ( M_toolType == ToolType::SQUARE )
                 drawRectangle( M_shapeStartX, M_shapeStartY, M_cursor.x(), M_cursor.y() );
             else if ( M_toolType == ToolType::CIRCLE )
@@ -106,7 +106,7 @@ ShapeTool::processKeyboardEvent( ftxui::Event event )
     {
 
         int width, height;
-        std::tie(width, height) = M_sprite.size();
+        std::tie(width, height) = M_layer.size();
 
         bool moved = false;
 
@@ -134,7 +134,7 @@ ShapeTool::processKeyboardEvent( ftxui::Event event )
         if ( moved )
         {
             M_cursor.setVisibility(true);
-            M_sprite = M_snapshot;
+            M_layer = M_snapshot;
 
             if ( M_toolType == ToolType::SQUARE )
                 drawRectangle( M_shapeStartX, M_shapeStartY, M_cursor.x(), M_cursor.y() );
@@ -183,12 +183,12 @@ ShapeTool::processMouseEvent( ftxui::Event event )
             M_shapeStartX = localX;
             M_shapeStartY = localY;
 
-            M_snapshot = M_sprite;
+            M_snapshot = M_layer;
             return true;
         }
         else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
         {
-            M_sprite = M_snapshot;
+            M_layer = M_snapshot;
 
             if ( M_toolType == ToolType::SQUARE )
                 drawRectangle( M_shapeStartX, M_shapeStartY, localX, localY );

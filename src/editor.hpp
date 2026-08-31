@@ -47,10 +47,10 @@ class EditorCanvasComponent
 public:
     EditorCanvasComponent( int width = 48, int height = 48, ShortcutManager * shortcutManager = nullptr )
         : M_width( width ), M_height( height ),
-          M_sprite( width, height ),
           M_shortcutManager( shortcutManager ),
           M_contextWindow( ContextWindow( shortcutManager) )
     {
+        M_layers.push_back( std::make_unique<Layer>( width, height, "Layer 1" ) );
         M_camera = std::make_unique<Camera>( M_width, M_height );
         //TODO: Must compute available size in screen
         M_cells = std::vector<ftxui::Elements>( M_camera->height(), ftxui::Elements( M_camera->width() * ( M_squarePixel ? 2 : 1 ), ftxui::text(" ") ) );
@@ -65,16 +65,16 @@ public:
         M_grid = std::make_unique<Grid>(),
         M_cursor = std::make_unique<CanvasCursor>();
         //TODO: Its super weird that the brush tool needs a ref to itself hehe
-        M_brushTool = std::make_unique<BrushTool>( M_sprite, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_brushTool = std::make_unique<BrushTool>( activeLayer(), *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
 
-        M_selectionTool = std::make_unique<SelectionTool>( M_sprite, *M_brushTool, *M_cursor, M_spriteSnapshot, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_selectionTool = std::make_unique<SelectionTool>( activeLayer(), *M_brushTool, *M_cursor, M_spriteSnapshot, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
         M_currentState.selectionTool = M_selectionTool.get();
-        M_eyeDropperTool = std::make_unique<EyeDropperTool>( M_sprite, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
-        M_paintTool = std::make_unique<PaintTool>( M_sprite, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
-        M_shapeTool = std::make_unique<ShapeTool>( M_currentState.toolType, M_sprite, M_spriteSnapshot, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_eyeDropperTool = std::make_unique<EyeDropperTool>( activeLayer(), *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_paintTool = std::make_unique<PaintTool>( activeLayer(), *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_shapeTool = std::make_unique<ShapeTool>( M_currentState.toolType, activeLayer(), M_spriteSnapshot, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
 
 
-        M_spriteHistory.push( M_sprite );
+        M_spriteHistory.push( activeLayer() );
 
         Add( M_contextWindow );
     }
@@ -94,16 +94,15 @@ public:
 
     Grid & grid(){ return *M_grid; }
     SelectionTool & selectionTool(){ return *M_selectionTool; }
-    Sprite & sprite(){ return M_sprite; }
     CanvasCursor & cursor(){ return *M_cursor; }
     BrushTool & brushTool(){ return *M_brushTool; }
 
 
     void undo() {
-        M_spriteHistory.undo( M_sprite );
+        M_spriteHistory.undo( activeLayer() );
     }
     void redo() {
-        M_spriteHistory.redo( M_sprite );
+        M_spriteHistory.redo( activeLayer() );
     }
     void toggleSquarePixel()
     {
@@ -116,8 +115,29 @@ public:
 
     std::function<void()> onBackgroundChangeRequested;
 
-
     void saveState();
+
+    Layer & activeLayer() { return *M_layers[M_activeLayer]; }
+    Layer const& activeLayer() const { return *M_layers[M_activeLayer]; }
+    void addLayer( std::string const& name = "New Layer" )
+    {
+        M_layers.push_back( std::make_unique<Layer>( M_width, M_height, name ) );
+        M_activeLayer = M_layers.size() - 1;
+    }
+    void removeLayer( int index )
+    {
+        if ( index < 0 || index >= M_layers.size() )
+            return;
+        M_layers.erase( M_layers.begin() + index );
+        if ( M_activeLayer >= M_layers.size() )
+            M_activeLayer = M_layers.size() - 1;
+    }
+    void setActiveLayer( int index )
+    {
+        if ( index < 0 || index >= M_layers.size() )
+            return;
+        M_activeLayer = index;
+    }
 
 private:
 
@@ -133,8 +153,10 @@ private:
 
     int M_width, M_height;
 
-    Sprite M_sprite;
-    Sprite M_spriteSnapshot;
+    int M_activeLayer = 0;
+    std::vector<std::unique_ptr<Layer>> M_layers;
+
+    Layer M_spriteSnapshot;
     SpriteHistory M_spriteHistory;
 
     EditorState M_currentState;

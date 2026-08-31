@@ -15,7 +15,7 @@ namespace Termisprite
 {
 
 
-bool SpriteImporter::importProject( std::string const& filepath, Sprite & targetSprite, EditorState & editorState, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes )
+bool SpriteImporter::importProject( std::string const& filepath, Layer & targetLayer, EditorState & editorState, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes )
 {
     std::ifstream inFile( filepath );
     if ( !inFile.is_open() )
@@ -37,8 +37,8 @@ bool SpriteImporter::importProject( std::string const& filepath, Sprite & target
         int w = importJson["width"];
         int h = importJson["height"];
 
-        targetSprite.resize( w, h );
-        targetSprite.clear();
+        targetLayer.resize( w, h );
+        targetLayer.clear();
     }
 
     if ( importJson.contains( "palettes" ) && importJson["palettes"].is_object() )
@@ -71,11 +71,11 @@ bool SpriteImporter::importProject( std::string const& filepath, Sprite & target
 
     }
 
-    if ( importJson.contains( "sprite" ) && importJson["sprite"].is_array() )
+    if ( importJson.contains( "layer" ) && importJson["layer"].is_array() )
     {
-        auto [w, h] = targetSprite.size();
+        auto [w, h] = targetLayer.size();
 
-        for ( auto const& item : importJson["sprite"] )
+        for ( auto const& item : importJson["layer"] )
     {
             int x = item.value("x", -1);
             int y = item.value("y", -1);
@@ -85,7 +85,7 @@ bool SpriteImporter::importProject( std::string const& filepath, Sprite & target
 
             if ( x >= 0 && x < w && y >= 0 && y < h )
             {
-                Pixel & cell = targetSprite.at( x, y );
+                Pixel & cell = targetLayer.at( x, y );
                 cell.brush = brush;
                 if ( sscanf( colorCode.c_str(), "38;2;%u;%u;%u", &r, &g, &b ) == 3 )
                     cell.color = ftxui::Color::RGB(r, g, b);
@@ -97,7 +97,7 @@ bool SpriteImporter::importProject( std::string const& filepath, Sprite & target
 }
 
 
-bool SpriteImporter::importImage( std::string const& filepath, Sprite& targetSprite, int targetWidth, int targetHeight, std::string const& format )
+bool SpriteImporter::importImage( std::string const& filepath, Layer& targetLayer, int targetWidth, int targetHeight, std::string const& format )
 {
 
     std::map<std::string, ImageFormat> formatMap = {
@@ -138,7 +138,7 @@ bool SpriteImporter::importImage( std::string const& filepath, Sprite& targetSpr
 
             for (int x = 0; x < targetWidth; ++x)
             {
-                Pixel & cell = targetSprite.at(x, y);
+                Pixel & cell = targetLayer.at(x, y);
                 cell.color = ftxui::Color::White;
                 if (charIndex < currentLine.length())
                 {
@@ -192,7 +192,7 @@ bool SpriteImporter::importImage( std::string const& filepath, Sprite& targetSpr
             unsigned char b = resizedData[index + 2];
             unsigned char a = resizedData[index + 3];
 
-            Pixel & cell = targetSprite.at(x, y);
+            Pixel & cell = targetLayer.at(x, y);
 
             if (a < 128)
             {
@@ -297,7 +297,7 @@ SpriteImporter::importPalette( std::string const& filepath, std::string const& p
 bool
 SpriteExporter::exportProject( std::string const& filepath,
                                std::string const& projectName,
-                               Sprite const& targetSprite,
+                               Layer const& targetLayer,
                                EditorState const& editorState,
                                std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes )
 {
@@ -305,7 +305,7 @@ SpriteExporter::exportProject( std::string const& filepath,
 
     exportJson["project_name"] = projectName;
 
-    auto [w,h] = targetSprite.size();
+    auto [w,h] = targetLayer.size();
 
     exportJson["width"] = w;
     exportJson["height"] = h;
@@ -321,19 +321,19 @@ SpriteExporter::exportProject( std::string const& filepath,
             exportJson["palettes"][paletteName].push_back(color.Print(false));
     }
 
-    exportJson["sprite"] = nlohmann::json::array();
+    exportJson["layer"] = nlohmann::json::array();
 
     for ( int y = 0; y < h; ++y )
     {
         for ( int x = 0; x < w; ++x )
         {
-            Pixel const& cell = targetSprite.at(x,y);
+            Pixel const& cell = targetLayer.at(x,y);
 
 
             if (cell.brush == " " )
                 continue;
 
-            exportJson["sprite"].push_back({
+            exportJson["layer"].push_back({
                 {"x", x},
                 {"y", y},
                 {"brush", cell.brush},
@@ -358,7 +358,7 @@ SpriteExporter::exportProject( std::string const& filepath,
 
 
 bool
-SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSprite, std::string const& format )
+SpriteExporter::exportImage( std::string const& filepath, Layer const& targetLayer, std::string const& format )
 {
     std::map<std::string, ImageFormat> formatMap = {
         {"png", ImageFormat::PNG},
@@ -368,7 +368,7 @@ SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSp
         {"ascii", ImageFormat::ASCII}
     };
 
-    auto [w, h] = targetSprite.size();
+    auto [w, h] = targetLayer.size();
     if (w <= 0 || h <= 0)
         return false;
 
@@ -394,7 +394,7 @@ SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSp
         {
             for (int x = 0; x < w; ++x)
             {
-                Pixel const& cell = targetSprite.at(x, y);
+                Pixel const& cell = targetLayer.at(x, y);
                 int index = (y * w + x) * channels;
 
                 if (cell.brush == " ")
@@ -457,7 +457,7 @@ SpriteExporter::exportImage( std::string const& filepath, Sprite const& targetSp
             {
                 for ( int x = 0; x < w; ++x )
                 {
-                    Pixel const& cell = targetSprite.at(x, y);
+                    Pixel const& cell = targetLayer.at(x, y);
                     if ( !cell.brush.empty() )
                         outFile << cell.brush;
                 }

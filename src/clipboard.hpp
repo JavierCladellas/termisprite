@@ -9,14 +9,14 @@ namespace Termisprite
 struct Clipboard
 {
     bool hasData = false;
-    Sprite::GridData data;
-    
+    Layer::GridData data;
 
-    void copy( Sprite const& sprite, SelectionTool & selectionTool );
 
-    void cut( Sprite & sprite, SelectionTool & selectionTool );
+    void copy( Layer const& layer, SelectionTool & selectionTool );
 
-    void paste( Sprite & sprite, int cursorX = 0, int cursorY = 0 );
+    void cut( Layer & layer, SelectionTool & selectionTool );
+
+    void paste( Layer & layer, int cursorX = 0, int cursorY = 0 );
 
 };
 

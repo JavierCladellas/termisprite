@@ -25,7 +25,7 @@ Modal::initTree()
             M_cancelButton,
             buildContentComponent(),
             M_okButton
-        }) 
+        })
     );
 }
 
@@ -120,7 +120,7 @@ NewProjectModal::buildContentComponent() const
     });
 }
 
-ftxui::Element 
+ftxui::Element
 NewProjectModal::renderModalContent()
 {
     using namespace ftxui;
@@ -185,7 +185,7 @@ ResizeModal::buildContentComponent() const
     });
 }
 
-ftxui::Element 
+ftxui::Element
 ResizeModal::renderModalContent()
 {
     using namespace ftxui;
@@ -209,7 +209,7 @@ void
 SaveModal::onConfirm()
 {
     if (!M_filepathInput.empty())
-        SpriteExporter::exportProject(M_filepathInput, "Untitled", M_editorCanvas.sprite(), M_editorCanvas.currentState(), M_palettes );
+        SpriteExporter::exportProject(M_filepathInput, "Untitled", M_editorCanvas.activeLayer(), M_editorCanvas.currentState(), M_palettes );
     M_filepathInput = "";
 }
 
@@ -220,7 +220,7 @@ SaveModal::buildContentComponent() const
     return M_filepathInputComponent;
 }
 
-ftxui::Element 
+ftxui::Element
 SaveModal::renderModalContent()
 {
     using namespace ftxui;
@@ -240,9 +240,9 @@ OpenProjectModal::onConfirm()
     if (!M_filepathInput.empty())
     {
 
-        if ( SpriteImporter::importProject( M_filepathInput, M_editorCanvas.sprite(), M_editorCanvas.currentState(), M_palettes ) )
+        if ( SpriteImporter::importProject( M_filepathInput, M_editorCanvas.activeLayer(), M_editorCanvas.currentState(), M_palettes ) )
         {
-            auto [width, height] = M_editorCanvas.sprite().size();
+            auto [width, height] = M_editorCanvas.activeLayer().size();
             M_editorCanvas.resize(width, height);
             M_editorCanvas.saveState();
         }
@@ -257,7 +257,7 @@ OpenProjectModal::buildContentComponent() const
     return M_filepathInputComponent;
 }
 
-ftxui::Element 
+ftxui::Element
 OpenProjectModal::renderModalContent()
 {
     using namespace ftxui;
@@ -273,7 +273,7 @@ void
 ExportModal::onConfirm()
 {
     if (!M_filepathInput.empty())
-        SpriteExporter::exportImage( M_filepathInput, M_editorCanvas.sprite(), M_formatOptions[M_selectedFormatIndex] );
+        SpriteExporter::exportImage( M_filepathInput, M_editorCanvas.activeLayer(), M_formatOptions[M_selectedFormatIndex] );
     M_filepathInput = "";
 }
 
@@ -284,7 +284,7 @@ ExportModal::buildContentComponent() const
     return ftxui::Container::Horizontal({ M_filepathInputComponent, M_formatDropdown });
 }
 
-ftxui::Element 
+ftxui::Element
 ExportModal::renderModalContent()
 {
     using namespace ftxui;
@@ -316,7 +316,7 @@ ImportModal::onConfirm()
         int newHeight = std::stoi(M_targetHeightInput);
         M_editorCanvas.resize(newWidth, newHeight);
 
-        if ( SpriteImporter::importImage( M_filepathInput, M_editorCanvas.sprite(), newWidth, newHeight, M_formatOptions[M_selectedFormatIndex]) )
+        if ( SpriteImporter::importImage( M_filepathInput, M_editorCanvas.activeLayer(), newWidth, newHeight, M_formatOptions[M_selectedFormatIndex]) )
             M_editorCanvas.saveState();
     }
     M_filepathInput = "";
@@ -335,7 +335,7 @@ ImportModal::buildContentComponent() const
     });
 }
 
-ftxui::Element 
+ftxui::Element
 ImportModal::renderModalContent()
 {
     using namespace ftxui;

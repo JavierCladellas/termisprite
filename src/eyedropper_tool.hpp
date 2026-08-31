@@ -12,8 +12,8 @@ class EyeDropperTool
     : public Tool
 {
 public:
-    EyeDropperTool( Sprite & sprite, BrushTool & brush, CanvasCursor & cursor, std::function<std::pair<int,int>(int,int)> screenToWorld )
-        : Tool( sprite, brush, cursor, screenToWorld )
+    EyeDropperTool( Layer & layer, BrushTool & brush, CanvasCursor & cursor, std::function<std::pair<int,int>(int,int)> screenToWorld )
+        : Tool( layer, brush, cursor, screenToWorld )
     {}
 
     bool processKeyboardEvent( ftxui::Event event ) override;

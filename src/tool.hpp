@@ -10,8 +10,8 @@ class BrushTool;
 class Tool
 {
 public:
-    Tool( Sprite & sprite, BrushTool & brush, CanvasCursor & cursor, std::function<std::pair<int,int>(int,int)> screenToWorld )
-        : M_sprite( sprite ), M_brush( brush ), M_cursor(cursor), M_screenToWorld( screenToWorld )
+    Tool( Layer & layer, BrushTool & brush, CanvasCursor & cursor, std::function<std::pair<int,int>(int,int)> screenToWorld )
+        : M_layer( layer ), M_brush( brush ), M_cursor(cursor), M_screenToWorld( screenToWorld )
     {}
     virtual ~Tool() = default;
 
@@ -23,7 +23,7 @@ public:
     void setActive( bool active ) { M_isActive = active; }
 
 protected:
-    Sprite & M_sprite;
+    Layer & M_layer;
     BrushTool & M_brush;
     std::function<std::pair<int,int>(int,int)> M_screenToWorld;
     CanvasCursor & M_cursor;

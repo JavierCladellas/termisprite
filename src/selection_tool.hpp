@@ -14,8 +14,8 @@ class SelectionTool
     : public Tool
 {
 public:
-    SelectionTool( Sprite & sprite, BrushTool & brush, CanvasCursor & cursor, Sprite & snapshot, std::function<std::pair<int,int>(int,int)> screenToWorld )
-        : Tool( sprite, brush, cursor, screenToWorld ), M_snapshot(snapshot)
+    SelectionTool( Layer & layer, BrushTool & brush, CanvasCursor & cursor, Layer & snapshot, std::function<std::pair<int,int>(int,int)> screenToWorld )
+        : Tool( layer, brush, cursor, screenToWorld ), M_snapshot(snapshot)
      {}
 
     void render( std::vector<ftxui::Elements> & cells, bool isSquarePixel );
@@ -43,7 +43,7 @@ public:
     bool isTranslating() const { return M_isTranslating; }
 
 public:
-    void deleteContent( Sprite & sprite );
+    void deleteContent( Layer & layer );
 
     void beginTranslation();
     void endTranslation();
@@ -52,15 +52,15 @@ public:
 
 
 private:
-    Sprite & M_snapshot;
+    Layer & M_snapshot;
 
     int M_startX = 0, M_startY = 0;
     int M_endX = 0, M_endY = 0;
 
     ftxui::Color M_color = ftxui::Color::White;
 
-    //Copy of sprite fragment as sort of floating layer
-    Sprite::GridData M_selection;
+    //Copy of layer fragment as sort of floating layer
+    Layer::GridData M_selection;
 
     bool M_isTranslating = false;
 };

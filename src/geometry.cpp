@@ -5,7 +5,7 @@ namespace Termisprite::Geometry
 {
 
 void
-drawLine(BrushTool & brush, Sprite & sprite,  int x0, int y0, int x1, int y1 )
+drawLine(BrushTool & brush, Layer & layer,  int x0, int y0, int x1, int y1 )
 {
     int dx = std::abs(x1 - x0);
     int sx = x0 < x1 ? 1 : -1;

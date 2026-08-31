@@ -2,7 +2,7 @@ namespace Termisprite
 {
 
 class BrushTool;
-class Sprite;
+class Layer;
 
 namespace Geometry
 {
@@ -10,12 +10,12 @@ namespace Geometry
 
 //Bresenham's line algorithm
 void
-drawLine(BrushTool & brush, Sprite & sprite,  int x0, int y0, int x1, int y1 );
+drawLine(BrushTool & brush, Layer & layer,  int x0, int y0, int x1, int y1 );
 
 
 //BFS flood fill algorithm
 void
-floodFill( BrushTool & brush, Sprite & sprite, int x, int y );
+floodFill( BrushTool & brush, Layer & layer, int x, int y );
 
 }
 

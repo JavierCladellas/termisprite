@@ -15,8 +15,8 @@ class BrushTool
     : public Tool
 {
 public:
-    BrushTool( Sprite & sprite, BrushTool & brush, CanvasCursor & cursor, std::function<std::pair<int,int>(int,int)> screenToWorld )
-        : Tool( sprite, brush, cursor, screenToWorld )
+    BrushTool( Layer & layer, BrushTool & brush, CanvasCursor & cursor, std::function<std::pair<int,int>(int,int)> screenToWorld )
+        : Tool( layer, brush, cursor, screenToWorld )
     {}
 
     void apply();

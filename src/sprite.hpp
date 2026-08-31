@@ -18,13 +18,13 @@ struct Pixel
     ftxui::Color color = ftxui::Color::RGB(255, 255, 255);
 };
 
-class Sprite
+class Layer
 {
 public:
     using GridData = std::vector<std::vector<Pixel>>;
 public:
-    Sprite( int width = 48, int height = 48 )
-        : M_width( width ), M_height( height )
+    Layer( int width = 48, int height = 48, std::string const& name = "Unamed Layer" )
+        : M_width( width ), M_height( height ), M_name( name )
     {
         M_grid.resize( M_height, std::vector<Pixel>( M_width ) );
     }
@@ -53,6 +53,9 @@ public:
     void clear() { M_grid.assign(M_height, std::vector<Pixel>(M_width)); };
     void resize( int width, int height );
 
+    bool isVisible() const { return M_isVisible; };
+    void toggleVisibility() { M_isVisible = !M_isVisible; }
+
     void flipVertical()
     {
         std::reverse( M_grid.begin(), M_grid.end() );
@@ -72,6 +75,8 @@ private:
     int M_width, M_height;
     GridData M_grid;
 
+    bool M_isVisible = true;
+    std::string M_name;
 };
 
 
@@ -82,37 +87,17 @@ public:
         : M_maxSize( maxSize ), M_currentIndex( 0 )
     { }
 
-    void push( Sprite const & sprite ) { M_history.push_back( sprite ); }
-    void save( Sprite const& sprite );
-    void undo( Sprite & sprite );
-    void redo( Sprite & sprite );
+    void push( Layer const & layer ) { M_history.push_back( layer ); }
+    void save( Layer const& layer );
+    void undo( Layer & layer );
+    void redo( Layer & layer );
 
 
 private:
-    std::deque<Sprite> M_history;
+    std::deque<Layer> M_history;
     int M_maxSize = 50;
     int M_currentIndex = 0;
 };
 
-
-
-class Layer
-{
-
-public:
-    Layer( Sprite & sprite )
-        : M_sprite( sprite )
-    {}
-
-    bool isVisible() const { return M_isVisible; };
-    void toggleVisibility() { M_isVisible = !M_isVisible; }
-
-private:
-    bool M_isVisible = true;
-    std::string M_name;
-    Sprite & M_sprite;
-
-
-};
 
 }

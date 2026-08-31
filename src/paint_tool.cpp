@@ -40,12 +40,12 @@ void
 PaintTool::floodFillPaint( int x, int y )
 {
     int width, height;
-    std::tie(width, height) = M_sprite.size();
+    std::tie(width, height) = M_layer.size();
 
     if ( x < 0 || x >= width || y < 0 || y >= height )
         return;
 
-    Pixel & targetCell = M_sprite.at(x, y);
+    Pixel & targetCell = M_layer.at(x, y);
     Pixel targetPixel = targetCell;
 
     if ( M_brush == targetPixel )
@@ -62,7 +62,7 @@ PaintTool::floodFillPaint( int x, int y )
         if ( cx < 0 || cx >= width || cy < 0 || cy >= height )
             continue;
 
-        Pixel & currentCell = M_sprite.at(cx, cy);
+        Pixel & currentCell = M_layer.at(cx, cy);
 
         if ( currentCell.brush != targetPixel.brush || currentCell.color != targetPixel.color )
             continue;

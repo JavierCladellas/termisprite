@@ -60,14 +60,14 @@ SelectionTool::beginTranslation()
     if ( M_isTranslating || !isActive() ) return;
 
     M_isTranslating = true;
-    M_snapshot = M_sprite;
+    M_snapshot = M_layer;
 
     int w = width();
     int h = height();
     M_selection.assign(h, std::vector<Pixel>(w));
 
     int maxW, maxH;
-    std::tie(maxW, maxH) = M_sprite.size();
+    std::tie(maxW, maxH) = M_layer.size();
 
     for ( int y = 0; y < h; ++y )
     {
@@ -99,9 +99,9 @@ SelectionTool::translateContent( int dx, int dy )
         beginTranslation();
 
 
-    M_sprite = M_snapshot;
+    M_layer = M_snapshot;
     int maxW, maxH;
-    std::tie(maxW, maxH) = M_sprite.size();
+    std::tie(maxW, maxH) = M_layer.size();
 
     setStart( startX() + dx, startY() + dy);
     setEnd( endX() + dx, endY() + dy);
@@ -115,7 +115,7 @@ SelectionTool::translateContent( int dx, int dy )
         for ( int x = 0; x < w; ++x )
         {
             if ( minX() + x < 0 || minX() + x >= maxW ) continue;
-            M_sprite.at(minX() + x,minY() + y) = M_selection[y][x];
+            M_layer.at(minX() + x,minY() + y) = M_selection[y][x];
         }
     }
 
@@ -124,13 +124,13 @@ SelectionTool::translateContent( int dx, int dy )
 
 
 void
-SelectionTool::deleteContent( Sprite & sprite )
+SelectionTool::deleteContent( Layer & layer )
 {
     int w = width();
     int h = height();
 
     int maxW, maxH;
-    std::tie(maxW, maxH) = sprite.size();
+    std::tie(maxW, maxH) = layer.size();
 
     for ( int y = 0; y < h; ++y )
     {
@@ -138,7 +138,7 @@ SelectionTool::deleteContent( Sprite & sprite )
         for ( int x = 0; x < w; ++x )
         {
             if ( minX() + x < 0 || minX() + x >= maxW ) continue;
-            sprite.at(minX() + x,minY() + y) = Pixel{" ", ftxui::Color::White};
+            layer.at(minX() + x,minY() + y) = Pixel{" ", ftxui::Color::White};
         }
     }
 
@@ -188,7 +188,7 @@ SelectionTool::processKeyboardEvent( ftxui::Event event )
         setActive(false);
 
         int maxW, maxH;
-        std::tie(maxW, maxH) = M_sprite.size();
+        std::tie(maxW, maxH) = M_layer.size();
         bool moved = processTranslation( event, maxW, maxH );
 
         setActive(wasActive);

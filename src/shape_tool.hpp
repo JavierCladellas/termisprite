@@ -12,8 +12,8 @@ class ShapeTool
     : public Tool
 {
 public:
-    ShapeTool( ToolType & toolType, Sprite & sprite, Sprite & snapshot, BrushTool & brush, CanvasCursor & cursor, std::function<std::pair<int,int>(int,int)> screenToWorld )
-        : Tool( sprite, brush, cursor, screenToWorld ), M_toolType( toolType ), M_snapshot( snapshot )
+    ShapeTool( ToolType & toolType, Layer & layer, Layer & snapshot, BrushTool & brush, CanvasCursor & cursor, std::function<std::pair<int,int>(int,int)> screenToWorld )
+        : Tool( layer, brush, cursor, screenToWorld ), M_toolType( toolType ), M_snapshot( snapshot )
     {}
 
     bool processKeyboardEvent( ftxui::Event event ) override;
@@ -26,7 +26,7 @@ private:
 
 private:
     ToolType & M_toolType;
-    Sprite & M_snapshot;
+    Layer & M_snapshot;
 
     int M_shapeStartX = 0;
     int M_shapeStartY = 0;

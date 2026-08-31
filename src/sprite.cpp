@@ -4,7 +4,7 @@ namespace Termisprite
 {
 
 void
-Sprite::resize( int width, int height )
+Layer::resize( int width, int height )
 {
     M_width = width;
     M_height = height;
@@ -18,8 +18,10 @@ Sprite::resize( int width, int height )
 
 
 void
-Sprite::render( std::vector<std::vector<ftxui::Element>> & cells, bool isSquarePixel ) const
+Layer::render( std::vector<std::vector<ftxui::Element>> & cells, bool isSquarePixel ) const
 {
+    if (!M_isVisible) return;
+
     int canvasHeight = cells.size();
     if ( canvasHeight == 0 ) return;
     int canvasWidth = cells[0].size();
@@ -53,12 +55,12 @@ Sprite::render( std::vector<std::vector<ftxui::Element>> & cells, bool isSquareP
 
 
 void
-SpriteHistory::save( Sprite const& sprite )
+SpriteHistory::save( Layer const& layer )
 {
     if ( M_currentIndex < static_cast<int>(M_history.size()) - 1 )
         M_history.erase( M_history.begin() + M_currentIndex + 1, M_history.end() );
 
-    M_history.push_back( sprite );
+    M_history.push_back( layer );
 
     if ( M_history.size() > M_maxSize )
         M_history.erase( M_history.begin() );
@@ -67,22 +69,22 @@ SpriteHistory::save( Sprite const& sprite )
 }
 
 void
-SpriteHistory::undo( Sprite & sprite )
+SpriteHistory::undo( Layer & layer )
 {
     if ( M_currentIndex > 0 )
     {
         M_currentIndex--;
-        sprite = M_history[M_currentIndex];
+        layer = M_history[M_currentIndex];
     }
 }
 
 void
-SpriteHistory::redo( Sprite & sprite )
+SpriteHistory::redo( Layer & layer )
 {
     if ( M_currentIndex < static_cast<int>(M_history.size()) - 1 )
     {
         M_currentIndex++;
-        sprite = M_history[M_currentIndex];
+        layer = M_history[M_currentIndex];
     }
 }
 
