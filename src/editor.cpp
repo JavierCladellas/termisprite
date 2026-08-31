@@ -14,7 +14,8 @@ EditorCanvasComponent::OnRender()
 {
 
     M_grid->render( M_cells, M_squarePixel );
-    activeLayer().render( M_cells, M_squarePixel );
+    for ( auto & layer : M_layers )
+        layer->render( M_cells, M_squarePixel );
     M_selectionTool->render(M_cells, M_squarePixel);
     M_cursor->render( M_cells, *M_brushTool, M_squarePixel );
 
