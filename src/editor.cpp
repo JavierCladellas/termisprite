@@ -18,10 +18,13 @@ EditorCanvasComponent::OnRender()
     //Reverse order
     for ( int i = M_layers.size() - 1; i >= 0; --i )
     {
-        M_layers[i].get()->render( M_cells, M_squarePixel );
-        if ( M_activeLayerBorderVisible && i == M_activeLayerIndex )
-            renderActiveLayerBorder();
+        auto & layer = M_layers[i];
+        if ( !layer ) continue;
+        layer->render( M_cells, M_squarePixel );
     }
+
+    if ( M_activeLayerBorderVisible )
+        renderActiveLayerBorder();
 
     M_selectionTool->render(M_cells, M_squarePixel);
     M_cursor->render( M_cells, *M_brushTool, M_squarePixel );
@@ -320,16 +323,16 @@ EditorCanvasComponent::renderActiveLayerBorder()
     auto [w,h] = M_activeLayer->size();
     auto [x0,y0] = M_activeLayer->position();
 
-    for ( int y = y0 -1; y < h + y0 + 1; ++y )
+    for ( int y = y0 ; y < h + y0 ; ++y )
     {
         if ( y < 0 || y >= M_camera->height() ) continue;
-        bool isTop = (y == y0 - 1);
-        bool isBot = (y == h + y0);
+        bool isTop = (y == y0 );
+        bool isBot = (y == h + y0 - 1);
 
-        for ( int x = x0 - 1; x < w + x0 + 1; ++x )
+        for ( int x = x0; x < w + x0; ++x )
         {
-            bool isLeft = (x == x0 - 1);
-            bool isRight = (x == w + x0);
+            bool isLeft = (x == x0);
+            bool isRight = (x == w + x0 - 1);
 
             if ( !(isTop || isBot || isLeft || isRight) ) continue;
 

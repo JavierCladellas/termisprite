@@ -127,7 +127,7 @@ public:
     void addLayer( std::string const& name = "New Layer" )
     {
         M_layers.insert( M_layers.begin(), std::make_unique<Layer>( M_width, M_height, name ) );
-        M_activeLayerIndex = M_layers.size() - 1;
+        M_activeLayerIndex = 0;
     }
     void removeLayer( int index )
     {
@@ -138,6 +138,7 @@ public:
         M_layers.erase( M_layers.begin() + index );
         if ( M_activeLayerIndex >= M_layers.size() )
             M_activeLayerIndex = M_layers.size() - 1;
+        M_activeLayer = M_layers[M_activeLayerIndex].get();
     }
     void setActiveLayer( int index )
     {
@@ -222,7 +223,6 @@ private:
 
     bool M_squarePixel = true;
     bool M_activeLayerBorderVisible = false;
-
 };
 
 

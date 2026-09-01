@@ -47,7 +47,7 @@ LayersComponent::createLayerRow( int index )
 
     auto visibilityBtn = ftxui::Button(
         layer->isVisible() ? "O" : " ",
-        [this, &layer, index](){ layer->toggleVisibility(); M_editor->saveState(); rebuild();},
+        [this, index](){ M_editor->layers()[index]->toggleVisibility(); M_editor->saveState(); rebuild();},
         ftxui::ButtonOption::Ascii()
     );
 
