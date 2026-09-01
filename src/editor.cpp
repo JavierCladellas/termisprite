@@ -118,65 +118,6 @@ EditorCanvasComponent::resize( int width, int height )
 
 
 
-
-// bool
-// EditorCanvasComponent::processPanning( ftxui::Event event )
-// {
-//     if ( !event.is_mouse() ) return false;
-//     auto mouse = event.mouse();
-//
-//     bool isPanTrigger = ( mouse.button == ftxui::Mouse::Button::Middle ) ||
-//                         ( M_currentState.toolType == ToolType::PAN && mouse.button == ftxui::Mouse::Button::Left );
-//
-//     if ( mouse.motion == ftxui::Mouse::Pressed && !M_isPanning )
-//     {
-//         if ( isPanTrigger && M_box.Contain(mouse.x, mouse.y) )
-//         {
-//             TakeFocus();
-//             M_isPanning = true;
-//             M_cursor->setVisibility(false);
-//             M_lastPanMouseX = mouse.x;
-//             M_lastPanMouseY = mouse.y;
-//             return true;
-//         }
-//     }
-//     else if ( M_isPanning )
-//     {
-//         if ( mouse.motion == ftxui::Mouse::Released )
-//         {
-//             M_isPanning = false;
-//             return true;
-//         }
-//
-//         if ( mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed )
-//         {
-//             int dx = (mouse.x - M_lastPanMouseX) / (M_squarePixel ? 2 : 1);
-//             int dy = mouse.y - M_lastPanMouseY;
-//
-//             if ( dx != 0 || dy != 0 )
-//             {
-//                 int visibleW = std::max(1, (M_box.x_max - M_box.x_min + 1) / (M_squarePixel ? 2 : 1));
-//                 int visibleH = std::max(1, (M_box.y_max - M_box.y_min + 1));
-//
-//                 int maxCameraX = std::max(0, M_width - visibleW);
-//                 int maxCameraY = std::max(0, M_height - visibleH);
-//
-//                 M_cameraX = std::clamp(M_cameraX - dx, 0, maxCameraX);
-//                 M_cameraY = std::clamp(M_cameraY - dy, 0, maxCameraY);
-//
-//                 M_lastPanMouseX += (dx * (M_squarePixel ? 2 : 1));
-//                 M_lastPanMouseY += dy;
-//             }
-//             return true;
-//         }
-//     }
-//
-//     return false;
-// }
-
-
-
-
 bool
 EditorCanvasComponent::processRightClickModal( ftxui::Event event )
 {
@@ -307,8 +248,14 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
     if ( processRightClickModal( event ) )
         return true;
 
-    // if ( processPanning( event ) )
-    //     return true;
+    if ( M_currentState.toolType == ToolType::PAN ) //TODO: Support middle click
+    {
+        if ( M_camera->processPanning( event, M_width, M_height ) )
+        {
+            TakeFocus();
+            return true;
+        }
+    }
 
 
     return false;
@@ -322,10 +269,14 @@ EditorCanvasComponent::renderActiveLayerBorder()
 
     auto [w,h] = M_activeLayer->size();
     auto [x0,y0] = M_activeLayer->position();
+    auto [camX, camY] = M_camera->position();
 
     for ( int y = y0 ; y < h + y0 ; ++y )
     {
-        if ( y < 0 || y >= M_camera->height() ) continue;
+        int screenY = y - camY;
+
+        if ( screenY < 0 || screenY >= M_camera->height() ) continue;
+
         bool isTop = (y == y0 );
         bool isBot = (y == h + y0 - 1);
 
@@ -336,7 +287,9 @@ EditorCanvasComponent::renderActiveLayerBorder()
 
             if ( !(isTop || isBot || isLeft || isRight) ) continue;
 
-            int terminalXStart = x * pixelScale;
+            int screenX = x - camX;
+            int terminalXStart = screenX * pixelScale;
+
             if ( terminalXStart < 0 || terminalXStart >= M_camera->width() * pixelScale ) continue;
 
             std::string brushL, brushR;
@@ -351,10 +304,10 @@ EditorCanvasComponent::renderActiveLayerBorder()
             else if (isLeft) { brushL = "⡇"; brushR = " "; }
             else if (isRight) { brushL = "⢸"; brushR = " "; }
 
-            M_cells[y][terminalXStart] = ftxui::text(brushL) | ftxui::color(ftxui::Color::Cyan);
+            M_cells[screenY][terminalXStart] = ftxui::text(brushL) | ftxui::color(ftxui::Color::Cyan);
 
             if ( pixelScale == 2 && (terminalXStart + 1 < M_camera->width() * pixelScale) )
-                M_cells[y][terminalXStart + 1] = ftxui::text(brushR) | ftxui::color(ftxui::Color::Cyan);
+                M_cells[screenY][terminalXStart + 1] = ftxui::text(brushR) | ftxui::color(ftxui::Color::Cyan);
         }
 
 

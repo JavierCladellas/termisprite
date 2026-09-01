@@ -1,5 +1,6 @@
 #pragma once
 
+#include "camera.hpp"
 #include <ftxui/dom/elements.hpp>
 
 
@@ -17,7 +18,7 @@ enum class GridType
 class Grid
 {
 public:
-    Grid() = default;
+    Grid( Camera & camera ) : M_camera(camera) {};
 
     void render( std::vector<ftxui::Elements> & cells, bool isPixelSquare = true ) const;
 
@@ -30,6 +31,7 @@ public:
 private:
     GridType M_gridType = GridType::LINES;
     bool M_isVisible = true;
+    Camera & M_camera;
 };
 
 }

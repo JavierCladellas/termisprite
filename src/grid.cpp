@@ -19,6 +19,8 @@ Grid::render( std::vector<ftxui::Elements> & cells, bool isPixelSquare ) const
         ftxui::Elements & row = cells[y];
         int width = row.size(); // For potential support to non rectangular grids?
 
+        int worldY = y + M_camera.posY();
+
         for ( int x = 0; x < width; ++x )
         {
             auto & cell = row[x];
@@ -26,10 +28,12 @@ Grid::render( std::vector<ftxui::Elements> & cells, bool isPixelSquare ) const
             int logicalX = isPixelSquare ? (x / 2) : x;
             bool isLeftHalf = isPixelSquare ? (x % 2 == 0) : true;
 
+            int worldX = logicalX + M_camera.posX();
+
             switch( M_gridType )
             {
                 case GridType::POINTS:
-                    if ( logicalX %  2 != 0 ) continue;
+                    if ( worldX %  2 != 0 ) continue;
 
                     if ( isLeftHalf )
                         cell = ftxui::text(".");
@@ -38,7 +42,7 @@ Grid::render( std::vector<ftxui::Elements> & cells, bool isPixelSquare ) const
                 case GridType::CHECKERBOARD:
                     cell = ftxui::text("█");
 
-                    if ( ( logicalX + y ) % 2 == 0 )
+                    if ( ( worldX + worldY ) % 2 == 0 )
                          cell |= ftxui::color( ftxui::Color::GrayDark );
                     else
                          cell |= ftxui::color( ftxui::Color::Black );
@@ -46,11 +50,11 @@ Grid::render( std::vector<ftxui::Elements> & cells, bool isPixelSquare ) const
                     break;
                 case GridType::LINES:
 
-                    if ( y != 0 && y % 8 == 0 )
+                    if ( worldY != 0 && worldY % 8 == 0 )
                         cell = ftxui::text("─");
-                    if ( logicalX != 0 && logicalX % 8 == 0 )
+                    if ( worldX != 0 && worldX % 8 == 0 )
                         cell = isLeftHalf ? ftxui::text("│") : ftxui::text(" ");
-                    if (  y != 0 && y % 8 == 0 &&  logicalX != 0 && logicalX % 8 == 0  ) //Intersections
+                    if (  worldY != 0 && worldY % 8 == 0 &&  worldX != 0 && worldX % 8 == 0  ) //Intersections
                         cell = isLeftHalf ? ftxui::text("┼") : ftxui::text("─");
 
                     cell |= ftxui::color( ftxui::Color::GrayDark );

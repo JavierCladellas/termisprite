@@ -28,10 +28,18 @@ Layer::render( std::vector<std::vector<ftxui::Element>> & cells, bool isSquarePi
 
     int scale = isSquarePixel ? 2 : 1;
 
-    for ( int logicalY = 0; logicalY < M_height; ++logicalY )
+    int startY = std::max(0, M_camera.posY() - M_y);
+    int endY = std::min(M_height, M_camera.posY() + canvasHeight - M_y);
+
+    int startX = std::max(0, M_camera.posX() - M_x);
+    int endX = std::min(M_width, M_camera.posX() + (canvasWidth / scale) - M_x);
+
+    for ( int logicalY = startY; logicalY < endY; ++logicalY )
     {
-        if ( logicalY + M_y >= canvasHeight ) break;
-        for ( int logicalX = 0; logicalX < M_width; ++logicalX )
+        int screenY = logicalY + M_y - M_camera.posY();
+        if ( screenY < 0 || screenY >= canvasHeight ) continue;
+
+        for ( int logicalX = startX; logicalX < endX; ++logicalX )
         {
             Pixel const& cellContent = at(logicalX, logicalY);
 
@@ -39,12 +47,14 @@ Layer::render( std::vector<std::vector<ftxui::Element>> & cells, bool isSquarePi
             if ( cellContent.brush == " " )
                 continue;
 
-            int terminalXStart = logicalX * scale;
+            int screenXLogical = logicalX + M_x - M_camera.posX();
+            int terminalXStart = screenXLogical * scale;
+
             for ( int i = 0; i < scale; ++i )
             {
                 int terminalX = terminalXStart + i;
-                if ( terminalX + M_x >= canvasWidth  ) break;
-                cells[logicalY + M_y][terminalX + M_x] = ftxui::text(brush) | ftxui::color( cellContent.color );
+                if ( terminalX < 0 || terminalX >= canvasWidth ) continue;
+                cells[screenY][terminalX] = ftxui::text(brush) | ftxui::color( cellContent.color );
             }
         }
     }

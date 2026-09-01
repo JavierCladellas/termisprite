@@ -1,5 +1,6 @@
 #pragma once
 
+#include "camera.hpp"
 #include <algorithm>
 #include <ftxui/dom/elements.hpp>
 #include <stdexcept>
@@ -23,10 +24,26 @@ class Layer
 public:
     using GridData = std::vector<std::vector<Pixel>>;
 public:
-    Layer( int width = 48, int height = 48, std::string const& name = "Unamed Layer" )
-        : M_width( width ), M_height( height ), M_name( name )
+    Layer() : M_camera(*new Camera( 48, 48 ) ) { }
+    Layer(Camera & camera, int width = 48, int height = 48, std::string const& name = "Unamed Layer" )
+        : M_width( width ), M_height( height ), M_name( name ), M_camera( camera )
     {
         M_grid.resize( M_height, std::vector<Pixel>( M_width ) );
+    }
+
+    Layer( Layer const& other )
+        : M_width( other.M_width ), M_height( other.M_height ), M_x( other.M_x ), M_y( other.M_y ), M_grid( other.M_grid ), M_isVisible( other.M_isVisible ), M_name( other.M_name ), M_camera( other.M_camera )
+    {}
+    Layer operator=( Layer const& other )
+    {
+        M_width = other.M_width;
+        M_height = other.M_height;
+        M_x = other.M_x;
+        M_y = other.M_y;
+        M_grid = other.M_grid;
+        M_isVisible = other.M_isVisible;
+        M_name = other.M_name;
+        return *this;
     }
 
 
@@ -81,6 +98,8 @@ private:
 
     bool M_isVisible = true;
     std::string M_name;
+
+    Camera & M_camera;
 };
 
 

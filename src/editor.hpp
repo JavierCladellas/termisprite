@@ -50,11 +50,12 @@ public:
           M_shortcutManager( shortcutManager ),
           M_contextWindow( ContextWindow( shortcutManager) )
     {
-        M_layers.push_back( std::make_unique<Layer>( width, height, "Layer 1" ) );
+
+        M_camera = std::make_unique<Camera>( M_width, M_height, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+
+        M_layers.push_back( std::make_unique<Layer>( *M_camera, width, height, "Layer 1" ) );
         setActiveLayer( 0 );
 
-        M_camera = std::make_unique<Camera>( M_width, M_height );
-        //TODO: Must compute available size in screen
         M_cells = std::vector<ftxui::Elements>( M_camera->height(), ftxui::Elements( M_camera->width() * ( M_squarePixel ? 2 : 1 ), ftxui::text(" ") ) );
 
         // updateViewport();
@@ -64,7 +65,7 @@ public:
         //
 
 
-        M_grid = std::make_unique<Grid>(),
+        M_grid = std::make_unique<Grid>( *M_camera );
         M_cursor = std::make_unique<CanvasCursor>();
         M_brushTool = std::make_unique<BrushTool>( M_activeLayer, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
 
@@ -126,7 +127,7 @@ public:
     Layer const& activeLayer() const { return *M_layers[M_activeLayerIndex]; }
     void addLayer( std::string const& name = "New Layer" )
     {
-        M_layers.insert( M_layers.begin(), std::make_unique<Layer>( M_width, M_height, name ) );
+        M_layers.insert( M_layers.begin(), std::make_unique<Layer>( *M_camera, M_width, M_height, name ) );
         M_activeLayerIndex = 0;
     }
     void removeLayer( int index )
