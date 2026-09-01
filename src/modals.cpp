@@ -273,7 +273,7 @@ void
 ExportModal::onConfirm()
 {
     if (!M_filepathInput.empty())
-        SpriteExporter::exportImage( M_filepathInput, M_editorCanvas.activeLayer(), M_formatOptions[M_selectedFormatIndex] );
+        SpriteExporter::exportImage( M_filepathInput, M_editorCanvas.layers(), M_formatOptions[M_selectedFormatIndex] );
     M_filepathInput = "";
 }
 

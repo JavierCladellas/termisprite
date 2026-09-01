@@ -358,7 +358,7 @@ SpriteExporter::exportProject( std::string const& filepath,
 
 
 bool
-SpriteExporter::exportImage( std::string const& filepath, Layer const& targetLayer, std::string const& format )
+SpriteExporter::exportImage( std::string const& filepath, std::vector<std::unique_ptr<Layer>> const& layers, std::string const& format )
 {
     std::map<std::string, ImageFormat> formatMap = {
         {"png", ImageFormat::PNG},
@@ -367,10 +367,16 @@ SpriteExporter::exportImage( std::string const& filepath, Layer const& targetLay
         {"bmp", ImageFormat::BMP},
         {"ascii", ImageFormat::ASCII}
     };
-
-    auto [w, h] = targetLayer.size();
-    if (w <= 0 || h <= 0)
+    if ( layers.empty() )
         return false;
+
+    int w = 0, h = 0;
+    for ( auto const& layer : layers )
+    {
+        auto [lw, lh] = layer->size();
+        w = std::max(w, lw);
+        h = std::max(h, lh);
+    }
 
     if ( !formatMap.contains(format) )
         return false;
@@ -394,7 +400,18 @@ SpriteExporter::exportImage( std::string const& filepath, Layer const& targetLay
         {
             for (int x = 0; x < w; ++x)
             {
-                Pixel const& cell = targetLayer.at(x, y);
+                Pixel cell;
+                for ( auto const& layer : layers )
+                {
+                    if ( !layer || !layer->isVisible() )
+                        continue;
+                    auto [lw, lh] = layer->size();
+                    if ( x >= lw || y >= lh )
+                        continue;
+                    cell = layer->at(x,y);
+                    if ( cell.brush != " " )
+                        break;
+                }
                 int index = (y * w + x) * channels;
 
                 if (cell.brush == " ")
@@ -457,7 +474,18 @@ SpriteExporter::exportImage( std::string const& filepath, Layer const& targetLay
             {
                 for ( int x = 0; x < w; ++x )
                 {
-                    Pixel const& cell = targetLayer.at(x, y);
+                    Pixel cell;
+                    for ( auto const& layer : layers )
+                    {
+                        if ( !layer || !layer->isVisible() ) continue;
+                        auto [lw, lh] = layer->size();
+                        if ( x >= lw || y >= lh )
+                            continue;
+                        cell = layer->at(x,y);
+                        if ( cell.brush != " " )
+                            break;
+                    }
+
                     if ( !cell.brush.empty() )
                         outFile << cell.brush;
                 }

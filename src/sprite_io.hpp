@@ -44,7 +44,7 @@ public:
                    std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes );
 
     static bool
-    exportImage( std::string const& filepath, Layer const& targetLayer, std::string const& format = "png" );
+    exportImage( std::string const& filepath, std::vector<std::unique_ptr<Layer>> const& layers, std::string const& format = "png" );
 
     static bool
     exportPalette( std::string const& filepath, std::vector<ftxui::Color> const& palette, std::string const& format = "gpl", std::string const& paletteName = "Unnamed Palette" );
