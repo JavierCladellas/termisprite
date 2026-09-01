@@ -66,17 +66,20 @@ SelectionTool::beginTranslation()
     int h = height();
     M_selection.assign(h, std::vector<Pixel>(w));
 
-    int maxW, maxH;
-    std::tie(maxW, maxH) = M_layer->size();
+    auto [maxW, maxH] = M_layer->size();
+    auto [lX, lY] = M_layer->position();
 
     for ( int y = 0; y < h; ++y )
     {
-        if ( minY() + y < 0 || minY() + y >= maxH ) continue;
+        int layerY = minY() + y - lY;
+        if ( layerY < 0 || layerY >= maxH ) continue;
         for ( int x = 0; x < w; ++x )
         {
-            if ( minX() + x < 0 || minX() + x >= maxW ) continue;
-            M_selection[y][x] = M_snapshot.at(minX() + x,minY() + y);
-            M_snapshot.at(minX() + x,minY() + y) = Pixel{" ", ftxui::Color::White};
+            int layerX = minX() + x - lX;
+            if ( layerX < 0 || layerX >= maxW ) continue;
+
+            M_selection[y][x] = M_snapshot.at(layerX,layerY);
+            M_snapshot.at(layerX,layerY) = Pixel{" ", ftxui::Color::White};
         }
     }
 }
@@ -100,8 +103,8 @@ SelectionTool::translateContent( int dx, int dy )
 
 
     *M_layer = M_snapshot;
-    int maxW, maxH;
-    std::tie(maxW, maxH) = M_layer->size();
+    auto [maxW,maxH] = M_layer->size();
+    auto [lX, lY] = M_layer->position();
 
     setStart( startX() + dx, startY() + dy);
     setEnd( endX() + dx, endY() + dy);
@@ -111,11 +114,13 @@ SelectionTool::translateContent( int dx, int dy )
     int h = height();
     for ( int y = 0; y < h; ++y )
     {
-        if ( minY() + y < 0 || minY() + y >= maxH ) continue;
+        int layerY = minY() + y - lY;
+        if ( layerY < 0 || layerY >= maxH ) continue;
         for ( int x = 0; x < w; ++x )
         {
-            if ( minX() + x < 0 || minX() + x >= maxW ) continue;
-            M_layer->at(minX() + x,minY() + y) = M_selection[y][x];
+            int layerX = minX() + x - lX;
+            if ( layerX < 0 || layerX >= maxW ) continue;
+            M_layer->at(layerX,layerY) = M_selection[y][x];
         }
     }
 
@@ -129,16 +134,18 @@ SelectionTool::deleteContent( Layer & layer )
     int w = width();
     int h = height();
 
-    int maxW, maxH;
-    std::tie(maxW, maxH) = layer.size();
+    auto [maxW, maxH] = layer.size();
+    auto [lX, lY] = layer.position();
 
     for ( int y = 0; y < h; ++y )
     {
-        if ( minY() + y < 0 || minY() + y >= maxH ) continue;
+        int layerY = minY() + y - lY;
+        if ( layerY < 0 || layerY >= maxH ) continue;
         for ( int x = 0; x < w; ++x )
         {
-            if ( minX() + x < 0 || minX() + x >= maxW ) continue;
-            layer.at(minX() + x,minY() + y) = Pixel{" ", ftxui::Color::White};
+            int layerX = minX() + x - lX;
+            if ( layerX < 0 || layerX >= maxW ) continue;
+            layer.at(layerX, layerY) = Pixel{" ", ftxui::Color::White};
         }
     }
 
