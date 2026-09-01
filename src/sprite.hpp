@@ -72,6 +72,8 @@ public:
 
     bool isVisible() const { return M_isVisible; };
     void toggleVisibility() { M_isVisible = !M_isVisible; }
+    std::pair<int, int> position() const { return { M_x, M_y }; }
+    void setPosition( int x, int y ) { M_x = x; M_y = y; }
 
     void flipVertical()
     {
@@ -85,11 +87,12 @@ public:
     }
 
     std::pair<int, int> size() const { return { M_width, M_height }; }
-    std::pair<int, int> position() const { return { M_x, M_y }; }
 
     void render( std::vector<std::vector<ftxui::Element>> & cells, bool isSquarePixel ) const;
 
     std::string const& name() const { return M_name; }
+
+    Camera const& camera() const { return M_camera; }
 
 private:
     int M_width, M_height;

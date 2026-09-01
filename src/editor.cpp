@@ -241,6 +241,42 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
     }
 
 
+    if ( M_currentState.toolType == ToolType::MOVE_LAYER )
+    {
+        if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
+        {
+            M_currentState.toolType = ToolType::DRAW;
+            return true;
+        }
+        if ( M_moveTool->processKeyboardEvent( event ) )
+        {
+            TakeFocus();
+            saveState();
+            return true;
+        }
+        if ( M_moveTool->processMouseEvent( event ) )
+        {
+            TakeFocus();
+            if ( !M_moveTool->isActive() )
+                saveState();
+            return true;
+        }
+    }
+
+    if ( M_currentState.toolType == ToolType::PAN ) //TODO: Support middle click
+    {
+        if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
+        {
+            M_currentState.toolType = ToolType::DRAW;
+            return true;
+        }
+        if ( M_camera->processPanning( event, M_width, M_height ) )
+        {
+            TakeFocus();
+            return true;
+        }
+    }
+
     if ( M_cells.size() > 0 && M_cursor->processMovement( event,  M_camera->width(), M_camera->height() ) )
         return true;
 
@@ -248,14 +284,6 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
     if ( processRightClickModal( event ) )
         return true;
 
-    if ( M_currentState.toolType == ToolType::PAN ) //TODO: Support middle click
-    {
-        if ( M_camera->processPanning( event, M_width, M_height ) )
-        {
-            TakeFocus();
-            return true;
-        }
-    }
 
 
     return false;

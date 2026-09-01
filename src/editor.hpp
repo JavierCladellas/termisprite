@@ -11,6 +11,7 @@
 #include "camera.hpp"
 #include "contextwindow.hpp"
 #include "eyedropper_tool.hpp"
+#include "move_tool.hpp"
 #include "paint_tool.hpp"
 #include "shape_tool.hpp"
 #include "shortcuts.hpp"
@@ -74,6 +75,7 @@ public:
         M_eyeDropperTool = std::make_unique<EyeDropperTool>( M_activeLayer, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
         M_paintTool = std::make_unique<PaintTool>( M_activeLayer, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
         M_shapeTool = std::make_unique<ShapeTool>( M_currentState.toolType, M_activeLayer, &M_spriteSnapshot, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_moveTool = std::make_unique<MoveTool>( M_activeLayer, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
 
 
         M_spriteHistory.push( *M_activeLayer );
@@ -153,6 +155,7 @@ public:
         if (M_eyeDropperTool) M_eyeDropperTool->setLayer( M_activeLayer );
         if (M_paintTool) M_paintTool->setLayer( M_activeLayer );
         if (M_shapeTool) M_shapeTool->setLayer( M_activeLayer );
+        if (M_moveTool) M_moveTool->setLayer( M_activeLayer );
 
 
     }
@@ -210,6 +213,7 @@ private:
     std::unique_ptr<PaintTool> M_paintTool;
     std::unique_ptr<ShapeTool> M_shapeTool;
     std::unique_ptr<Camera> M_camera;
+    std::unique_ptr<MoveTool> M_moveTool;
 
     std::shared_ptr<ContextWindowComponent> M_contextWindow;
 

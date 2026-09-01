@@ -35,7 +35,7 @@ getDefaultKeymap()
         { ShortcutType::CHANGE_GRID_TYPE, {"Change Grid Type", "[Shift+G]",  {ftxui::Event::Character('G')}} },
         { ShortcutType::TOGGLE_PAN,        {"Toggle Pan",       "[T]",           {ftxui::Event::Character('t'), ftxui::Event::Character('T')}} },
 
-        { ShortcutType::MOVE_LAYER,        {"Move Layer",       "[Shift+M]",     {ftxui::Event::Character('M')}} },
+        { ShortcutType::MOVE_LAYER,        {"Move Layer",       "[M]",     {ftxui::Event::Character('m'), ftxui::Event::Character('M')}} },
         { ShortcutType::SELECT_BRUSH_TOOL, {"Brush",       "[B]",           {ftxui::Event::Character('b'), ftxui::Event::Character('B')}} },
         { ShortcutType::SELECT_ERASER_TOOL,{"Eraser",      "[E]",           {ftxui::Event::Character('e'), ftxui::Event::Character('E')}} },
         { ShortcutType::SELECT_RECTANGLE_TOOL, {"Rectangle",    "[R]",           {ftxui::Event::Character('r'), ftxui::Event::Character('R')}} },
@@ -88,6 +88,7 @@ ShortcutManager::bindAllActions( Termisprite * app )
         else
             app->selectTool(ToolType::PAN);
     });
+    this->bindAction(ShortcutType::MOVE_LAYER, [app]() { app->selectTool(ToolType::MOVE_LAYER); });
 
     this->bindAction(ShortcutType::SELECT_BRUSH_TOOL, [app]() { app->selectTool(ToolType::DRAW); });
     this->bindAction(ShortcutType::SELECT_ERASER_TOOL, [app]() { app->selectTool(ToolType::ERASER); });

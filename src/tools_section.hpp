@@ -22,7 +22,8 @@ enum class ToolType
     EYE_DROPPER,
     PAINT_FILL,
     BOX_SELECT,
-    PAN
+    PAN,
+    MOVE_LAYER
 };
 
 class ToolsComponent
@@ -54,7 +55,8 @@ private:
         { ToolType::EYE_DROPPER, ShortcutType::SELECT_EYE_DROPPER_TOOL },
         { ToolType::PAINT_FILL, ShortcutType::SELECT_PAINT_FILL_TOOL },
         { ToolType::BOX_SELECT, ShortcutType::SELECT_BOX_SELECT_TOOL },
-        { ToolType::PAN, ShortcutType::TOGGLE_PAN }
+        { ToolType::PAN, ShortcutType::TOGGLE_PAN },
+        { ToolType::MOVE_LAYER, ShortcutType::MOVE_LAYER }
     };
 
 };

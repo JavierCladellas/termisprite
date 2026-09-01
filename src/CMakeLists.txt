@@ -10,6 +10,7 @@ add_library( termisprite_lib termisprite.cpp
                              statusbar.cpp
                              sprite_io.cpp
                              shortcuts.cpp
+                             move_tool.cpp
                              tool_settings.cpp
                              colorpalettes.cpp
                              layers.cpp
