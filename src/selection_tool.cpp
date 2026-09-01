@@ -36,13 +36,13 @@ SelectionTool::render( std::vector<ftxui::Elements> & cells, bool isSquarePixel 
 
             if (isTop && isLeft && isBot && isRight) { brushL = "⡏"; brushR = "⢹"; }
             else if (isTop && isLeft) { brushL = "⡏"; brushR = "⠉"; }
-            else if (isTop && isRight) { brushL = "⠉"; brushR = "⢹"; }
+            else if (isTop && isRight) { brushL = "⢹"; brushR = " "; }
             else if (isBot && isLeft) { brushL = "⣇"; brushR = "⣀"; }
-            else if (isBot && isRight) { brushL = "⣀"; brushR = "⣸"; }
+            else if (isBot && isRight) { brushL = "⣸"; brushR = " "; }
             else if (isTop) { brushL = "⠉"; brushR = "⠉"; }
             else if (isBot) { brushL = "⣀"; brushR = "⣀"; }
             else if (isLeft) { brushL = "⡇"; brushR = " "; }
-            else if (isRight) { brushL = " "; brushR = "⢸"; }
+            else if (isRight) { brushL = "⢸"; brushR = " "; }
 
             cells[logicalY][terminalXStart] = ftxui::text(brushL) | ftxui::color( M_color );
 

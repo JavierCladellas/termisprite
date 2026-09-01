@@ -68,6 +68,7 @@ public:
     }
 
     std::pair<int, int> size() const { return { M_width, M_height }; }
+    std::pair<int, int> position() const { return { M_x, M_y }; }
 
     void render( std::vector<std::vector<ftxui::Element>> & cells, bool isSquarePixel ) const;
 
@@ -75,6 +76,7 @@ public:
 
 private:
     int M_width, M_height;
+    int M_x = 0, M_y = 0;
     GridData M_grid;
 
     bool M_isVisible = true;

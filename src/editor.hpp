@@ -175,8 +175,11 @@ public:
             M_activeLayerIndex--;
     }
 
+    bool & activeLayerBorderVisible() { return M_activeLayerBorderVisible; }
+
 private:
 
+    void renderActiveLayerBorder();
     std::pair<int,int> screenToWorld(int screenX, int screenY) const;
     std::pair<int,int> worldToScreen(int worldX, int worldY) const;
 
@@ -218,6 +221,7 @@ private:
     ftxui::Box M_availableBox;
 
     bool M_squarePixel = true;
+    bool M_activeLayerBorderVisible = false;
 
 };
 

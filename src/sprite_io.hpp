@@ -36,6 +36,7 @@ class SpriteExporter
 public:
     SpriteExporter() = default;
 
+    //TODO: FIX MULTI-LAYER EXPORT/IMPORT
     static bool
     exportProject( std::string const& filepath,
                    std::string const& projectName,

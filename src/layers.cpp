@@ -47,7 +47,7 @@ LayersComponent::createLayerRow( int index )
 
     auto visibilityBtn = ftxui::Button(
         layer->isVisible() ? "O" : " ",
-        [this, &layer, index](){ layer->toggleVisibility(); rebuild();},
+        [this, &layer, index](){ layer->toggleVisibility(); M_editor->saveState(); rebuild();},
         ftxui::ButtonOption::Ascii()
     );
 
@@ -104,9 +104,12 @@ LayersComponent::rebuild()
         rebuild();
     }, ftxui::ButtonOption::Ascii());
 
+    auto toggleActiveBorderCheckbox = ftxui::Checkbox("Show Boundaries", &M_editor->activeLayerBorderVisible());
+
     auto layout = ftxui::Container::Vertical(std::move(layerRows));
     layout->Add(ftxui::Renderer([]{ return ftxui::separatorEmpty(); }));
     layout->Add(addButton);
+    layout->Add(toggleActiveBorderCheckbox);
 
     Add(layout);
 }

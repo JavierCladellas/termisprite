@@ -17,7 +17,11 @@ EditorCanvasComponent::OnRender()
 
     //Reverse order
     for ( int i = M_layers.size() - 1; i >= 0; --i )
+    {
         M_layers[i].get()->render( M_cells, M_squarePixel );
+        if ( M_activeLayerBorderVisible && i == M_activeLayerIndex )
+            renderActiveLayerBorder();
+    }
 
     M_selectionTool->render(M_cells, M_squarePixel);
     M_cursor->render( M_cells, *M_brushTool, M_squarePixel );
@@ -305,6 +309,53 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
 
 
     return false;
+}
+
+
+void
+EditorCanvasComponent::renderActiveLayerBorder()
+{
+    int pixelScale = M_squarePixel ? 2 : 1;
+
+    auto [w,h] = M_activeLayer->size();
+    auto [x0,y0] = M_activeLayer->position();
+
+    for ( int y = y0 -1; y < h + y0 + 1; ++y )
+    {
+        if ( y < 0 || y >= M_camera->height() ) continue;
+        bool isTop = (y == y0 - 1);
+        bool isBot = (y == h + y0);
+
+        for ( int x = x0 - 1; x < w + x0 + 1; ++x )
+        {
+            bool isLeft = (x == x0 - 1);
+            bool isRight = (x == w + x0);
+
+            if ( !(isTop || isBot || isLeft || isRight) ) continue;
+
+            int terminalXStart = x * pixelScale;
+            if ( terminalXStart < 0 || terminalXStart >= M_camera->width() * pixelScale ) continue;
+
+            std::string brushL, brushR;
+
+            if (isTop && isLeft && isBot && isRight) { brushL = "⡏"; brushR = "⢹"; }
+            else if (isTop && isLeft) { brushL = "⡏"; brushR = "⠉"; }
+            else if (isTop && isRight) { brushL = "⢹"; brushR = " "; }
+            else if (isBot && isLeft) { brushL = "⣇"; brushR = "⣀"; }
+            else if (isBot && isRight) { brushL = "⣸"; brushR = " "; }
+            else if (isTop) { brushL = "⠉"; brushR = "⠉"; }
+            else if (isBot) { brushL = "⣀"; brushR = "⣀"; }
+            else if (isLeft) { brushL = "⡇"; brushR = " "; }
+            else if (isRight) { brushL = "⢸"; brushR = " "; }
+
+            M_cells[y][terminalXStart] = ftxui::text(brushL) | ftxui::color(ftxui::Color::Cyan);
+
+            if ( pixelScale == 2 && (terminalXStart + 1 < M_camera->width() * pixelScale) )
+                M_cells[y][terminalXStart + 1] = ftxui::text(brushR) | ftxui::color(ftxui::Color::Cyan);
+        }
+
+
+    }
 }
 
 

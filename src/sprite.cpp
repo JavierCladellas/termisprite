@@ -30,7 +30,7 @@ Layer::render( std::vector<std::vector<ftxui::Element>> & cells, bool isSquarePi
 
     for ( int logicalY = 0; logicalY < M_height; ++logicalY )
     {
-        if ( logicalY >= canvasHeight ) break;
+        if ( logicalY + M_y >= canvasHeight ) break;
         for ( int logicalX = 0; logicalX < M_width; ++logicalX )
         {
             Pixel const& cellContent = at(logicalX, logicalY);
@@ -43,8 +43,8 @@ Layer::render( std::vector<std::vector<ftxui::Element>> & cells, bool isSquarePi
             for ( int i = 0; i < scale; ++i )
             {
                 int terminalX = terminalXStart + i;
-                if ( terminalX >= canvasWidth ) break;
-                cells[logicalY][terminalX] = ftxui::text(brush) | ftxui::color( cellContent.color );
+                if ( terminalX + M_x >= canvasWidth  ) break;
+                cells[logicalY + M_y][terminalX + M_x] = ftxui::text(brush) | ftxui::color( cellContent.color );
             }
         }
     }
