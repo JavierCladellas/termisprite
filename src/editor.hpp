@@ -126,7 +126,7 @@ public:
     Layer const& activeLayer() const { return *M_layers[M_activeLayerIndex]; }
     void addLayer( std::string const& name = "New Layer" )
     {
-        M_layers.push_back( std::make_unique<Layer>( M_width, M_height, name ) );
+        M_layers.insert( M_layers.begin(), std::make_unique<Layer>( M_width, M_height, name ) );
         M_activeLayerIndex = M_layers.size() - 1;
     }
     void removeLayer( int index )

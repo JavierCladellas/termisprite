@@ -42,7 +42,7 @@ LayersComponent::createLayerRow( int index )
     );
 
     auto selectBtn = ftxui::Button(
-        (index == M_editor->activeLayerIndex() ? "> " : " ") + layer->name(),
+        layer->name(),
         [this, index](){ M_editor->setActiveLayer(index); },
         ftxui::ButtonOption::Ascii()
     );
@@ -67,7 +67,7 @@ LayersComponent::createLayerRow( int index )
 
     return Renderer(rowContainer, [this, index, visibilityBtn, selectBtn, moveUpBtn, moveDownBtn,deleteBtn](){
         return hbox({
-            selectBtn->Render() | flex | ( index == M_editor->activeLayerIndex() ? ( bold | color(Color::Green) ) : color(Color::White) ),
+            selectBtn->Render() | flex | ( index == M_editor->activeLayerIndex() ? ( bold | color(Color::Green) ) : ( color(Color::White) | dim  ) ),
             text(" "),
             visibilityBtn->Render(),
             moveUpBtn->Render(),
@@ -90,6 +90,7 @@ LayersComponent::rebuild()
 
     auto addButton = Button("+ Add Layer", [this] {
         M_editor->addLayer("Layer " + std::to_string(M_editor->layers().size() + 1));
+        M_editor->setActiveLayer(0);
         rebuild();
     }, ftxui::ButtonOption::Ascii());
 
