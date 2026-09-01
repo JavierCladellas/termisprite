@@ -27,6 +27,16 @@ LayersComponent::OnRender()
 
 }
 
+bool
+LayersComponent::OnEvent( ftxui::Event event )
+{
+    if ( Focused() && ( event == ftxui::Event::Tab ) || ( event == ftxui::Event::TabReverse ) )
+        return false;
+
+
+    return ComponentBase::OnEvent( event );
+}
+
 
 ftxui::Component
 LayersComponent::createLayerRow( int index )

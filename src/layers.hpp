@@ -17,7 +17,7 @@ public:
     LayersComponent( EditorCanvasComponent * editor, ShortcutManager * shortcutManager );
 
     ftxui::Element OnRender() override;
-    // bool OnEvent( ftxui::Event event ) override;
+    bool OnEvent( ftxui::Event event ) override;
 
 private:
 
