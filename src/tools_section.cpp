@@ -21,7 +21,8 @@ ToolsComponent::ToolsComponent( ToolType & activeTool, ShortcutManager * shortcu
     auto utilGroup = ftxui::Container::Vertical({
         makeToolButton("◧", shortcutManager->getShortcut(ShortcutType::SELECT_EYE_DROPPER_TOOL), ToolType::EYE_DROPPER),
         makeToolButton("▼", shortcutManager->getShortcut(ShortcutType::SELECT_PAINT_FILL_TOOL), ToolType::PAINT_FILL),
-        makeToolButton("⬚", shortcutManager->getShortcut(ShortcutType::SELECT_BOX_SELECT_TOOL), ToolType::BOX_SELECT)
+        makeToolButton("⬚", shortcutManager->getShortcut(ShortcutType::SELECT_BOX_SELECT_TOOL), ToolType::BOX_SELECT),
+        makeToolButton("⤨", shortcutManager->getShortcut(ShortcutType::TOGGLE_PAN), ToolType::PAN)
     });
 
     M_container = ftxui::Container::Vertical({ drawGroup, shapeGroup, utilGroup });
