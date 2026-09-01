@@ -39,10 +39,17 @@ bool EyeDropperTool::processMouseEvent( ftxui::Event event )
     if ( mouse.button != ftxui::Mouse::Button::Left || mouse.motion != ftxui::Mouse::Pressed )
         return false;
 
-    int spriteW, spriteH;
-    std::tie(spriteW, spriteH) = M_layer->size();
+    auto [spriteW,spriteH] = M_layer->size();
+    auto [lX, lY] = M_layer->position();
+
+    localX -= lX;
+    localY -= lY;
+
     if ( localX >= spriteW || localY >= spriteH )
         return false;
+    if ( localX < 0 || localY < 0 )
+        return false;
+
     Pixel & cell = M_layer->at(localX, localY);
     if ( cell.brush != " " )
     {

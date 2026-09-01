@@ -39,20 +39,26 @@ bool PaintTool::processMouseEvent( ftxui::Event event )
 void
 PaintTool::floodFillPaint( int x, int y )
 {
-    int width, height;
-    std::tie(width, height) = M_layer->size();
+    auto [width,height] = M_layer->size();
+    auto [lX, lY] = M_layer->position();
 
     if ( x < 0 || x >= width || y < 0 || y >= height )
         return;
 
-    Pixel & targetCell = M_layer->at(x, y);
+    int localX = x - lX;
+    int localY = y - lY;
+
+    if ( localX < 0 || localX >= width || localY < 0 || localY >= height )
+        return;
+
+    Pixel & targetCell = M_layer->at(localX, localY);
     Pixel targetPixel = targetCell;
 
     if ( M_brush == targetPixel )
         return;
 
     std::stack<std::pair<int, int>> stack;
-    stack.push({x, y});
+    stack.push({localX, localY});
 
     while (!stack.empty())
     {
