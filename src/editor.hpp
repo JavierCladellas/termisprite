@@ -70,11 +70,11 @@ public:
         M_cursor = std::make_unique<CanvasCursor>();
         M_brushTool = std::make_unique<BrushTool>( M_activeLayer, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
 
-        M_selectionTool = std::make_unique<SelectionTool>( M_activeLayer, *M_brushTool, *M_cursor, &M_spriteSnapshot, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_selectionTool = std::make_unique<SelectionTool>( M_activeLayer, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
         M_currentState.selectionTool = M_selectionTool.get();
         M_eyeDropperTool = std::make_unique<EyeDropperTool>( M_activeLayer, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
         M_paintTool = std::make_unique<PaintTool>( M_activeLayer, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
-        M_shapeTool = std::make_unique<ShapeTool>( M_currentState.toolType, M_activeLayer, &M_spriteSnapshot, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
+        M_shapeTool = std::make_unique<ShapeTool>( M_currentState.toolType, M_activeLayer, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
         M_moveTool = std::make_unique<MoveTool>( M_activeLayer, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
 
 
@@ -201,7 +201,6 @@ private:
     Layer * M_activeLayer = nullptr;
     std::vector<std::unique_ptr<Layer>> M_layers;
 
-    Layer M_spriteSnapshot;
     SpriteHistory M_spriteHistory;
 
     EditorState M_currentState;

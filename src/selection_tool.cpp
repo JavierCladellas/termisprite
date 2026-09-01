@@ -60,7 +60,7 @@ SelectionTool::beginTranslation()
     if ( M_isTranslating || !isActive() ) return;
 
     M_isTranslating = true;
-    M_snapshot = M_layer;
+    M_snapshot = *M_layer;
 
     int w = width();
     int h = height();
@@ -75,8 +75,8 @@ SelectionTool::beginTranslation()
         for ( int x = 0; x < w; ++x )
         {
             if ( minX() + x < 0 || minX() + x >= maxW ) continue;
-            M_selection[y][x] = M_snapshot->at(minX() + x,minY() + y);
-            M_snapshot->at(minX() + x,minY() + y) = Pixel{" ", ftxui::Color::White};
+            M_selection[y][x] = M_snapshot.at(minX() + x,minY() + y);
+            M_snapshot.at(minX() + x,minY() + y) = Pixel{" ", ftxui::Color::White};
         }
     }
 }
@@ -99,7 +99,7 @@ SelectionTool::translateContent( int dx, int dy )
         beginTranslation();
 
 
-    M_layer = M_snapshot;
+    *M_layer = M_snapshot;
     int maxW, maxH;
     std::tie(maxW, maxH) = M_layer->size();
 

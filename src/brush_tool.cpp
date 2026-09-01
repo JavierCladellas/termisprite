@@ -15,15 +15,20 @@ BrushTool::apply()
 void
 BrushTool::apply( int targetX, int targetY )
 {
-    int width, height;
-    std::tie( width, height ) = M_layer->size();
+    if (!M_layer) return;
+
+    auto [width,height] = M_layer->size();
+    auto [layerX, layerY] = M_layer->position();
+
+    int localTargetX = targetX - layerX;
+    int localTargetY = targetY - layerY;
 
     for ( int by = 0; by < M_size; ++by )
     {
         for ( int bx = 0; bx < M_size; ++bx )
         {
-            int px = targetX + bx;
-            int py = targetY + by;
+            int px = localTargetX + bx;
+            int py = localTargetY + by;
 
             if ( px >= 0 && px < width && py >= 0 && py < height )
             {

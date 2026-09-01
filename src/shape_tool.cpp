@@ -74,7 +74,7 @@ ShapeTool::processKeyboardEvent( ftxui::Event event )
     if ( M_isDrawing && event == ftxui::Event::Escape )
     {
         M_isDrawing = false;
-        M_layer = M_snapshot;
+        *M_layer = M_snapshot;
         return true;
     }
 
@@ -86,9 +86,9 @@ ShapeTool::processKeyboardEvent( ftxui::Event event )
             M_isDrawing = true;
             M_shapeStartX = M_cursor.x();
             M_shapeStartY = M_cursor.y();
-            M_snapshot = M_layer;
+            M_snapshot = *M_layer;
 
-            M_layer = M_snapshot;
+            *M_layer = M_snapshot;
             if ( M_toolType == ToolType::SQUARE )
                 drawRectangle( M_shapeStartX, M_shapeStartY, M_cursor.x(), M_cursor.y() );
             else if ( M_toolType == ToolType::CIRCLE )
@@ -134,7 +134,7 @@ ShapeTool::processKeyboardEvent( ftxui::Event event )
         if ( moved )
         {
             M_cursor.setVisibility(true);
-            M_layer = M_snapshot;
+            *M_layer = M_snapshot;
 
             if ( M_toolType == ToolType::SQUARE )
                 drawRectangle( M_shapeStartX, M_shapeStartY, M_cursor.x(), M_cursor.y() );
@@ -183,12 +183,12 @@ ShapeTool::processMouseEvent( ftxui::Event event )
             M_shapeStartX = localX;
             M_shapeStartY = localY;
 
-            M_snapshot = M_layer;
+            M_snapshot = *M_layer;
             return true;
         }
         else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
         {
-            M_layer = M_snapshot;
+            *M_layer = M_snapshot;
 
             if ( M_toolType == ToolType::SQUARE )
                 drawRectangle( M_shapeStartX, M_shapeStartY, localX, localY );
