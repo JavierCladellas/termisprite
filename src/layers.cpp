@@ -109,6 +109,7 @@ LayersComponent::rebuild()
     auto layout = ftxui::Container::Vertical(std::move(layerRows));
     layout->Add(ftxui::Renderer([]{ return ftxui::separatorEmpty(); }));
     layout->Add(addButton);
+    layout->Add(ftxui::Renderer([]{ return ftxui::separator(); }));
     layout->Add(toggleActiveBorderCheckbox);
 
     Add(layout);
