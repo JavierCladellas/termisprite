@@ -21,7 +21,7 @@ public:
     static bool importImage( std::string const& filepath, Layer & targetLayer, int targetWidth, int targetHeight, std::string const& format = "png" );
 
     static bool
-    importProject( std::string const& filepath, Layer & targetLayer, EditorState & editorState, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes );
+    importProject( std::string const& filepath, EditorCanvasComponent & editorCanvas, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes );
 
 
     static bool
@@ -36,12 +36,10 @@ class SpriteExporter
 public:
     SpriteExporter() = default;
 
-    //TODO: FIX MULTI-LAYER EXPORT/IMPORT
     static bool
     exportProject( std::string const& filepath,
                    std::string const& projectName,
-                   Layer const& targetLayer,
-                   EditorState const& editorState,
+                   EditorCanvasComponent const& editorCanvas,
                    std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes );
 
     static bool

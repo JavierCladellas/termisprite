@@ -15,7 +15,7 @@ namespace Termisprite
 {
 
 
-bool SpriteImporter::importProject( std::string const& filepath, Layer & targetLayer, EditorState & editorState, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes )
+bool SpriteImporter::importProject( std::string const& filepath, EditorCanvasComponent & editorCanvas, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes )
 {
     std::ifstream inFile( filepath );
     if ( !inFile.is_open() )
@@ -37,8 +37,7 @@ bool SpriteImporter::importProject( std::string const& filepath, Layer & targetL
         int w = importJson["width"];
         int h = importJson["height"];
 
-        targetLayer.resize( w, h );
-        targetLayer.clear();
+        editorCanvas.resize( w, h );
     }
 
     if ( importJson.contains( "palettes" ) && importJson["palettes"].is_object() )
@@ -67,31 +66,76 @@ bool SpriteImporter::importProject( std::string const& filepath, Layer & targetL
 
         unsigned int r = 255, g = 255, b = 255;
         if ( sscanf( bgColorCode.c_str(), "48;2;%u;%u;%u", &r, &g, &b ) == 3 )
-            editorState.backgroundColor = ftxui::Color::RGB(r, g, b);
+            editorCanvas.currentState().backgroundColor = ftxui::Color::RGB(r, g, b);
 
     }
 
-    if ( importJson.contains( "layer" ) && importJson["layer"].is_array() )
+    if ( importJson.contains( "layers" ) && importJson["layers"].is_array() )
     {
-        auto [w, h] = targetLayer.size();
+        while ( editorCanvas.layers().size() > 1 )
+            editorCanvas.removeLayer( editorCanvas.layers().size() - 1 );
 
-        for ( auto const& item : importJson["layer"] )
-    {
-            int x = item.value("x", -1);
-            int y = item.value("y", -1);
-            std::string brush = item.value("brush", " ");
-            std::string colorCode = item.value("color", "");
-            unsigned int r = 255, g = 255, b = 255;
+        bool isFirstLayer = true;
+        auto const& layersJson = importJson["layers"];
 
-            if ( x >= 0 && x < w && y >= 0 && y < h )
+        for ( auto it = layersJson.rbegin(); it != layersJson.rend(); ++it )
+        {
+            auto const& layerJson = *it;
+            std::string layerName = layerJson.value("name", "Layer");
+
+            auto [layerW, layerH] = editorCanvas.size(); //Fallback
+            if ( layerJson.contains("size") && layerJson["size"].size() == 2 )
             {
-                Pixel & cell = targetLayer.at( x, y );
-                cell.brush = brush;
-                if ( sscanf( colorCode.c_str(), "38;2;%u;%u;%u", &r, &g, &b ) == 3 )
-                    cell.color = ftxui::Color::RGB(r, g, b);
+                layerW = layerJson["size"][0];
+                layerH = layerJson["size"][1];
+            }
+
+            Layer newLayer( editorCanvas.camera(), layerW, layerH, layerName );
+
+            if ( layerJson.contains("position") && layerJson["position"].size() == 2 )
+                newLayer.setPosition( layerJson["position"][0], layerJson["position"][1] );
+
+            if ( layerJson.contains("visible") && !layerJson["visible"].get<bool>() )
+                newLayer.toggleVisibility(); //Assumes default is visible
+
+            if ( layerJson.contains("sprite") && layerJson["sprite"].is_array() )
+            {
+                for ( auto const& pixelJson : layerJson["sprite"] )
+                {
+                    int x = pixelJson.value("x", -1);
+                    int y = pixelJson.value("y", -1);
+                    std::string brush = pixelJson.value("brush", " ");
+                    std::string colorCode = pixelJson.value("color", "");
+                    unsigned int r = 255, g = 255, b = 255;
+
+                    if ( x >= 0 && x < layerW && y >= 0 && y < layerH )
+                    {
+                        Pixel & cell = newLayer.at( x, y );
+                        cell.brush = brush;
+                        if ( sscanf( colorCode.c_str(), "38;2;%u;%u;%u", &r, &g, &b ) == 3 )
+                            cell.color = ftxui::Color::RGB(r, g, b);
+                    }
+                }
+            }
+
+            if ( isFirstLayer )
+            {
+                editorCanvas.setActiveLayer(0);
+                editorCanvas.activeLayer() = newLayer;
+                isFirstLayer = false;
+            }
+            else
+            {
+                editorCanvas.addLayer(layerName);
+                editorCanvas.activeLayer() = newLayer;
             }
         }
     }
+
+    editorCanvas.saveState();
+
+    if ( editorCanvas.onLayersChanged )
+        editorCanvas.onLayersChanged();
 
     return true;
 }
@@ -297,21 +341,18 @@ SpriteImporter::importPalette( std::string const& filepath, std::string const& p
 bool
 SpriteExporter::exportProject( std::string const& filepath,
                                std::string const& projectName,
-                               Layer const& targetLayer,
-                               EditorState const& editorState,
+                               EditorCanvasComponent const& editorCanvas,
                                std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes )
 {
     nlohmann::json exportJson;
 
     exportJson["project_name"] = projectName;
 
-    auto [w,h] = targetLayer.size();
-
+    auto [w,h] = editorCanvas.size();
     exportJson["width"] = w;
     exportJson["height"] = h;
 
-    std::string backgroundColor;
-    exportJson["background_color"] = editorState.backgroundColor.Print(true);
+    exportJson["background_color"] = editorCanvas.currentState().backgroundColor.Print(true);
 
     exportJson["palettes"] = nlohmann::json::object();
     for ( auto const& [paletteName, colors] : palettes )
@@ -321,26 +362,44 @@ SpriteExporter::exportProject( std::string const& filepath,
             exportJson["palettes"][paletteName].push_back(color.Print(false));
     }
 
-    exportJson["layer"] = nlohmann::json::array();
 
-    for ( int y = 0; y < h; ++y )
+    exportJson["layers"] = nlohmann::json::array();
+    for ( auto const& layer : editorCanvas.layers() )
     {
-        for ( int x = 0; x < w; ++x )
+        if ( !layer ) continue;
+
+        nlohmann::json layerJson = {
+            {"name", layer->name()},
+            {"visible", layer->isVisible()},
+            {"position", {layer->position().first, layer->position().second}},
+            {"size", {layer->size().first, layer->size().second}},
+            {"sprite", nlohmann::json::array()}
+        };
+        auto [layerW, layerH] = layer->size();
+
+        for ( int y = 0; y < layerH; ++y )
         {
-            Pixel const& cell = targetLayer.at(x,y);
+            for ( int x = 0; x < layerW; ++x )
+            {
+                Pixel const& cell = layer->at(x,y);
+
+                if (cell.brush == " " )
+                    continue;
 
 
-            if (cell.brush == " " )
-                continue;
-
-            exportJson["layer"].push_back({
-                {"x", x},
-                {"y", y},
-                {"brush", cell.brush},
-                {"color", cell.color.Print(false)}
-            });
+                layerJson["sprite"].push_back({
+                    {"x", x},
+                    {"y", y},
+                    {"brush", cell.brush},
+                    {"color", cell.color.Print(false)}
+                });
+            }
         }
+
+        exportJson["layers"].push_back(layerJson);
+
     }
+
 
     std::string parsedFilepath = filepath;
     if (!parsedFilepath.ends_with(".json"))

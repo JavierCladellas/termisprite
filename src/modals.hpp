@@ -217,10 +217,10 @@ class BackgroundColorModal
     : public Modal
 {
 public:
-    BackgroundColorModal( EditorState & editorState, std::function<void()> onClose)
+    BackgroundColorModal( ftxui::Color & backgroundColor, std::function<void()> onClose)
         : Modal( onClose, "Export")
     {
-        M_colorPicker = ColorPicker( editorState.backgroundColor );
+        M_colorPicker = ColorPicker( backgroundColor );
         Modal::initTree();
     }
 

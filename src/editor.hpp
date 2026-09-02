@@ -89,7 +89,9 @@ public:
     bool Focusable() const override { return true; }
 
 
+    //TODO: Remove state like struct
     EditorState & currentState() { return M_currentState; }
+    EditorState const& currentState() const { return M_currentState; }
     void setCurrentState( EditorState state ) { M_currentState = state; }
 
     std::pair<int, int> size() const { return { M_width, M_height }; }
@@ -101,20 +103,27 @@ public:
     SelectionTool & selectionTool(){ return *M_selectionTool; }
     CanvasCursor & cursor(){ return *M_cursor; }
     BrushTool & brushTool(){ return *M_brushTool; }
+    Camera & camera(){ return *M_camera; }
 
 
     void undo()
     {
         DocumentSnapshot snap;
         if ( M_history.undo( snap ) )
+        {
             applySnapshot( snap );
+            if (onLayersChanged) onLayersChanged();
+        }
     }
 
     void redo()
     {
         DocumentSnapshot snap;
         if ( M_history.redo( snap ) )
+        {
             applySnapshot( snap );
+            if (onLayersChanged) onLayersChanged();
+        }
     }
 
     void toggleSquarePixel()
@@ -127,6 +136,7 @@ public:
     void clear();
 
     std::function<void()> onBackgroundChangeRequested;
+    std::function<void()> onLayersChanged = nullptr;
 
     void saveState();
 

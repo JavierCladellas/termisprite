@@ -39,7 +39,7 @@ Termisprite::Termisprite()
     M_shortcutsModal = std::make_shared<ShortcutsModal>(&M_shortcutManager, [this]{ M_showShortcutsModal = false; });
 
     M_editorCanvas->onBackgroundChangeRequested = [this] { M_showBackgroundColorModal = true; };
-    M_backgroundColorModal = std::make_shared<BackgroundColorModal>( M_editorCanvas->currentState(), [this]{ M_showBackgroundColorModal = false; });
+    M_backgroundColorModal = std::make_shared<BackgroundColorModal>( M_editorCanvas->currentState().backgroundColor, [this]{ M_showBackgroundColorModal = false; });
 
     M_importModal = std::make_shared<ImportModal>( *M_editorCanvas, [this]{ M_showImportModal = false; });
 

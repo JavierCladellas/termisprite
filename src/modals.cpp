@@ -209,7 +209,7 @@ void
 SaveModal::onConfirm()
 {
     if (!M_filepathInput.empty())
-        SpriteExporter::exportProject(M_filepathInput, "Untitled", M_editorCanvas.activeLayer(), M_editorCanvas.currentState(), M_palettes );
+        SpriteExporter::exportProject(M_filepathInput, "Untitled", M_editorCanvas, M_palettes );
     M_filepathInput = "";
 }
 
@@ -240,7 +240,7 @@ OpenProjectModal::onConfirm()
     if (!M_filepathInput.empty())
     {
 
-        if ( SpriteImporter::importProject( M_filepathInput, M_editorCanvas.activeLayer(), M_editorCanvas.currentState(), M_palettes ) )
+        if ( SpriteImporter::importProject( M_filepathInput, M_editorCanvas, M_palettes ) )
         {
             auto [width, height] = M_editorCanvas.activeLayer().size();
             M_editorCanvas.resize(width, height);

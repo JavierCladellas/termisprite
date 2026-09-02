@@ -227,13 +227,15 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
         if ( M_selectionTool->processKeyboardEvent( event ) )
         {
             TakeFocus();
-            saveState();
+            if ( !M_selectionTool->isDrawing() && !M_selectionTool->isTranslating() )
+                saveState();
             return true;
         }
         if ( M_selectionTool->processMouseEvent( event ) )
         {
             TakeFocus();
-            saveState();
+            if ( !M_selectionTool->isDrawing() && !M_selectionTool->isTranslating() )
+                saveState();
             return true;
         }
         if ( M_cells.size() > 0 && M_selectionTool->processTranslation( event,  M_camera->width(), M_camera->height() ) )

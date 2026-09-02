@@ -11,6 +11,7 @@ namespace Termisprite
 LayersComponent::LayersComponent( EditorCanvasComponent * editor, ShortcutManager * shortcutManager )
     : M_editor( editor), M_shortcutManager( shortcutManager )
 {
+    M_editor->onLayersChanged = [this]() { rebuild(); };
     rebuild();
 }
 
