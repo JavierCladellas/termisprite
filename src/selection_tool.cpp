@@ -14,21 +14,27 @@ SelectionTool::render( std::vector<ftxui::Elements> & cells, bool isSquarePixel 
     int canvasWidth = cells[0].size();
 
     int scale = isSquarePixel ? 2 : 1;
+    auto [camX, camY] = M_layer->camera().position();
 
-    for ( int logicalY = minY(); logicalY < minY() + height(); ++logicalY )
+    int startY = minY() - camY;
+    int endY = maxY() - camY;
+    int startX = minX() - camX;
+    int endX = maxX() - camX;
+
+    for ( int screenY = startY; screenY <= endY; ++screenY )
     {
-        if ( logicalY < 0 || logicalY >= canvasHeight ) continue;
+        if ( screenY < 0 || screenY >= canvasHeight ) continue;
 
-        bool isTop = (logicalY == minY());
-        bool isBot = (logicalY == maxY());
+        bool isTop = (screenY == startY);
+        bool isBot = (screenY == endY);
 
-        for ( int logicalX = minX(); logicalX < minX() + width(); ++logicalX )
+        for ( int screenX = startX; screenX <= endX; ++screenX )
         {
-            bool isLeft = (logicalX == minX());
-            bool isRight = (logicalX == maxX());
+            bool isLeft = (screenX == startX);
+            bool isRight = (screenX == endX);
             if ( !(isTop || isBot || isLeft || isRight) ) continue;
 
-            int terminalXStart = logicalX * scale;
+            int terminalXStart = screenX * scale;
 
             if ( terminalXStart < 0 || terminalXStart >= canvasWidth ) continue;
 
@@ -44,10 +50,10 @@ SelectionTool::render( std::vector<ftxui::Elements> & cells, bool isSquarePixel 
             else if (isLeft) { brushL = "⡇"; brushR = " "; }
             else if (isRight) { brushL = "⢸"; brushR = " "; }
 
-            cells[logicalY][terminalXStart] = ftxui::text(brushL) | ftxui::color( M_color );
+            cells[screenY][terminalXStart] = ftxui::text(brushL) | ftxui::color( M_color );
 
             if ( isSquarePixel && (terminalXStart + 1 < canvasWidth) )
-                cells[logicalY][terminalXStart + 1] = ftxui::text(brushR) | ftxui::color( M_color );
+                cells[screenY][terminalXStart + 1] = ftxui::text(brushR) | ftxui::color( M_color );
         }
     }
 }
@@ -169,6 +175,7 @@ SelectionTool::processKeyboardEvent( ftxui::Event event )
         return true;
     }
 
+    auto [camX, camY] = M_layer->camera().position();
     if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
     {
         M_cursor.setVisibility(true);
@@ -178,8 +185,8 @@ SelectionTool::processKeyboardEvent( ftxui::Event event )
             M_isDrawing = true;
             setActive(true);
 
-            setStart(M_cursor.x(), M_cursor.y());
-            setEnd(M_cursor.x(), M_cursor.y());
+            setStart(M_cursor.x() + camX, M_cursor.y() + camY);
+            setEnd(M_cursor.x() + camX, M_cursor.y() + camY);
         }
         else
         {
@@ -203,7 +210,7 @@ SelectionTool::processKeyboardEvent( ftxui::Event event )
         if ( moved )
         {
             M_cursor.setVisibility(true);
-            setEnd(M_cursor.x(), M_cursor.y());
+            setEnd(M_cursor.x() + camX, M_cursor.y()+ camY);
             return true;
         }
     }
@@ -234,6 +241,10 @@ SelectionTool::processMouseEvent( ftxui::Event event )
     if ( localX < 0 || localY < 0 ) //screenToWorld returned invalid coordinates (out of screen box )
         return false;
 
+    auto [camX, camY] = M_layer->camera().position();
+    int worldX = localX + camX;
+    int worldY = localY + camY;
+
     if ( mouse.button == ftxui::Mouse::Button::Left )
     {
         M_cursor.setVisibility(false);
@@ -243,13 +254,13 @@ SelectionTool::processMouseEvent( ftxui::Event event )
             M_isDrawing = true;
             setActive(true);
 
-            setStart( localX, localY );
-            setEnd( localX, localY );
+            setStart( worldX, worldY );
+            setEnd( worldX, worldY );
             return true;
         }
         else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && M_isDrawing )
         {
-            setEnd( localX, localY );
+            setEnd( worldX, worldY );
             return true;
         }
     }
@@ -260,12 +271,12 @@ SelectionTool::processMouseEvent( ftxui::Event event )
         {
             if ( isActive() )
             {
-                if ( localX >= minX() && localX <= maxX() &&
-                     localY >= minY() && localY <= maxY() )
+                if ( worldX >= minX() && worldX <= maxX() &&
+                     worldY >= minY() && worldY <= maxY() )
                 {
                     beginTranslation(  );
-                    M_lastX = localX;
-                    M_lastY = localY;
+                    M_lastX = worldX;
+                    M_lastY = worldY;
                     return true;
                 }
                 else
@@ -277,15 +288,15 @@ SelectionTool::processMouseEvent( ftxui::Event event )
         }
         else if ( (mouse.motion == ftxui::Mouse::Moved || mouse.motion == ftxui::Mouse::Pressed) && isTranslating() )
         {
-            int dx = localX - M_lastX;
-            int dy = localY - M_lastY;
+            int dx = worldX - M_lastX;
+            int dy = worldY - M_lastY;
 
             if ( dx != 0 || dy != 0 )
             {
                 if ( translateContent( dx, dy ) )
                 {
-                    M_lastX = localX;
-                    M_lastY = localY;
+                    M_lastX = worldX;
+                    M_lastY = worldY;
                 }
             }
             return true;

@@ -19,9 +19,10 @@ BrushTool::apply( int targetX, int targetY )
 
     auto [width,height] = M_layer->size();
     auto [layerX, layerY] = M_layer->position();
+    auto [camX, camY] = M_layer->camera().position();
 
-    int localTargetX = targetX - layerX;
-    int localTargetY = targetY - layerY;
+    int localTargetX = targetX + camX - layerX;
+    int localTargetY = targetY + camY - layerY;
 
     for ( int by = 0; by < M_size; ++by )
     {

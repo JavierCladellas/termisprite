@@ -243,7 +243,7 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
 
     if ( M_currentState.toolType == ToolType::MOVE_LAYER )
     {
-        if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return )
+        if ( event == ftxui::Event::Character(' ') || event == ftxui::Event::Return || event == ftxui::Event::Escape )
         {
             M_currentState.toolType = ToolType::DRAW;
             return true;

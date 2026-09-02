@@ -11,12 +11,17 @@ bool EyeDropperTool::processKeyboardEvent( ftxui::Event event )
     if ( event != ftxui::Event::Character(' ') && event != ftxui::Event::Return )
         return false;
 
-    int spriteW, spriteH;
-    std::tie(spriteW, spriteH) = M_layer->size();
-    if ( M_cursor.x() < 0 || M_cursor.x() >= spriteW || M_cursor.y() < 0 || M_cursor.y() >= spriteH )
+    auto [spriteW, spriteH] = M_layer->size();
+    auto [lX, lY] = M_layer->position();
+    auto [camX, camY] = M_layer->camera().position();
+
+    int localX = M_cursor.x() + camX - lX;
+    int localY = M_cursor.y() + camY - lY;
+
+    if ( localX < 0 || localX >= spriteW || localY < 0 || localY >= spriteH )
         return false;
 
-    Pixel & cell = M_layer->at(M_cursor.x(),M_cursor.y());
+    Pixel & cell = M_layer->at(localX, localY);
 
     M_brush.setCurrentBrush(cell.brush);
     M_brush.setColor(cell.color);
@@ -41,9 +46,10 @@ bool EyeDropperTool::processMouseEvent( ftxui::Event event )
 
     auto [spriteW,spriteH] = M_layer->size();
     auto [lX, lY] = M_layer->position();
+    auto [camX, camY] = M_layer->camera().position();
 
-    localX -= lX;
-    localY -= lY;
+    localX = localX + camX - lX;
+    localY = localY + camY - lY;
 
     if ( localX >= spriteW || localY >= spriteH )
         return false;

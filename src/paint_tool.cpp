@@ -41,12 +41,10 @@ PaintTool::floodFillPaint( int x, int y )
 {
     auto [width,height] = M_layer->size();
     auto [lX, lY] = M_layer->position();
+    auto [camX, camY] = M_layer->camera().position();
 
-    if ( x < 0 || x >= width || y < 0 || y >= height )
-        return;
-
-    int localX = x - lX;
-    int localY = y - lY;
+    int localX = x + camX - lX;
+    int localY = y + camY - lY;
 
     if ( localX < 0 || localX >= width || localY < 0 || localY >= height )
         return;

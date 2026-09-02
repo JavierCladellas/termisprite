@@ -29,6 +29,8 @@ public:
     {
         M_width = width;
         M_height = height;
+        M_x = 0;
+        M_y = 0;
     }
 
 private:
