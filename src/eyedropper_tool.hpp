@@ -8,6 +8,7 @@
 namespace Termisprite
 {
 
+//TODO: This should work for the canvas, not only for a layer.
 class EyeDropperTool
     : public Tool
 {

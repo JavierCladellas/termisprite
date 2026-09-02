@@ -11,6 +11,7 @@ add_library( termisprite_lib termisprite.cpp
                              sprite_io.cpp
                              shortcuts.cpp
                              move_tool.cpp
+                             history.cpp
                              tool_settings.cpp
                              colorpalettes.cpp
                              layers.cpp

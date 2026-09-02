@@ -106,24 +106,4 @@ private:
 };
 
 
-class SpriteHistory
-{
-public:
-    SpriteHistory( int maxSize = 50 )
-        : M_maxSize( maxSize ), M_currentIndex( 0 )
-    { }
-
-    void push( Layer const & layer ) { M_history.push_back( layer ); }
-    void save( Layer const& layer );
-    void undo( Layer & layer );
-    void redo( Layer & layer );
-
-
-private:
-    std::deque<Layer> M_history;
-    int M_maxSize = 50;
-    int M_currentIndex = 0;
-};
-
-
 }

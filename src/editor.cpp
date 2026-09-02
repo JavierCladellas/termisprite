@@ -368,7 +368,29 @@ EditorCanvasComponent::computeColorsInCanvas() const
 void
 EditorCanvasComponent::saveState()
 {
-    M_spriteHistory.save( *M_activeLayer );
+    DocumentSnapshot snap;
+    snap.activeLayerIndex = M_activeLayerIndex;
+    snap.canvasWidth = M_width;
+    snap.canvasHeight = M_height;
+    for ( auto const& l : M_layers )
+        snap.layers.push_back( *l );
+
+    M_history.save( snap );
+    M_colorsInCanvas = computeColorsInCanvas();
+}
+
+void
+EditorCanvasComponent::applySnapshot( DocumentSnapshot const& snapshot )
+{
+    M_width = snapshot.canvasWidth;
+    M_height = snapshot.canvasHeight;
+    updateViewport();
+
+    M_layers.clear();
+    for ( auto const& l : snapshot.layers )
+        M_layers.push_back( std::make_unique<Layer>( l ) );
+
+    setActiveLayer( snapshot.activeLayerIndex );
     M_colorsInCanvas = computeColorsInCanvas();
 }
 

@@ -11,6 +11,7 @@
 #include "camera.hpp"
 #include "contextwindow.hpp"
 #include "eyedropper_tool.hpp"
+#include "history.hpp"
 #include "move_tool.hpp"
 #include "paint_tool.hpp"
 #include "shape_tool.hpp"
@@ -78,7 +79,7 @@ public:
         M_moveTool = std::make_unique<MoveTool>( M_activeLayer, *M_brushTool, *M_cursor, std::bind(&EditorCanvasComponent::screenToWorld, this, std::placeholders::_1, std::placeholders::_2) );
 
 
-        M_spriteHistory.push( *M_activeLayer );
+        saveState();
 
         Add( M_contextWindow );
     }
@@ -102,14 +103,20 @@ public:
     BrushTool & brushTool(){ return *M_brushTool; }
 
 
-    void undo() {
-        //TODO: Fix this, buggy.
-        M_spriteHistory.undo( *M_activeLayer );
+    void undo()
+    {
+        DocumentSnapshot snap;
+        if ( M_history.undo( snap ) )
+            applySnapshot( snap );
     }
-    void redo() {
-        //TODO: Fix this, buggy.
-        M_spriteHistory.redo( *M_activeLayer );
+
+    void redo()
+    {
+        DocumentSnapshot snap;
+        if ( M_history.redo( snap ) )
+            applySnapshot( snap );
     }
+
     void toggleSquarePixel()
     {
         M_squarePixel = !M_squarePixel;
@@ -183,6 +190,7 @@ public:
     bool & activeLayerBorderVisible() { return M_activeLayerBorderVisible; }
 
 private:
+    void applySnapshot( DocumentSnapshot const& snapshot );
 
     void renderActiveLayerBorder();
     std::pair<int,int> screenToWorld(int screenX, int screenY) const;
@@ -201,7 +209,7 @@ private:
     Layer * M_activeLayer = nullptr;
     std::vector<std::unique_ptr<Layer>> M_layers;
 
-    SpriteHistory M_spriteHistory;
+    History M_history;
 
     EditorState M_currentState;
 
