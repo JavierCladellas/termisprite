@@ -257,7 +257,7 @@ EditorCanvasComponent::OnEvent( ftxui::Event event )
         if ( M_moveTool->processMouseEvent( event ) )
         {
             TakeFocus();
-            if ( !M_moveTool->isActive() )
+            if ( !M_moveTool->isDrawing() )
                 saveState();
             return true;
         }
