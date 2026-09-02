@@ -194,8 +194,9 @@ ColorPaletteComponent::OnRender()
     return ftxui::vbox({
         ftxui::text( " Palettes " ) | ftxui::color( Focused() ? ftxui::Color::Cyan : ftxui::Color::White ),
 
+        //TODO: support scrolling
         M_colorsInCanvasContainer->ChildCount() > 0 ? ftxui::text( " In Canvas" ) : ftxui::emptyElement() | ftxui::color( ftxui::Color::White ) | ftxui::dim,
-        M_colorsInCanvasContainer->ChildCount() > 0 ? M_colorsInCanvasContainer->Render() : ftxui::emptyElement(),
+        M_colorsInCanvasContainer->ChildCount() > 0 ? M_colorsInCanvasContainer->Render() | ftxui::size(ftxui::HEIGHT, ftxui::LESS_THAN, 6 )  : ftxui::emptyElement(),
 
         ftxui::hbox({
             M_createPaletteButton->Render() | ftxui::color( ftxui::Color::White ) | ftxui::dim,
