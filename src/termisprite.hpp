@@ -1,12 +1,13 @@
 #pragma once
 
+#include "layers.hpp"
 #include "tool_settings.hpp"
 #include "colorpicker.hpp"
 #include "editor.hpp"
 #include "menu.hpp"
 #include "shortcuts.hpp"
 #include "statusbar.hpp"
-#include "tools.hpp"
+#include "tools_section.hpp"
 #include "modals.hpp"
 
 #include <ftxui/component/component.hpp>
@@ -40,13 +41,24 @@ public:
     void showOpenProjectModal() { M_showOpenProjectModal = true; }
 
     EditorCanvasComponent * editor() { return M_editorCanvas.get(); }
-    void selectTool(ToolType type) { M_tools->selectTool(type); }
+    void selectTool(ToolType type) {
+        M_editorCanvas->currentState().toolType = type;
+
+        if ( type != ToolType::BOX_SELECT )
+            M_editorCanvas->selectionTool().setActive( false );
+
+        if ( type == ToolType::ERASER )
+            M_editorCanvas->brushTool().setCurrentBrush(" ");
+        else
+            M_editorCanvas->brushTool().updateCurrentBrush();
+    }
 
 
 private:
     ftxui::Component M_masterComponent;
 
     std::shared_ptr<EditorCanvasComponent> M_editorCanvas;
+    std::shared_ptr<LayersComponent> M_layersSection;
     std::shared_ptr<MenuComponent> M_menu;
     ftxui::Component M_settingsContainer;
     std::shared_ptr<ToolsComponent> M_tools;

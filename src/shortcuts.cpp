@@ -33,8 +33,9 @@ getDefaultKeymap()
         { ShortcutType::ZOOM_OUT,          {"Zoom Out",         "",              {}} },
         { ShortcutType::TOGGLE_GRID,       {"Toggle Grid",      "[G]",                  {ftxui::Event::Character('g')}} },
         { ShortcutType::CHANGE_GRID_TYPE, {"Change Grid Type", "[Shift+G]",  {ftxui::Event::Character('G')}} },
-        { ShortcutType::TOGGLE_PAN,        {"Toggle Pan",       "[M]",           {ftxui::Event::Character('m'), ftxui::Event::Character('M')}} },
+        { ShortcutType::TOGGLE_PAN,        {"Toggle Pan",       "[T]",           {ftxui::Event::Character('t'), ftxui::Event::Character('T')}} },
 
+        { ShortcutType::MOVE_LAYER,        {"Move Layer",       "[M]",     {ftxui::Event::Character('m'), ftxui::Event::Character('M')}} },
         { ShortcutType::SELECT_BRUSH_TOOL, {"Brush",       "[B]",           {ftxui::Event::Character('b'), ftxui::Event::Character('B')}} },
         { ShortcutType::SELECT_ERASER_TOOL,{"Eraser",      "[E]",           {ftxui::Event::Character('e'), ftxui::Event::Character('E')}} },
         { ShortcutType::SELECT_RECTANGLE_TOOL, {"Rectangle",    "[R]",           {ftxui::Event::Character('r'), ftxui::Event::Character('R')}} },
@@ -68,19 +69,26 @@ ShortcutManager::bindAllActions( Termisprite * app )
     this->bindAction(ShortcutType::CLEAR, [app]() { app->editor()->clear(); });
 
     this->bindAction(ShortcutType::RESIZE_CANVAS, [app]() { app->showResizeModal(); });
-    this->bindAction(ShortcutType::FLIP_VERTICAL, [app]() { app->editor()->flipVertical(); });
-    this->bindAction(ShortcutType::FLIP_HORIZONTAL, [app]() { app->editor()->flipHorizontal(); });
+    this->bindAction(ShortcutType::FLIP_VERTICAL, [app]() {
+        app->editor()->activeLayer().flipVertical();
+        app->editor()->saveState();
+    });
+    this->bindAction(ShortcutType::FLIP_HORIZONTAL, [app]() {
+        app->editor()->activeLayer().flipHorizontal();
+        app->editor()->saveState();
+    });
     this->bindAction(ShortcutType::BACKGROUND_COLOR, [app]() { app->showBackgroundColorModal(); });
 
     this->bindAction(ShortcutType::SQUARE_PIXEL, [app]() { app->editor()->toggleSquarePixel(); });
-    this->bindAction(ShortcutType::TOGGLE_GRID, [app]() { app->editor()->toggleGrid(); });
-    this->bindAction(ShortcutType::CHANGE_GRID_TYPE, [app]() { app->editor()->changeGridType(); });
+    this->bindAction(ShortcutType::TOGGLE_GRID, [app]() { app->editor()->grid().toggle(); });
+    this->bindAction(ShortcutType::CHANGE_GRID_TYPE, [app]() { app->editor()->grid().switchType(); });
     this->bindAction(ShortcutType::TOGGLE_PAN, [app]() {
         if ( app->editor()->currentState().toolType == ToolType::PAN )
             app->selectTool(ToolType::DRAW);
         else
             app->selectTool(ToolType::PAN);
     });
+    this->bindAction(ShortcutType::MOVE_LAYER, [app]() { app->selectTool(ToolType::MOVE_LAYER); });
 
     this->bindAction(ShortcutType::SELECT_BRUSH_TOOL, [app]() { app->selectTool(ToolType::DRAW); });
     this->bindAction(ShortcutType::SELECT_ERASER_TOOL, [app]() { app->selectTool(ToolType::ERASER); });
@@ -95,16 +103,22 @@ ShortcutManager::bindAllActions( Termisprite * app )
     this->bindAction(ShortcutType::HELP_SHORTCUTS, [app]() { app->showShortcutsModal(); });
 
     this->bindAction(ShortcutType::CLIPBOARD_COPY, [app]() {
-        if ( app->editor()->currentState().selection.isActive )
-            app->editor()->copyToClipboard();
+        if ( app->editor()->currentState().selectionTool->isActive() )
+            app->editor()->currentState().clipboard.copy( app->editor()->activeLayer(), app->editor()->selectionTool() );
     });
     this->bindAction(ShortcutType::CLIPBOARD_CUT, [app]() {
-        if ( app->editor()->currentState().selection.isActive )
-            app->editor()->cutToClipboard();
+        if ( app->editor()->currentState().selectionTool->isActive() )
+        {
+            app->editor()->currentState().clipboard.cut( app->editor()->activeLayer(), app->editor()->selectionTool() );
+            app->editor()->saveState();
+        }
     });
     this->bindAction(ShortcutType::CLIPBOARD_PASTE, [app]() {
         if ( app->editor()->currentState().clipboard.hasData )
-            app->editor()->pasteClipboard();
+        {
+            app->editor()->currentState().clipboard.paste( app->editor()->activeLayer(), app->editor()->cursor().x(), app->editor()->cursor().y() );
+            app->editor()->saveState();
+        }
     });
 }
 

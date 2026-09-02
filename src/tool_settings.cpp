@@ -8,9 +8,9 @@ namespace Termisprite
 {
 
 ftxui::Component
-BrushCharacterInput( EditorState & editorState )
+BrushCharacterInput( BrushTool & brushTool )
 {
-    return ftxui::Input(&editorState.selectedBrush, "Symbol", {
+    return ftxui::Input(&brushTool.selectedChar(), "Symbol", {
         .transform = []( ftxui::InputState const& state) {
             if ( state.focused )
                 return state.element | ftxui::inverted | ftxui::bold | ftxui::center | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 2);
@@ -19,23 +19,23 @@ BrushCharacterInput( EditorState & editorState )
         },
         .multiline = false,
         .insert = false,
-        .on_change = [&editorState] {
-            std::wstring wbrush = ftxui::to_wstring(editorState.selectedBrush);
+        .on_change = [&brushTool] {
+            std::wstring wbrush = ftxui::to_wstring(brushTool.selectedChar());
             if ( wbrush.empty() )
-                editorState.selectedBrush = "█";
+                brushTool.selectedChar() = "█";
             else
             {
                 wbrush = wbrush.substr(wbrush.length() - 1, 1);
-                editorState.selectedBrush = ftxui::to_string(wbrush);
+                brushTool.selectedChar() = ftxui::to_string(wbrush);
             }
-            editorState.brush = editorState.selectedBrush;
+            brushTool.currentChar() = brushTool.selectedChar();
         },
-        .on_enter = [&editorState] {
-            if ( editorState.selectedBrush.empty() )
-                editorState.selectedBrush = "█";
-            editorState.brush = editorState.selectedBrush;
+        .on_enter = [&brushTool] {
+            if ( brushTool.selectedChar().empty() )
+                brushTool.selectedChar() = "█";
+            brushTool.currentChar() = brushTool.selectedChar();
         },
-        .cursor_position = editorState.selectedBrush.size(),
+        .cursor_position = brushTool.selectedChar().size(),
     } );
 
 }
@@ -78,10 +78,10 @@ ToolSettingsComponent::OnEvent( ftxui::Event event )
 
 
 
-BrushSettingsComponent::BrushSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager )
-    : ToolSettingsComponent( editorState, shortcutManager ), M_brushSize( editorState.brushSize )
+BrushSettingsComponent::BrushSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager )
+    : ToolSettingsComponent( brushTool, shortcutManager ), M_brushSize( brushTool.size() )
 {
-    M_brushCharInput = BrushCharacterInput( editorState );
+    M_brushCharInput = BrushCharacterInput( brushTool );
     M_sizeSpinner = SpinnerInput( M_brushSize, 1, 10 );
     M_container = ftxui::Container::Vertical({ M_brushCharInput, M_sizeSpinner });
     ftxui::ComponentBase::Add( M_container );
@@ -109,8 +109,8 @@ BrushSettingsComponent::OnRender()
 
 
 
-EraserSettingsComponent::EraserSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager )
-    : ToolSettingsComponent( editorState, shortcutManager ), M_brushSize( editorState.brushSize )
+EraserSettingsComponent::EraserSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager )
+    : ToolSettingsComponent( brushTool, shortcutManager ), M_brushSize( brushTool.size() )
 {
     M_sizeSpinner = SpinnerInput( M_brushSize, 1, 10 );
     M_container = ftxui::Container::Vertical({ M_sizeSpinner });
@@ -135,8 +135,8 @@ EraserSettingsComponent::OnRender()
 }
 
 
-RectangleSettingsComponent::RectangleSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager )
-    : ToolSettingsComponent( editorState, shortcutManager ), M_brushSize( editorState.brushSize )
+RectangleSettingsComponent::RectangleSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager )
+    : ToolSettingsComponent( brushTool, shortcutManager ), M_brushSize( brushTool.size() )
 {
     M_sizeSpinner = SpinnerInput( M_brushSize, 1, 10 );
     M_container = ftxui::Container::Vertical({ M_sizeSpinner });
@@ -161,8 +161,8 @@ RectangleSettingsComponent::OnRender()
 }
 
 
-LineSettingsComponent::LineSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager )
-    : ToolSettingsComponent( editorState, shortcutManager ), M_brushSize( editorState.brushSize )
+LineSettingsComponent::LineSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager )
+    : ToolSettingsComponent( brushTool, shortcutManager ), M_brushSize( brushTool.size() )
 {
     M_sizeSpinner = SpinnerInput( M_brushSize, 1, 10 );
     M_container = ftxui::Container::Vertical({ M_sizeSpinner });
@@ -187,8 +187,8 @@ LineSettingsComponent::OnRender()
 }
 
 
-EllipseSettingsComponent::EllipseSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager )
-    : ToolSettingsComponent( editorState, shortcutManager ), M_brushSize( editorState.brushSize )
+EllipseSettingsComponent::EllipseSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager )
+    : ToolSettingsComponent( brushTool, shortcutManager ), M_brushSize( brushTool.size() )
 {
     M_sizeSpinner = SpinnerInput( M_brushSize, 1, 10 );
     M_container = ftxui::Container::Vertical({ M_sizeSpinner });
@@ -213,8 +213,8 @@ EllipseSettingsComponent::OnRender()
 }
 
 
-PaintFillSettingsComponent::PaintFillSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager )
-    : ToolSettingsComponent( editorState, shortcutManager )
+PaintFillSettingsComponent::PaintFillSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager )
+    : ToolSettingsComponent( brushTool, shortcutManager )
 {
     // ftxui::ComponentBase::Add( M_container );
 }
@@ -238,8 +238,8 @@ PaintFillSettingsComponent::OnRender()
 }
 
 
-BoxSelectSettingsComponent::BoxSelectSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager )
-    : ToolSettingsComponent( editorState, shortcutManager )
+BoxSelectSettingsComponent::BoxSelectSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager )
+    : ToolSettingsComponent( brushTool, shortcutManager )
 {
     // ftxui::ComponentBase::Add( M_container );
 }
@@ -264,46 +264,46 @@ BoxSelectSettingsComponent::OnRender()
 
 
 std::shared_ptr<BrushSettingsComponent>
-BrushSettings( EditorState & editorState, ShortcutManager * shortcutManager )
+BrushSettings( BrushTool & brushTool, ShortcutManager * shortcutManager )
 {
-    return std::make_shared<BrushSettingsComponent>( editorState, shortcutManager );
+    return std::make_shared<BrushSettingsComponent>( brushTool, shortcutManager );
 };
 
 
 std::shared_ptr<EraserSettingsComponent>
-EraserSettings( EditorState & editorState, ShortcutManager * shortcutManager )
+EraserSettings( BrushTool & brushTool, ShortcutManager * shortcutManager )
 {
-    return std::make_shared<EraserSettingsComponent>( editorState, shortcutManager );
+    return std::make_shared<EraserSettingsComponent>( brushTool, shortcutManager );
 };
 
 std::shared_ptr<RectangleSettingsComponent>
-RectangleSettings( EditorState & editorState, ShortcutManager * shortcutManager )
+RectangleSettings( BrushTool & brushTool, ShortcutManager * shortcutManager )
 {
-    return std::make_shared<RectangleSettingsComponent>( editorState, shortcutManager );
+    return std::make_shared<RectangleSettingsComponent>( brushTool, shortcutManager );
 };
 
 std::shared_ptr<EllipseSettingsComponent>
-EllipseSettings( EditorState & editorState, ShortcutManager * shortcutManager )
+EllipseSettings( BrushTool & brushTool, ShortcutManager * shortcutManager )
 {
-    return std::make_shared<EllipseSettingsComponent>( editorState, shortcutManager );
+    return std::make_shared<EllipseSettingsComponent>( brushTool, shortcutManager );
 };
 
 std::shared_ptr<LineSettingsComponent>
-LineSettings( EditorState & editorState, ShortcutManager * shortcutManager )
+LineSettings( BrushTool & brushTool, ShortcutManager * shortcutManager )
 {
-    return std::make_shared<LineSettingsComponent>( editorState, shortcutManager );
+    return std::make_shared<LineSettingsComponent>( brushTool, shortcutManager );
 };
 
 std::shared_ptr<PaintFillSettingsComponent>
-PaintFillSettings( EditorState & editorState, ShortcutManager * shortcutManager )
+PaintFillSettings( BrushTool & brushTool, ShortcutManager * shortcutManager )
 {
-    return std::make_shared<PaintFillSettingsComponent>( editorState, shortcutManager );
+    return std::make_shared<PaintFillSettingsComponent>( brushTool, shortcutManager );
 };
 
 std::shared_ptr<BoxSelectSettingsComponent>
-BoxSelectSettings( EditorState & editorState, ShortcutManager * shortcutManager )
+BoxSelectSettings( BrushTool & brushTool, ShortcutManager * shortcutManager )
 {
-    return std::make_shared<BoxSelectSettingsComponent>( editorState, shortcutManager );
+    return std::make_shared<BoxSelectSettingsComponent>( brushTool, shortcutManager );
 };
 
 

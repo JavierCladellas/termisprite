@@ -1,5 +1,8 @@
 add_library( termisprite_lib termisprite.cpp
-                             tools.cpp
+                             tool.cpp
+                             camera.cpp
+                             tools_section.cpp
+                             contextwindow.cpp
                              editor.cpp
                              colorpicker.cpp
                              menu.cpp
@@ -7,8 +10,20 @@ add_library( termisprite_lib termisprite.cpp
                              statusbar.cpp
                              sprite_io.cpp
                              shortcuts.cpp
+                             move_tool.cpp
+                             history.cpp
                              tool_settings.cpp
                              colorpalettes.cpp
+                             layers.cpp
+                             grid.cpp
+                             cursor.cpp
+                             selection_tool.cpp
+                             eyedropper_tool.cpp
+                             paint_tool.cpp
+                             clipboard.cpp
+                             brush_tool.cpp
+                             shape_tool.cpp
+                             geometry.cpp
                              modals.cpp )
 
 target_link_libraries(termisprite_lib PRIVATE nlohmann_json::nlohmann_json)
