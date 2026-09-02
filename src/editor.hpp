@@ -196,6 +196,17 @@ public:
         else if ( M_activeLayerIndex == index + 1 )
             M_activeLayerIndex--;
     }
+    void duplicateLayer( int index, bool setActive = false )
+    {
+        if ( index < 0 || index >= M_layers.size() )
+            return;
+        auto & layer = M_layers[index];
+        auto newLayer = std::make_unique<Layer>( *layer );
+        newLayer->setName( layer->name() + " Copy" );
+        M_layers.insert( M_layers.begin() + index + 1, std::move(newLayer) );
+        if ( setActive )
+            setActiveLayer( index + 1 );
+    }
 
     bool & activeLayerBorderVisible() { return M_activeLayerBorderVisible; }
 

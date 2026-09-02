@@ -9,6 +9,56 @@ namespace Termisprite
 
 
 
+//TODO: Refactor with contextWindow for right click in editor. Tons of repeated code here lol
+class LayerContextMenuComponent
+    : public ftxui::ComponentBase
+{
+public:
+    LayerContextMenuComponent( EditorCanvasComponent * editor )
+        : M_editor( editor )
+    { }
+
+    ftxui::Element OnRender() override;
+    bool OnEvent( ftxui::Event event ) override;
+
+    bool isActive() const { return M_isActive; }
+    void show() { M_isActive = true; }
+    void hide() { M_isActive = false; }
+
+
+    void setLayerIndex( int index ) { M_layerIndex = index; }
+
+    int & x() { return M_posX; }
+    int & y() { return M_posY; }
+
+private:
+    EditorCanvasComponent * M_editor;
+    int M_layerIndex = 0;
+
+    int M_posX = 0;
+    int M_posY = 0;
+
+    bool M_isActive = false;
+
+    ftxui::Box M_box;
+
+    int M_menuIndex = 0;
+    std::vector<std::string> M_menuOptions = {
+        "Rename",
+        "Duplicate",
+        "Delete",
+        "Clear",
+        "Hide/Show",
+        "Export",
+        "Move Up",
+        "Move Down",
+        "Cancel [Esc]"
+    };
+
+    ftxui::Component M_menu = ftxui::Menu(&M_menuOptions, &M_menuIndex);
+};
+
+std::shared_ptr<LayerContextMenuComponent> LayerContextMenu( EditorCanvasComponent * editor );
 
 class LayersComponent
     : public ftxui::ComponentBase
@@ -27,6 +77,9 @@ private:
 private:
     EditorCanvasComponent * M_editor;
     ShortcutManager * M_shortcutManager;
+
+    std::shared_ptr<LayerContextMenuComponent> M_contextMenu;
+    ftxui::Box M_box;
 
 };
 
