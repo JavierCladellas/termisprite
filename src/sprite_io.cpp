@@ -158,6 +158,8 @@ bool SpriteImporter::importImage( std::string const& filepath, Layer& targetLaye
 
     ImageFormat imageFormat = formatMap[format];
 
+    targetLayer.resize(targetWidth, targetHeight);
+
     if ( imageFormat == ImageFormat::ASCII )
     {
         std::ifstream inFile(filepath);
