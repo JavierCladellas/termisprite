@@ -460,6 +460,33 @@ NewPaletteModal::renderModalContent()
 
 
 void
+RenameLayerModal::onConfirm()
+{
+    if ( M_layerNameInput.empty() )
+        M_layerNameInput = M_currentName;
+
+    M_onRename(M_layerNameInput);
+}
+
+ftxui::Component
+RenameLayerModal::buildContentComponent() const
+{
+    return M_layerNameInputComponent;
+}
+
+ftxui::Element
+RenameLayerModal::renderModalContent()
+{
+    using namespace ftxui;
+
+    return hbox({
+        text(" Layer Name: ") | dim | vcenter,
+        M_layerNameInputComponent->Render() | border | size(WIDTH, EQUAL, 20)
+    });
+}
+
+
+void
 ImportPaletteModal::onConfirm()
 {
     if ( M_paletteNameInput.empty( ))

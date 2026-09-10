@@ -1,7 +1,10 @@
 
 
 #include "layers.hpp"
+#include "sprite.hpp"
+#include "sprite_io.hpp"
 #include <ftxui/component/component.hpp>
+#include <memory>
 
 namespace Termisprite
 {
@@ -60,12 +63,22 @@ LayerContextMenuComponent::OnEvent( ftxui::Event event )
     {
         switch ( M_menuIndex )
         {
-            case 0: break; //TODO Impl rename modal
+            case 0:
+                if ( onRenameAction )
+                    onRenameAction(M_layerIndex);
+                break;
             case 1: M_editor->duplicateLayer(M_layerIndex,true); break;
             case 2: M_editor->removeLayer(M_layerIndex); break;
             case 3: M_editor->layers()[M_layerIndex]->clear(); break;
             case 4: M_editor->layers()[M_layerIndex]->toggleVisibility(); break;
-            case 5: break; //TODO Impl export modal
+            case 5:
+            {
+                auto const& layer = M_editor->layers()[M_layerIndex];
+                std::vector<std::unique_ptr<Layer>> layersToExport;
+                layersToExport.push_back(std::make_unique<Layer>(*layer));
+                SpriteExporter::exportImage(layer->name()+".png", layersToExport);
+                break;
+            }
             case 6: M_editor->moveLayerUp(M_layerIndex); break;
             case 7: M_editor->moveLayerDown(M_layerIndex); break;
             default: break;
@@ -96,6 +109,36 @@ LayerContextMenu( EditorCanvasComponent * editor )
 LayersComponent::LayersComponent( EditorCanvasComponent * editor, ShortcutManager * shortcutManager )
     : M_editor( editor), M_shortcutManager( shortcutManager ), M_contextMenu( LayerContextMenu(editor) )
 {
+
+    M_renameInput = ftxui::Input(&M_renameBuffer, "Layer Name", {
+        .multiline = false,
+        .on_enter = [this]() {
+            std::string trimmedName = M_renameBuffer;
+            if ( trimmedName.ends_with("\n") )
+                trimmedName.pop_back();
+            M_editor->layers()[M_renamingLayerIndex]->setName(trimmedName);
+            M_renamingLayerIndex = -1;
+            rebuild();
+        }
+    });
+
+    M_renameInput |= ftxui::CatchEvent([this](ftxui::Event event) {
+        if (event == ftxui::Event::Escape )
+        {
+            M_renamingLayerIndex = -1;
+            rebuild();
+            return true;
+        }
+        return false;
+    });
+
+    M_contextMenu->onRenameAction = [this](int index) {
+        M_renamingLayerIndex = index;
+        M_renameBuffer = M_editor->layers()[index]->name();
+        rebuild();
+        M_renameInput->TakeFocus();
+    };
+
     M_editor->onLayersChanged = [this]() { rebuild(); };
     rebuild();
 }
@@ -174,11 +217,14 @@ LayersComponent::createLayerRow( int index )
         ftxui::ButtonOption::Ascii()
     );
 
-    auto selectBtn = ftxui::Button(
-        layer->name(),
-        [this, index](){ M_editor->setActiveLayer(index); },
-        ftxui::ButtonOption::Ascii()
-    );
+    ftxui::Component nameBtn;
+    if ( M_renamingLayerIndex == index )
+        nameBtn = M_renameInput;
+    else
+        nameBtn = ftxui::Button( layer->name(),
+            [this, index](){ M_editor->setActiveLayer(index); },
+            ftxui::ButtonOption::Ascii()
+        );
 
     auto moveUpBtn = ftxui::Button(
         "↑",
@@ -196,11 +242,15 @@ LayersComponent::createLayerRow( int index )
         ftxui::ButtonOption::Ascii()
     );
 
-    auto rowContainer = Container::Horizontal({  selectBtn, visibilityBtn, moveUpBtn, moveDownBtn, deleteBtn });
+    auto rowContainer = Container::Horizontal({  nameBtn, visibilityBtn, moveUpBtn, moveDownBtn, deleteBtn });
 
-    return Renderer(rowContainer, [this, index, visibilityBtn, selectBtn, moveUpBtn, moveDownBtn,deleteBtn](){
+    return Renderer(rowContainer, [this, index, visibilityBtn, nameBtn, moveUpBtn, moveDownBtn,deleteBtn](){
+        auto nameElt = nameBtn->Render() | flex;
+        if (M_renamingLayerIndex != index)
+            nameElt |=  ( index == M_editor->activeLayerIndex() ? ( bold | color(Color::Green) ) : ( color(Color::White) | dim ) );
+
         return hbox({
-            selectBtn->Render() | flex | ( index == M_editor->activeLayerIndex() ? ( bold | color(Color::Green) ) : ( color(Color::White) | dim  ) ),
+                nameElt,
             text(" "),
             visibilityBtn->Render(),
             moveUpBtn->Render(),

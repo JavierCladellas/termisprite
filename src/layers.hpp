@@ -31,6 +31,8 @@ public:
     int & x() { return M_posX; }
     int & y() { return M_posY; }
 
+    std::function<void(int)> onRenameAction;
+
 private:
     EditorCanvasComponent * M_editor;
     int M_layerIndex = 0;
@@ -80,6 +82,10 @@ private:
 
     std::shared_ptr<LayerContextMenuComponent> M_contextMenu;
     ftxui::Box M_box;
+
+    int M_renamingLayerIndex = -1;
+    std::string M_renameBuffer;
+    ftxui::Component M_renameInput;
 
 };
 

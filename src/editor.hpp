@@ -6,6 +6,7 @@
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <memory>
+#include <set>
 #include <string>
 
 #include "camera.hpp"
@@ -206,6 +207,13 @@ public:
         M_layers.insert( M_layers.begin() + index + 1, std::move(newLayer) );
         if ( setActive )
             setActiveLayer( index + 1 );
+    }
+
+    void renameLayer( int index, std::string const& newName )
+    {
+        if ( index < 0 || index >= M_layers.size() )
+            return;
+        M_layers[index]->setName( newName );
     }
 
     bool & activeLayerBorderVisible() { return M_activeLayerBorderVisible; }
