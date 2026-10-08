@@ -1,5 +1,6 @@
 #pragma once
 
+#include "animations.hpp"
 #include "layers.hpp"
 #include "tool_settings.hpp"
 #include "colorpicker.hpp"
@@ -59,6 +60,7 @@ private:
 
     std::shared_ptr<EditorCanvasComponent> M_editorCanvas;
     std::shared_ptr<LayersComponent> M_layersSection;
+    std::shared_ptr<AnimationsPanelComponent> M_animationsPanel;
     std::shared_ptr<MenuComponent> M_menu;
     ftxui::Component M_settingsContainer;
     std::shared_ptr<ToolsComponent> M_tools;

@@ -4,6 +4,7 @@
 
 #include "termisprite.hpp"
 
+#include "animations.hpp"
 #include "editor.hpp"
 
 
@@ -21,6 +22,7 @@ Termisprite::Termisprite()
     M_tools = ToolsSection( M_editorCanvas->currentState().toolType, &M_shortcutManager );
     M_colorSection = ColorSection( M_editorCanvas->brushTool().activeColor() ,M_editorCanvas->colorsInCanvas() );
     M_statusBar = StatusBar( M_editorCanvas->currentState(), &M_shortcutManager );
+    M_animationsPanel = AnimationsPanel( M_editorCanvas.get(), &M_shortcutManager );
 
     M_brushSettings = BrushSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
     M_eraserSettings = EraserSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
@@ -57,7 +59,7 @@ Termisprite::Termisprite()
 
     ftxui::Component baseContainer = ftxui::Container::Vertical({
         ftxui::Container::Horizontal({
-             M_menu, M_settingsContainer, M_tools, M_editorCanvas, M_colorSection, M_layersSection
+             M_menu, M_settingsContainer, M_tools, M_editorCanvas, M_colorSection, M_layersSection, M_animationsPanel
         }),
         M_statusBar
     });
@@ -78,6 +80,7 @@ Termisprite::Termisprite()
                         M_layersSection->Render()
                     })
                 }) | ftxui::flex,
+                M_animationsPanel->Render(),
                 M_statusBar->Render()
             }),
             M_menu->RenderOverlay()

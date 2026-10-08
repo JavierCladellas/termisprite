@@ -24,6 +24,8 @@ add_library( termisprite_lib termisprite.cpp
                              brush_tool.cpp
                              shape_tool.cpp
                              geometry.cpp
+                             animations.cpp
+                             frame.cpp
                              modals.cpp )
 
 target_link_libraries(termisprite_lib PRIVATE nlohmann_json::nlohmann_json)
