@@ -62,8 +62,8 @@ private:
     std::string M_heightInput;
 
     ftxui::Component M_projectNameInputComponent = ftxui::Input(&M_projectNameInput, "Project Name");
-    ftxui::Component M_widthInputComponent = ftxui::Input(&M_widthInput, "32");
-    ftxui::Component M_heightInputComponent = ftxui::Input(&M_heightInput, "32");
+    ftxui::Component M_widthInputComponent = ftxui::Input(&M_widthInput, "48");
+    ftxui::Component M_heightInputComponent = ftxui::Input(&M_heightInput, "48");
 
 };
 
@@ -217,10 +217,10 @@ class BackgroundColorModal
     : public Modal
 {
 public:
-    BackgroundColorModal( EditorState & editorState, std::function<void()> onClose)
+    BackgroundColorModal( ftxui::Color & backgroundColor, std::function<void()> onClose)
         : Modal( onClose, "Export")
     {
-        M_colorPicker = ColorPicker( editorState.backgroundColor );
+        M_colorPicker = ColorPicker( backgroundColor );
         Modal::initTree();
     }
 
@@ -326,6 +326,33 @@ private:
 
 };
 
+
+class RenameLayerModal
+    : public Modal
+{
+public:
+    RenameLayerModal( std::string const& currentName, std::function<void(std::string const&)> onRename, std::function<void()> onClose )
+        : Modal( onClose, "Rename Layer"), M_currentName( currentName ), M_onRename( onRename )
+    {
+        Modal::initTree();
+        M_layerNameInputComponent->TakeFocus();
+    }
+
+    void setCurrentName( std::string const& currentName ) { M_currentName = currentName; }
+
+private:
+    void onConfirm() override;
+    ftxui::Component buildContentComponent() const override;
+    ftxui::Element renderModalContent() override;
+
+private:
+    std::string M_currentName;
+    std::function<void(std::string const&)> M_onRename;
+
+    std::string M_layerNameInput = "";
+    ftxui::Component M_layerNameInputComponent = ftxui::Input(&M_layerNameInput, "Layer Name");
+
+};
 
 
 class ExportPaletteModal

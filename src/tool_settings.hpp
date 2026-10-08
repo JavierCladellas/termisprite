@@ -1,6 +1,6 @@
 #pragma once
 
-#include "editor.hpp"
+#include "brush_tool.hpp"
 #include "shortcuts.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
@@ -14,8 +14,8 @@ class ToolSettingsComponent
     : public ftxui::ComponentBase
 {
 public:
-    ToolSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager )
-        : M_editorState( editorState ), M_shortcutManager( shortcutManager )
+    ToolSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager )
+        : M_brushTool( brushTool ), M_shortcutManager( shortcutManager )
     {}
 
     virtual ftxui::Element OnRender() override = 0;
@@ -23,7 +23,7 @@ public:
 
 protected:
     ftxui::Component M_container;
-    EditorState & M_editorState;
+    BrushTool & M_brushTool;
     ShortcutManager * M_shortcutManager;
 };
 
@@ -31,7 +31,7 @@ class BrushSettingsComponent
     : public ToolSettingsComponent
 {
 public:
-    BrushSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager );
+    BrushSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager );
     ftxui::Element OnRender() override;
 
 private:
@@ -44,7 +44,7 @@ class EraserSettingsComponent
     : public ToolSettingsComponent
 {
 public:
-    EraserSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager );
+    EraserSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager );
     ftxui::Element OnRender() override;
 
 private:
@@ -57,7 +57,7 @@ class RectangleSettingsComponent
     : public ToolSettingsComponent
 {
 public:
-    RectangleSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager );
+    RectangleSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager );
     ftxui::Element OnRender() override;
 
 private:
@@ -70,7 +70,7 @@ class EllipseSettingsComponent
     : public ToolSettingsComponent
 {
 public:
-    EllipseSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager );
+    EllipseSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager );
     ftxui::Element OnRender() override;
 
 private:
@@ -82,7 +82,7 @@ class LineSettingsComponent
     : public ToolSettingsComponent
 {
 public:
-    LineSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager );
+    LineSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager );
     ftxui::Element OnRender() override;
 
 private:
@@ -95,7 +95,7 @@ class PaintFillSettingsComponent
     : public ToolSettingsComponent
 {
 public:
-    PaintFillSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager );
+    PaintFillSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager );
     ftxui::Element OnRender() override;
 
 private:
@@ -105,21 +105,21 @@ class BoxSelectSettingsComponent
     : public ToolSettingsComponent
 {
 public:
-    BoxSelectSettingsComponent( EditorState & editorState, ShortcutManager * shortcutManager );
+    BoxSelectSettingsComponent( BrushTool & brushTool, ShortcutManager * shortcutManager );
     ftxui::Element OnRender() override;
 
 private:
 };
 
-std::shared_ptr<BrushSettingsComponent> BrushSettings( EditorState & editorState, ShortcutManager * shortcutManager );
-std::shared_ptr<EraserSettingsComponent> EraserSettings( EditorState & editorState, ShortcutManager * shortcutManager );
+std::shared_ptr<BrushSettingsComponent> BrushSettings( BrushTool & brushTool, ShortcutManager * shortcutManager );
+std::shared_ptr<EraserSettingsComponent> EraserSettings( BrushTool & brushTool, ShortcutManager * shortcutManager );
 
-std::shared_ptr<RectangleSettingsComponent> RectangleSettings( EditorState & editorState, ShortcutManager * shortcutManager );
-std::shared_ptr<EllipseSettingsComponent> EllipseSettings( EditorState & editorState, ShortcutManager * shortcutManager );
-std::shared_ptr<LineSettingsComponent> LineSettings( EditorState & editorState, ShortcutManager * shortcutManager );
+std::shared_ptr<RectangleSettingsComponent> RectangleSettings( BrushTool & brushTool, ShortcutManager * shortcutManager );
+std::shared_ptr<EllipseSettingsComponent> EllipseSettings( BrushTool & brushTool, ShortcutManager * shortcutManager );
+std::shared_ptr<LineSettingsComponent> LineSettings( BrushTool & brushTool, ShortcutManager * shortcutManager );
 
-std::shared_ptr<PaintFillSettingsComponent> PaintFillSettings( EditorState & editorState, ShortcutManager * shortcutManager );
-std::shared_ptr<BoxSelectSettingsComponent> BoxSelectSettings( EditorState & editorState, ShortcutManager * shortcutManager );
+std::shared_ptr<PaintFillSettingsComponent> PaintFillSettings( BrushTool & brushTool, ShortcutManager * shortcutManager );
+std::shared_ptr<BoxSelectSettingsComponent> BoxSelectSettings( BrushTool & brushTool, ShortcutManager * shortcutManager );
 
 
 }

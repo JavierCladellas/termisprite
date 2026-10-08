@@ -3,8 +3,6 @@
 #include <ftxui/component/component.hpp>
 #include <unordered_map>
 
-#include "editor.hpp"
-
 
 namespace Termisprite
 {
@@ -18,7 +16,7 @@ class ColorPaletteComponent
     : public ftxui::ComponentBase
 {
 public:
-    ColorPaletteComponent( EditorState & editorState );
+    ColorPaletteComponent( ftxui::Color & activeColor, std::vector<ftxui::Color> const& colorsInCanvas );
 
     ftxui::Element OnRender() override;
 
@@ -33,8 +31,9 @@ private:
     ftxui::Component buildColorButton( ftxui::Color color, std::function<void()> onDelete = {} );
 
 private:
+    ftxui::Color & M_activeColor;
     std::vector<ftxui::Color> M_lastColorsInCanvas;
-    EditorState & M_editorState;
+    std::vector<ftxui::Color> const& M_colorsInCanvas;
 
     ftxui::Component M_container;
     ftxui::Component M_colorsInCanvasContainer;
@@ -63,6 +62,6 @@ private:
 };
 
 
-std::shared_ptr<ColorPaletteComponent> ColorPalette( EditorState & editorState );
+std::shared_ptr<ColorPaletteComponent> ColorPalette( ftxui::Color & activeColor, std::vector<ftxui::Color> const& colorsInCanvas );
 
 }

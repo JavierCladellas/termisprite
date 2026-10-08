@@ -14,20 +14,21 @@ namespace Termisprite
 Termisprite::Termisprite()
     : M_shortcutManager( this )
 {
-    M_editorCanvas = EditorCanvas( 48, 48 );
+    M_editorCanvas = EditorCanvas( 32, 32, &M_shortcutManager );
 
     M_menu = Menu( &M_shortcutManager );
-    M_tools = ToolsSection( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_colorSection = ColorSection( M_editorCanvas->currentState() );
+    M_layersSection = LayersSection( M_editorCanvas.get(), &M_shortcutManager );
+    M_tools = ToolsSection( M_editorCanvas->currentState().toolType, &M_shortcutManager );
+    M_colorSection = ColorSection( M_editorCanvas->brushTool().activeColor() ,M_editorCanvas->colorsInCanvas() );
     M_statusBar = StatusBar( M_editorCanvas->currentState(), &M_shortcutManager );
 
-    M_brushSettings = BrushSettings( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_eraserSettings = EraserSettings( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_rectangleSettings = RectangleSettings( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_ellipseSettings = EllipseSettings( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_lineSettings = LineSettings( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_paintFillSettings = PaintFillSettings( M_editorCanvas->currentState(), &M_shortcutManager );
-    M_boxSelectSettings = BoxSelectSettings( M_editorCanvas->currentState(), &M_shortcutManager );
+    M_brushSettings = BrushSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
+    M_eraserSettings = EraserSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
+    M_rectangleSettings = RectangleSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
+    M_ellipseSettings = EllipseSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
+    M_lineSettings = LineSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
+    M_paintFillSettings = PaintFillSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
+    M_boxSelectSettings = BoxSelectSettings( M_editorCanvas->brushTool(), &M_shortcutManager );
 
     M_newProjectModal = std::make_shared<NewProjectModal>( *M_editorCanvas, [this]{ M_showNewProjectModal = false; });
     M_openProjectModal = std::make_shared<OpenProjectModal>( *M_editorCanvas, [this]{ M_showOpenProjectModal = false; M_colorSection->reloadPalettes(); }, M_colorSection->palettes() );
@@ -38,7 +39,7 @@ Termisprite::Termisprite()
     M_shortcutsModal = std::make_shared<ShortcutsModal>(&M_shortcutManager, [this]{ M_showShortcutsModal = false; });
 
     M_editorCanvas->onBackgroundChangeRequested = [this] { M_showBackgroundColorModal = true; };
-    M_backgroundColorModal = std::make_shared<BackgroundColorModal>( M_editorCanvas->currentState(), [this]{ M_showBackgroundColorModal = false; });
+    M_backgroundColorModal = std::make_shared<BackgroundColorModal>( M_editorCanvas->currentState().backgroundColor, [this]{ M_showBackgroundColorModal = false; });
 
     M_importModal = std::make_shared<ImportModal>( *M_editorCanvas, [this]{ M_showImportModal = false; });
 
@@ -56,7 +57,7 @@ Termisprite::Termisprite()
 
     ftxui::Component baseContainer = ftxui::Container::Vertical({
         ftxui::Container::Horizontal({
-            M_menu, M_editorCanvas, M_settingsContainer, M_tools, M_colorSection
+             M_menu, M_settingsContainer, M_tools, M_editorCanvas, M_colorSection, M_layersSection
         }),
         M_statusBar
     });
@@ -67,14 +68,16 @@ Termisprite::Termisprite()
                 M_menu->Render(),
                 ftxui::separatorEmpty(),
                 ftxui::hbox({
-                    M_editorCanvas->Render() | ftxui::flex,
                     ftxui::vbox({
                         M_settingsContainer->Render(),
                         M_tools->Render(),
-                        M_colorSection->Render()
+                    }),
+                    M_editorCanvas->Render() | ftxui::flex,
+                    ftxui::vbox({
+                        M_colorSection->Render(),
+                        M_layersSection->Render()
                     })
                 }) | ftxui::flex,
-                ftxui::filler(),
                 M_statusBar->Render()
             }),
             M_menu->RenderOverlay()

@@ -16,14 +16,14 @@ StatusBarComponent::StatusBarComponent( EditorState & editorState, ShortcutManag
         {{ M_shortcutManager->getName(ShortcutType::TOGGLE_GRID), M_shortcutManager->getHotkeyText(ShortcutType::TOGGLE_GRID)}, {} },
         {{ M_shortcutManager->getName(ShortcutType::CHANGE_GRID_TYPE), M_shortcutManager->getHotkeyText(ShortcutType::CHANGE_GRID_TYPE)}, {} },
 
-        {{ "Move Cursor", "[Arrows / hjkl]" }, [](EditorState & s) { return !s.selection.isActive; } },
+        {{ "Move Cursor", "[Arrows / hjkl]" }, [](EditorState & s) { return !s.selectionTool->isActive(); } },
 
-        {{ "Move Selection", "[Arrows / hjkl]" }, [](EditorState & s) { return s.selection.isActive; } },
-        {{ "Drop", "[Enter / Esc]" }, [](EditorState & s) { return s.selection.isActive; } },
-        {{ M_shortcutManager->getName(ShortcutType::CLIPBOARD_COPY), M_shortcutManager->getHotkeyText(ShortcutType::CLIPBOARD_COPY)}, [](EditorState & s) { return s.selection.isActive; } },
-        {{ M_shortcutManager->getName(ShortcutType::CLIPBOARD_CUT), M_shortcutManager->getHotkeyText(ShortcutType::CLIPBOARD_CUT)}, [](EditorState & s) { return s.selection.isActive; } },
+        {{ "Move Selection", "[Arrows / hjkl]" }, [](EditorState & s) { return s.selectionTool->isActive(); } },
+        {{ "Drop", "[Enter / Esc]" }, [](EditorState & s) { return s.selectionTool->isActive(); } },
+        {{ M_shortcutManager->getName(ShortcutType::CLIPBOARD_COPY), M_shortcutManager->getHotkeyText(ShortcutType::CLIPBOARD_COPY)}, [](EditorState & s) { return s.selectionTool->isActive(); } },
+        {{ M_shortcutManager->getName(ShortcutType::CLIPBOARD_CUT), M_shortcutManager->getHotkeyText(ShortcutType::CLIPBOARD_CUT)}, [](EditorState & s) { return s.selectionTool->isActive(); } },
 
-        {{ M_shortcutManager->getName(ShortcutType::CLIPBOARD_PASTE), M_shortcutManager->getHotkeyText(ShortcutType::CLIPBOARD_PASTE)}, [](EditorState & s) { return s.clipboard.hasData && !s.selection.isActive; } }
+        {{ M_shortcutManager->getName(ShortcutType::CLIPBOARD_PASTE), M_shortcutManager->getHotkeyText(ShortcutType::CLIPBOARD_PASTE)}, [](EditorState & s) { return s.clipboard.hasData && !s.selectionTool->isActive(); } }
     };
 
 }
@@ -42,6 +42,7 @@ StatusBarComponent::toolTypeToString( ToolType type ) const
         case ToolType::PAINT_FILL:  return "Paint Fill";
         case ToolType::BOX_SELECT:  return "Box Select";
         case ToolType::PAN:         return "Panning";
+        case ToolType::MOVE_LAYER:  return "Move";
         default:                    return "Unknown";
     }
 }
@@ -57,7 +58,7 @@ StatusBarComponent::OnRender()
     });
 
     Elements stateIndicators;
-    if ( M_editorState.selection.isActive )
+    if ( M_editorState.selectionTool->isActive() )
         stateIndicators.push_back( text( " [Selecting] " ) | color( Color::Yellow ) | bold );
 
     if ( M_editorState.clipboard.hasData )

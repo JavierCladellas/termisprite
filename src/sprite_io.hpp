@@ -18,10 +18,10 @@ class SpriteImporter
 public:
     SpriteImporter() = default;
 
-    static bool importImage( std::string const& filepath, Sprite & targetSprite, int targetWidth, int targetHeight, std::string const& format = "png" );
-  
+    static bool importImage( std::string const& filepath, Layer & targetLayer, int targetWidth, int targetHeight, std::string const& format = "png" );
+
     static bool
-    importProject( std::string const& filepath, Sprite & targetSprite, EditorState & editorState, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes );
+    importProject( std::string const& filepath, EditorCanvasComponent & editorCanvas, std::unordered_map<std::string, std::vector<ftxui::Color>> & palettes );
 
 
     static bool
@@ -39,12 +39,11 @@ public:
     static bool
     exportProject( std::string const& filepath,
                    std::string const& projectName,
-                   Sprite const& targetSprite,
-                   EditorState const& editorState,
+                   EditorCanvasComponent const& editorCanvas,
                    std::unordered_map<std::string, std::vector<ftxui::Color>> const& palettes );
 
     static bool
-    exportImage( std::string const& filepath, Sprite const& targetSprite, std::string const& format = "png" );
+    exportImage( std::string const& filepath, std::vector<std::unique_ptr<Layer>> const& layers, std::string const& format = "png" );
 
     static bool
     exportPalette( std::string const& filepath, std::vector<ftxui::Color> const& palette, std::string const& format = "gpl", std::string const& paletteName = "Unnamed Palette" );
